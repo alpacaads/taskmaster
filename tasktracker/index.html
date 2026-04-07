@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Task Tracker</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+
+  <div class="app-container">
+
+    <div class="top-bar">
+      <div class="left-bar">
+        <div class="toggle">
+          <button class="active" id="btn-work" onclick="setMode('work')">Work</button>
+          <button id="btn-personal" onclick="setMode('personal')">Personal</button>
+        </div>
+        <span id="overdue-badge" class="overdue-badge hidden"></span>
+      </div>
+      <div class="top-actions">
+        <input type="text" id="search-input" placeholder="Search tasks…" oninput="setSearch(this.value)" />
+        <button class="btn" id="client-mgr-btn" onclick="toggleClientMgr()">Clients</button>
+        <button class="btn btn-ai" onclick="toggleAI()">✦ AI</button>
+        <button class="btn" onclick="toggleForm()">+ Add task</button>
+        <button class="btn btn-settings" onclick="toggleSettings()" title="Business brief">⚙</button>
+      </div>
+    </div>
+
+    <!-- Settings panel -->
+    <div class="panel hidden" id="settings-panel">
+      <div class="panel-title">Business brief <span class="panel-hint">The AI uses this to understand your work</span></div>
+      <textarea id="business-brief" rows="4" placeholder="e.g. I run Alpaca Ads, a digital advertising agency based in Australia. We manage Google Ads, Meta campaigns and SEO for small-to-medium businesses. I'm the sole operator and manage 6–10 clients at a time."></textarea>
+      <div class="panel-actions">
+        <button class="btn" onclick="toggleSettings()">Cancel</button>
+        <button class="save" onclick="saveBrief()">Save brief</button>
+      </div>
+    </div>
+
+    <!-- AI panel -->
+    <div class="panel hidden" id="ai-panel">
+      <div class="panel-title">✦ AI task planner <span class="panel-hint">Describe a goal and AI will plan the tasks</span></div>
+      <div class="ai-input-row">
+        <textarea id="ai-prompt" rows="3" placeholder="e.g. Launch a Google Ads campaign for Sales Structures by end of next week, including research, copy, setup and reporting…"></textarea>
+        <button class="mic-btn" id="mic-btn" onclick="toggleVoice()" title="Voice input">🎤</button>
+      </div>
+      <div id="ai-mode-row" style="display:flex;gap:8px;align-items:center;">
+        <label style="font-size:13px;color:var(--text-secondary);">Mode:</label>
+        <select id="ai-mode" style="font-size:13px;padding:4px 8px;border:0.5px solid var(--border);border-radius:6px;background:transparent;color:var(--text);">
+          <option value="work">Work</option>
+          <option value="personal">Personal</option>
+        </select>
+      </div>
+      <div class="panel-actions">
+        <button class="btn" onclick="toggleAI()">Cancel</button>
+        <button class="save btn-ai-go" id="ai-go-btn" onclick="runAI()">✦ Plan tasks</button>
+      </div>
+      <div id="ai-status" class="ai-status hidden"></div>
+    </div>
+
+    <!-- AI preview -->
+    <div class="panel hidden" id="ai-preview">
+      <div class="panel-title">✦ Review tasks <span class="panel-hint">Edit or remove before saving</span></div>
+      <div id="ai-preview-list"></div>
+      <div class="panel-actions" style="margin-top:12px;">
+        <button class="btn" onclick="closeAIPreview()">Cancel</button>
+        <button class="save btn-ai-go" onclick="confirmAITasks()">Save all tasks</button>
+      </div>
+    </div>
+
+    <!-- Client manager -->
+    <div class="panel hidden" id="client-mgr">
+      <div id="client-list-mgr"></div>
+      <div class="client-add-row">
+        <input type="text" id="new-client-name" placeholder="Client name" />
+        <button class="btn" onclick="addClient()">Add</button>
+      </div>
+    </div>
+
+    <!-- Add task form -->
+    <div class="add-form hidden" id="add-form">
+      <input type="text" id="new-name" placeholder="Task name" />
+      <div class="row">
+        <select id="new-priority">
+          <option value="high">High priority</option>
+          <option value="med" selected>Medium priority</option>
+          <option value="low">Low priority</option>
+        </select>
+        <input type="date" id="new-due" />
+      </div>
+      <select id="new-client"></select>
+      <textarea id="new-notes" placeholder="Notes (optional)" rows="2"></textarea>
+      <div class="form-actions">
+        <button onclick="toggleForm()">Cancel</button>
+        <button class="save" onclick="addTask()">Save</button>
+      </div>
+    </div>
+
+    <div id="client-filter-bar"></div>
+    <div id="task-area"></div>
+
+  </div>
+
+  <!-- Edit modal -->
+  <div id="modal" class="hidden"></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/config.js"></script>
+  <script src="js/app.js"></script>
+  <script src="js/ai.js"></script>
+</body>
+</html>

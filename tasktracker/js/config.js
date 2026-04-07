@@ -1,0 +1,2 @@
+const SUPABASE_URL = 'https://frycxliowdnbrukvrpvh.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZyeWN4bGlvd2RuYnJ1a3ZycHZoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU1NDA1NDAsImV4cCI6MjA5MTExNjU0MH0.8EjiU-odnjTyFYPzjHEy6psZ_DTn9YY05zW4unrKFMo';
