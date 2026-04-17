@@ -239,80 +239,58 @@ window.Scenes = (function () {
     fire: { skin: "#2a1a0c", cloth: "#1a0c06", cloth2: "#2c1808", hair: "#0a0402", rim: "#ff9b3a" },
   };
 
-  function survivor(x, y, opts = {}) {
-    const { scale = 1, flip = false, tone = "cool", anim = "breathe", jacket = "#1f1c14", build = "m" } = opts;
-    const t = TONE[tone] || TONE.cool;
-    const sx = (flip ? -1 : 1) * scale, sy = scale;
-    const head = build === "f" ? 7 : 7.5;
-    const torso = build === "f" ? 17 : 19;
-    return `<g class="char anim-${anim}" transform="translate(${x},${y}) scale(${sx},${sy})">
-      <ellipse cx="0" cy="-3" rx="14" ry="2" fill="#000" opacity="0.5"/>
-      <rect x="-6" y="-22" width="5" height="22" fill="${t.cloth}"/>
-      <rect x="1"  y="-22" width="5" height="22" fill="${t.cloth}"/>
-      <g class="torso">
-        <rect x="-9" y="-44" width="18" height="${torso+3}" rx="3" fill="${jacket}"/>
-        <rect x="-9" y="-44" width="18" height="6" fill="${t.cloth2}" opacity="0.6"/>
-        <rect class="arm-l" x="-13" y="-42" width="5" height="22" rx="2" fill="${jacket}"/>
-        <rect class="arm-r" x="8"   y="-42" width="5" height="22" rx="2" fill="${jacket}"/>
-        <ellipse cx="0" cy="-50" rx="${head}" ry="${head+2}" fill="${t.skin}"/>
-        <path d="M ${-head} -52 Q 0 -${58+(build==="f"?2:0)} ${head} -52 L ${head} -47 L ${-head} -47 Z" fill="${t.hair}"/>
-        ${build === "f" ? `<path d="M ${-head} -47 Q ${-head-1} -42 ${-head+1} -38" fill="${t.hair}"/>
-                           <path d="M ${head} -47 Q ${head+1} -42 ${head-1} -38" fill="${t.hair}"/>` : ""}
-        <ellipse cx="-2" cy="-50" rx="0.6" ry="0.6" fill="${t.rim}" opacity="0.8"/>
+  // Render a character as a sized emoji inside the SVG scene.
+  // The emoji sits naturally in the painted environment and gets per-character
+  // animation via a wrapping <g class="char anim-…">.
+  function emojiChar(x, y, glyph, opts = {}) {
+    const { size = 44, anim = "breathe", flip = false, dim = false, dropShadow = true } = opts;
+    const sx = flip ? -1 : 1;
+    const filter = dropShadow ? `filter="drop-shadow(0 2px 3px rgba(0,0,0,0.7))"` : "";
+    const opacity = dim ? 0.85 : 1;
+    return `<g class="char anim-${anim}" transform="translate(${x},${y})">
+      <ellipse cx="0" cy="2" rx="${size*0.4}" ry="${size*0.08}" fill="#000" opacity="0.55"/>
+      <g transform="scale(${sx},1)" ${filter} opacity="${opacity}">
+        <text x="0" y="0" font-size="${size}" text-anchor="middle"
+              dominant-baseline="alphabetic"
+              style="font-family: 'Apple Color Emoji','Segoe UI Emoji','Noto Color Emoji',sans-serif">${glyph}</text>
       </g>
     </g>`;
+  }
+
+  function survivor(x, y, opts = {}) {
+    const { scale = 1, flip = false, anim = "breathe", build = "m", named = null } = opts;
+    let glyph = build === "f" ? "🧍‍♀️" : "🧍";
+    if (named === "maya")  glyph = "👩‍🦰";
+    if (named === "ren")   glyph = "🧑‍⚕️";
+    if (named === "vega")  glyph = "👩‍✈️";
+    if (named === "ellis") glyph = "🧑";
+    return emojiChar(x, y, glyph, { size: 50 * scale, anim, flip });
   }
 
   function child(x, y, opts = {}) {
-    const { scale = 0.75, flip = false, tone = "cool", anim = "breathe" } = opts;
-    return survivor(x, y, { scale, flip, tone, anim, jacket: "#3a2818", build: "f" });
+    const { scale = 0.85, flip = false, anim = "breathe" } = opts;
+    return emojiChar(x, y, "👧", { size: 38 * scale, anim, flip });
   }
 
   function zombie(x, y, opts = {}) {
-    const { scale = 1, flip = false, tone = "cool", variant = "walker", anim = "shamble" } = opts;
-    const t = TONE[tone] || TONE.cool;
-    const sx = (flip ? -1 : 1) * scale, sy = scale;
-    const slump = variant === "runner" ? -2 : 6;
-    const skin = variant === "bloater" ? "#3a4030" : "#2a2a22";
-    return `<g class="char anim-${anim}" transform="translate(${x},${y}) scale(${sx},${sy})">
-      <ellipse cx="0" cy="-3" rx="14" ry="2" fill="#000" opacity="0.45"/>
-      <rect x="-6" y="-22" width="5" height="22" fill="#0a0a08"/>
-      <rect x="1"  y="-22" width="5" height="22" fill="#0a0a08"/>
-      <g transform="translate(0, ${slump})">
-        <rect x="-10" y="-44" width="20" height="22" rx="2" fill="#1a1812"/>
-        <path d="M -10 -34 L -3 -28 L 0 -34 L 4 -27 L 10 -33" stroke="#5a1818" stroke-width="1.5" fill="none"/>
-        <rect class="arm-l zombie-arm" x="-16" y="-42" width="5" height="24" rx="2" fill="#1a1812"/>
-        <rect class="arm-r zombie-arm" x="11"  y="-42" width="5" height="24" rx="2" fill="#1a1812"/>
-        <ellipse cx="-13" cy="-22" rx="3" ry="3" fill="${skin}"/>
-        <ellipse cx="14"  cy="-22" rx="3" ry="3" fill="${skin}"/>
-        <ellipse cx="2" cy="-50" rx="8" ry="9" fill="${skin}"/>
-        <path d="M -6 -55 Q 2 -${variant === 'bloater' ? 64 : 60} 9 -53" stroke="#1a1010" stroke-width="2" fill="none"/>
-        <ellipse cx="-1" cy="-50" rx="1.2" ry="0.8" fill="#6a1818"/>
-        <ellipse cx="4"  cy="-50" rx="1.2" ry="0.8" fill="#6a1818"/>
-        <path d="M -3 -45 Q 2 -42 6 -45" stroke="#3a0808" stroke-width="1" fill="none"/>
-      </g>
-    </g>`;
+    const { scale = 1, flip = false, variant = "walker", anim = "shamble" } = opts;
+    const glyph = variant === "runner"  ? "🧟‍♂️"
+                : variant === "bloater" ? "🧟"
+                : variant === "female"  ? "🧟‍♀️"
+                : "🧟";
+    const size = variant === "bloater" ? 56 * scale : 50 * scale;
+    return emojiChar(x, y, glyph, { size, anim, flip });
   }
 
   function bandit(x, y, opts = {}) {
-    const { scale = 1, flip = false, tone = "cool", weapon = "rifle" } = opts;
-    const t = TONE[tone] || TONE.cool;
-    const sx = (flip ? -1 : 1) * scale, sy = scale;
-    const wpn = weapon === "rifle"
-      ? `<rect x="6" y="-38" width="22" height="3" fill="#1a1208"/>
-         <rect x="22" y="-40" width="6" height="6" fill="#0a0604"/>`
-      : `<rect x="6" y="-36" width="10" height="3" fill="#1a1208"/>`;
-    return `<g class="char anim-stand" transform="translate(${x},${y}) scale(${sx},${sy})">
-      <ellipse cx="0" cy="-3" rx="14" ry="2" fill="#000" opacity="0.5"/>
-      <rect x="-6" y="-22" width="5" height="22" fill="#0a0a08"/>
-      <rect x="1"  y="-22" width="5" height="22" fill="#0a0a08"/>
-      <rect x="-10" y="-46" width="20" height="26" rx="3" fill="#241c12"/>
-      <rect x="-13" y="-44" width="5" height="22" rx="2" fill="#241c12"/>
-      <rect x="8"   y="-44" width="5" height="22" rx="2" fill="#241c12"/>
-      ${wpn}
-      <ellipse cx="0" cy="-52" rx="7.5" ry="9" fill="${t.skin}"/>
-      <rect x="-8" y="-58" width="16" height="6" fill="#1a1208"/>
-      <rect x="-9" y="-54" width="18" height="3" fill="#0a0604"/>
+    const { scale = 1, flip = false, weapon = "rifle" } = opts;
+    const glyph = weapon === "rifle" ? "🤠" : "🥷";
+    const out = emojiChar(x, y, glyph, { size: 48 * scale, anim: "stand", flip });
+    // Add a small weapon emoji beside them
+    const wx = x + (flip ? -22 : 22) * scale;
+    const wpn = weapon === "rifle" ? "🔫" : "🔪";
+    return out + `<g transform="translate(${wx},${y - 22 * scale}) scale(${flip ? -1 : 1},1)" filter="drop-shadow(0 1px 1px rgba(0,0,0,0.6))">
+      <text x="0" y="0" font-size="${22*scale}" text-anchor="middle">${wpn}</text>
     </g>`;
   }
 
@@ -320,16 +298,19 @@ window.Scenes = (function () {
     const { scale = 1 } = opts;
     let out = "";
     const slots = [
-      { x: -50, s: 0.85, t: 0,  v: "walker"  },
-      { x: -25, s: 0.95, t: 5,  v: "runner"  },
-      { x: 0,   s: 1.0,  t: 0,  v: "walker"  },
-      { x: 25,  s: 0.92, t: -3, v: "bloater" },
-      { x: 50,  s: 0.88, t: 2,  v: "walker"  },
-      { x: -38, s: 0.7,  t: 12, v: "walker"  },
-      { x: 38,  s: 0.7,  t: 12, v: "runner"  },
+      { x: -70, s: 0.85, t: 6,  v: "walker",  flip: false },
+      { x: -35, s: 1.0,  t: 0,  v: "runner",  flip: false },
+      { x: 0,   s: 1.1,  t: 4,  v: "bloater", flip: false },
+      { x: 35,  s: 0.95, t: 0,  v: "female",  flip: true  },
+      { x: 70,  s: 0.85, t: 6,  v: "walker",  flip: true  },
+      { x: -55, s: 0.7,  t: 14, v: "walker",  flip: false },
+      { x: 55,  s: 0.7,  t: 14, v: "runner",  flip: true  },
     ];
     slots.forEach((s, i) => {
-      out += zombie(x + s.x * scale, y + s.t * scale, { scale: s.s * scale, variant: s.v, anim: i % 2 ? "shamble" : "shamble-2" });
+      out += zombie(x + s.x * scale, y + s.t * scale, {
+        scale: s.s * scale, variant: s.v, flip: s.flip,
+        anim: i % 2 ? "shamble" : "shamble-2",
+      });
     });
     return out;
   }
@@ -500,11 +481,11 @@ window.Scenes = (function () {
     greenbelt_gate: () => BG.fenceForest() +
       gate(170, 155) +
       survivor(80, 178, { tone: "warm" }) +
-      survivor(310, 178, { tone: "warm", build: "f", jacket: "#2a3024", flip: true }),
+      survivor(310, 178, { tone: "warm", named: "maya", flip: true }),
 
     greenbelt_camp: () => BG.camp() +
       survivor(110, 178, { tone: "fire" }) +
-      survivor(180, 178, { tone: "fire", build: "f", jacket: "#2a3024" }) +
+      survivor(180, 178, { tone: "fire", named: "maya" }) +
       survivor(290, 178, { tone: "fire", build: "f", jacket: "#3a2820", flip: true }),
 
     greenbelt_morning: () => BG.forestDawn() +
@@ -514,8 +495,9 @@ window.Scenes = (function () {
 
     medbay: () => BG.indoor() +
       bed(100, 140) +
-      survivor(160, 162, { tone: "warm", build: "f", jacket: "#2a3024", anim: "rest" }) +
-      survivor(250, 178, { tone: "warm" }),
+      child(140, 158, { anim: "rest" }) +
+      survivor(220, 178, { named: "ren" }) +
+      survivor(290, 178, { named: "ellis", flip: true }),
 
     bonfire_night: () => `<rect width="400" height="200" fill="url(#skyNight)"/>
       ${stars(50)}
@@ -524,7 +506,7 @@ window.Scenes = (function () {
       <ellipse cx="200" cy="170" rx="90" ry="35" fill="url(#fireGlow)"/>
       ${campfire(200, 168)}
       ${survivor(140, 178, { tone: "fire" })}
-      ${survivor(260, 178, { tone: "fire", build: "f", jacket: "#2a3024", flip: true })}`,
+      ${survivor(260, 178, { tone: "fire", named: "maya", flip: true })}`,
 
     intimate_bedroom: () => BG.bedroomNight() +
       bed(220, 145) +
@@ -536,7 +518,7 @@ window.Scenes = (function () {
 
     cliff_dawn: () => BG.cliff() +
       survivor(180, 165, { tone: "pale" }) +
-      survivor(220, 165, { tone: "pale", build: "f", jacket: "#2a3024", flip: true }),
+      survivor(220, 165, { tone: "pale", named: "maya", flip: true }),
 
     horde_wall: () => BG.bloodDawn() +
       fence(20, 130, 360) +
@@ -550,7 +532,7 @@ window.Scenes = (function () {
     ending_dawn: () => BG.bloodDawn() +
       fence(20, 130, 360) +
       survivor(180, 178, { tone: "fire" }) +
-      survivor(220, 178, { tone: "fire", build: "f", jacket: "#2a3024", flip: true }),
+      survivor(220, 178, { tone: "fire", named: "maya", flip: true }),
 
     ending_grave: () => `<rect width="400" height="200" fill="url(#skyDusk)"/>
       <rect y="155" width="400" height="45" fill="#1a0e07"/>
@@ -558,11 +540,11 @@ window.Scenes = (function () {
       <rect x="190" y="120" width="20" height="40" fill="#3a2820" rx="2"/>
       <rect x="180" y="115" width="40" height="6" fill="#3a2820"/>
       <ellipse cx="200" cy="165" rx="30" ry="4" fill="#0a0604"/>
-      ${survivor(280, 178, { tone: "warm", build: "f", jacket: "#2a3024" })}`,
+      ${survivor(280, 178, { tone: "warm", named: "maya" })}`,
 
     ending_road: () => BG.highway() +
       survivor(180, 178, { tone: "pale" }) +
-      survivor(210, 178, { tone: "pale", build: "f", jacket: "#2a3024" }) +
+      survivor(210, 178, { tone: "pale", named: "maya" }) +
       child(238, 178, { tone: "pale", flip: true }) +
       survivor(265, 178, { tone: "pale" }),
 
@@ -571,7 +553,7 @@ window.Scenes = (function () {
        <ellipse cx="200" cy="155" rx="22" ry="6" fill="#1a1208"/>
        <ellipse cx="200" cy="150" rx="14" ry="4" fill="#2a3a44" opacity="0.5"/>` +
       survivor(140, 178, { tone: "fire" }) +
-      survivor(260, 178, { tone: "fire", build: "f", jacket: "#2a3024", flip: true }),
+      survivor(260, 178, { tone: "fire", named: "maya", flip: true }),
 
     perimeter: () => BG.fenceForest() +
       `<rect x="80" y="60" width="40" height="100" fill="#1a1208" stroke="#2a1c10" stroke-width="2"/>
@@ -579,7 +561,7 @@ window.Scenes = (function () {
        <line x1="100" y1="160" x2="100" y2="60" stroke="#2a1c10" stroke-width="1"/>` +
       survivor(100, 80, { scale: 0.6, tone: "cool" }) +
       survivor(220, 178, { tone: "cool" }) +
-      survivor(280, 178, { tone: "cool", build: "f", jacket: "#2a3024", flip: true }),
+      survivor(280, 178, { tone: "cool", named: "maya", flip: true }),
 
     briefing_tent: () => `<rect width="400" height="200" fill="#0d0a06"/>
       <polygon points="0,200 400,200 400,40 200,15 0,40" fill="#231609"/>
@@ -587,8 +569,8 @@ window.Scenes = (function () {
       <rect x="180" y="120" width="40" height="55" fill="#1a1208" rx="2"/>
       <rect x="178" y="115" width="44" height="8" fill="#3a2818"/>
       <ellipse cx="200" cy="100" rx="80" ry="40" fill="url(#lampGlow)" opacity="0.5"/>
-      ${survivor(120, 178, { tone: "warm" })}
-      ${survivor(280, 178, { tone: "warm", flip: true, jacket: "#2a2418" })}`,
+      ${survivor(120, 178, { named: "ellis" })}
+      ${survivor(280, 178, { named: "vega", flip: true })}`,
 
     hospital_ext: () => `<rect width="400" height="200" fill="url(#skyDusk)"/>
       ${ruinedBuilding(60, 30, 280, 130, { tone: "#15110b" })}
@@ -597,7 +579,7 @@ window.Scenes = (function () {
       <text x="200" y="108" text-anchor="middle" font-size="9" fill="#7a2020" font-family="serif">+</text>
       <rect y="160" width="400" height="40" fill="#0a0604"/>
       ${survivor(140, 178, { tone: "warm" })}
-      ${survivor(180, 178, { tone: "warm", build: "f", jacket: "#2a3024", flip: true })}`,
+      ${survivor(180, 178, { tone: "warm", named: "maya", flip: true })}`,
 
     hospital_lobby: () => `<rect width="400" height="200" fill="#0a0c10"/>
       <rect y="0" width="400" height="160" fill="#10141a"/>
@@ -610,7 +592,7 @@ window.Scenes = (function () {
       <rect x="180" y="40" width="40" height="50" fill="#0a0c10" stroke="#2a3038"/>
       <ellipse cx="200" cy="80" rx="100" ry="35" fill="url(#lampGlow)" opacity="0.3"/>
       ${survivor(160, 178, { tone: "cool" })}
-      ${survivor(240, 178, { tone: "cool", build: "f", jacket: "#2a3024", flip: true })}`,
+      ${survivor(240, 178, { tone: "cool", named: "maya", flip: true })}`,
 
     pharmacy_fight: () => BG.grocery() +
       zombie(160, 178, { tone: "cool", variant: "walker" }) +
@@ -637,7 +619,7 @@ window.Scenes = (function () {
        <rect x="80" y="100" width="20" height="40" fill="#1a1208"/>
        <rect x="320" y="80" width="20" height="60" fill="#1a1208"/>` +
       survivor(180, 140, { tone: "fire" }) +
-      survivor(220, 140, { tone: "fire", build: "f", jacket: "#2a3024", flip: true }),
+      survivor(220, 140, { tone: "fire", named: "maya", flip: true }),
 
     death: () => `<rect width="400" height="200" fill="#0a0404"/>
       <rect width="400" height="200" fill="url(#bloodHaze)"/>
