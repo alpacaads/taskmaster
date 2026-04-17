@@ -243,16 +243,14 @@ window.Scenes = (function () {
   // The emoji sits naturally in the painted environment and gets per-character
   // animation via a wrapping <g class="char anim-…">.
   function emojiChar(x, y, glyph, opts = {}) {
-    const { size = 44, anim = "breathe", flip = false, dim = false, dropShadow = true } = opts;
+    const { size = 44, anim = "breathe", flip = false, dim = false } = opts;
     const sx = flip ? -1 : 1;
-    const filter = dropShadow ? `filter="drop-shadow(0 2px 3px rgba(0,0,0,0.7))"` : "";
     const opacity = dim ? 0.85 : 1;
+    const style = "filter: drop-shadow(0 2px 3px rgba(0,0,0,0.75)); font-family: 'Apple Color Emoji','Segoe UI Emoji','Noto Color Emoji',sans-serif;";
     return `<g class="char anim-${anim}" transform="translate(${x},${y})">
       <ellipse cx="0" cy="2" rx="${size*0.4}" ry="${size*0.08}" fill="#000" opacity="0.55"/>
-      <g transform="scale(${sx},1)" ${filter} opacity="${opacity}">
-        <text x="0" y="0" font-size="${size}" text-anchor="middle"
-              dominant-baseline="alphabetic"
-              style="font-family: 'Apple Color Emoji','Segoe UI Emoji','Noto Color Emoji',sans-serif">${glyph}</text>
+      <g transform="scale(${sx},1)" opacity="${opacity}">
+        <text x="0" y="0" font-size="${size}" text-anchor="middle" style="${style}">${glyph}</text>
       </g>
     </g>`;
   }
