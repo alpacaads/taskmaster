@@ -80,7 +80,7 @@ window.Game = (function () {
     const sceneEl = document.getElementById("scene");
     sceneEl.className = "scene " + (node.sceneClass || "");
     const art = document.getElementById("scene-art");
-    art.textContent = node.art || "";
+    renderAnimatedArt(art, node.art || "");
     art.classList.remove("shake");
     if (node.sceneClass === "blood") {
       void art.offsetWidth;
@@ -178,6 +178,56 @@ window.Game = (function () {
     void el.offsetWidth;
     el.style.animation = "";
     toast._t = setTimeout(() => el.classList.add("hidden"), 2500);
+  }
+
+  // Map a grapheme (single visible glyph) to an animation class.
+  // Adds life to the emoji art: zombies shamble, fires pulse, trees sway, etc.
+  const ANIM_MAP = {
+    lurch:   ["🧟","🧟‍♂️","🧟‍♀️","💀"],
+    shamble: ["🧔","🧍","🧍‍♀️","👧","🚶","🚶‍♀️","🏃"],
+    sway:    ["🌳","🌲","🌴","🎄","🌾","🏚️","🏢","🏬","🏪","⛺","🚧","🛡️"],
+    pulse:   ["🔥","💥","🕯️","🧨","☀️"],
+    glow:    ["🌕","🌑","🌒","🌓","🌔","✨","🕊️"],
+    flicker: ["🔦","💡","💫","🔌"],
+    hover:   ["💨","💭","🌫️","☁️","🎵","🌅","🌃","🌆"],
+    fly:     ["🚁","🕊️","🦅","🦇"],
+    drip:    ["🩸","💧","❄️"],
+    breathe: ["🎒","🥫","🧻","🪜","🚪","🗺️","🔫"],
+    tremble: ["⚠️","📯","🔔"],
+  };
+  const CHAR_TO_ANIM = (() => {
+    const m = new Map();
+    for (const [cls, chars] of Object.entries(ANIM_MAP)) {
+      for (const c of chars) m.set(c, cls);
+    }
+    return m;
+  })();
+
+  function renderAnimatedArt(el, text) {
+    el.innerHTML = "";
+    if (!text) return;
+    let graphemes;
+    try {
+      const seg = new Intl.Segmenter("en", { granularity: "grapheme" });
+      graphemes = [...seg.segment(text)].map(s => s.segment);
+    } catch (_) {
+      graphemes = [...text];
+    }
+    graphemes.forEach((ch, i) => {
+      if (ch === " ") {
+        el.appendChild(document.createTextNode(" "));
+        return;
+      }
+      const span = document.createElement("span");
+      span.className = "g";
+      const cls = CHAR_TO_ANIM.get(ch);
+      if (cls) span.classList.add(cls);
+      else span.classList.add("hover"); // gentle bob for anything unmapped
+      // Stagger so characters aren't perfectly in sync
+      span.style.animationDelay = (i * 0.18).toFixed(2) + "s";
+      span.textContent = ch;
+      el.appendChild(span);
+    });
   }
 
   function escapeHtml(s) {
