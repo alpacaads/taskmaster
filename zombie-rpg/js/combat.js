@@ -35,6 +35,12 @@ window.Combat = (function () {
     logEl.innerHTML = "";
     log(state.enemy.desc, "info");
 
+    // Combat opening sound per enemy type
+    if (config.enemy === "horde") Sound.play("hordeRoar");
+    else if (config.enemy === "runner") Sound.play("runnerScream");
+    else if (config.enemy === "bandit") Sound.play("drySnap");
+    else Sound.play("groan");
+
     refreshHud();
     updateEnemyHp();
   }
@@ -67,9 +73,9 @@ window.Combat = (function () {
     if (!state) return;
     const s = Game.state;
 
-    if (action === "shoot" && s.ammo <= 0) { Game.toast("Out of ammo"); return; }
-    if (action === "melee" && s.stam <= 0) { Game.toast("Too exhausted"); return; }
-    if (action === "brace" && s.stam <= 0) { Game.toast("Too exhausted"); return; }
+    if (action === "shoot" && s.ammo <= 0) { Game.toast("Out of ammo"); Sound.play("drySnap"); return; }
+    if (action === "melee" && s.stam <= 0) { Game.toast("Too exhausted"); Sound.play("back"); return; }
+    if (action === "brace" && s.stam <= 0) { Game.toast("Too exhausted"); Sound.play("back"); return; }
 
     state.bracing = false;
 
@@ -83,10 +89,12 @@ window.Combat = (function () {
         ? `You drive the crowbar through its skull. CRITICAL ${total}!`
         : `You swing — ${total} damage.`,
         crit ? "crit" : "hero");
+      Sound.play(crit ? "crit" : "melee");
       hitFlash();
     }
     else if (action === "shoot") {
       s.ammo -= 1;
+      Sound.play("gunshot");
       const hit = Math.random() < (state.enemy.speed === 2 ? 0.7 : 0.9);
       if (!hit) {
         log("The shot misses. The sound draws more attention.", "info");
@@ -101,8 +109,10 @@ window.Combat = (function () {
       s.stam -= 1;
       state.bracing = true;
       log("You raise your guard.", "info");
+      Sound.play("brace");
     }
     else if (action === "flee") {
+      Sound.play("flee");
       if (state.enemy.speed >= 2 || state.enemy.pack) {
         log("You can't outrun it. It's on you.", "info");
       } else {
@@ -121,6 +131,7 @@ window.Combat = (function () {
 
     if (state.enemy.hp <= 0) {
       log(`${state.enemy.name} falls.`, "crit");
+      Sound.play("victory");
       setTimeout(() => end("win"), 900);
       return;
     }
@@ -146,18 +157,21 @@ window.Combat = (function () {
     const hit = Math.random() < (e.human ? 0.7 : 0.85);
     if (!hit) {
       log(`${e.name} lunges — you dodge.`, "info");
+      Sound.play("dodge");
     } else {
       s.hp -= dmg;
       log(state.bracing
         ? `${e.name} strikes — you absorb most of it. ${dmg} damage.`
         : `${e.name} strikes — ${dmg} damage.`,
         "enemy");
+      Sound.play(state.bracing ? "brace" : "damage");
     }
 
     refreshHud();
 
     if (s.hp <= 0) {
       log("You collapse.", "crit");
+      Sound.play("death");
       setTimeout(() => end("lose"), 900);
     }
   }

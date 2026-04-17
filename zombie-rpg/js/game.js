@@ -23,6 +23,7 @@ window.Game = (function () {
 
   function startNew() {
     state = DEFAULT_STATE();
+    Sound.init(); Sound.play("select");
     show("game-screen");
     hide("title-screen");
     goto("intro");
@@ -30,9 +31,10 @@ window.Game = (function () {
 
   function continueGame() {
     const raw = localStorage.getItem(SAVE_KEY);
-    if (!raw) { toast("No save found"); return; }
+    if (!raw) { toast("No save found"); Sound.play("back"); return; }
     try {
       state = JSON.parse(raw);
+      Sound.init(); Sound.play("select");
       show("game-screen");
       hide("title-screen");
       goto(state.node || "intro");
@@ -44,7 +46,7 @@ window.Game = (function () {
   function save() {
     try {
       localStorage.setItem(SAVE_KEY, JSON.stringify(state));
-      toast("Saved");
+      toast("Saved"); Sound.play("pickup");
     } catch (e) {
       toast("Couldn't save");
     }
@@ -55,6 +57,8 @@ window.Game = (function () {
   }
 
   function quitToTitle() {
+    Sound.stopAmbient();
+    Sound.play("back");
     hide("game-screen");
     hide("combat-screen");
     show("title-screen");
@@ -79,6 +83,16 @@ window.Game = (function () {
     // Update scene
     const sceneEl = document.getElementById("scene");
     sceneEl.className = "scene " + (node.sceneClass || "");
+    Sound.setAmbience(node.sceneClass || null);
+
+    // Scene-entry sting
+    if (nodeId === "death") Sound.play("death");
+    else if (nodeId.startsWith("ending_final_")) Sound.play("victory");
+    else if (nodeId === "horde_warning") Sound.play("hordeRoar");
+    else if (nodeId === "neighbour_wake") Sound.play("groan");
+    else if (nodeId === "ambush") Sound.play("tense");
+    else if (nodeId === "greenbelt_in") Sound.play("radio");
+    else if (nodeId === "freezer") Sound.play("door");
     const art = document.getElementById("scene-art");
     renderAnimatedArt(art, node.art || "");
     art.classList.remove("shake");
@@ -114,17 +128,23 @@ window.Game = (function () {
   }
 
   function handleChoice(c) {
+    const before = { hp: state.hp, food: state.food, ammo: state.ammo };
     if (c.effect) {
       try { c.effect(state); } catch (e) { console.error(e); }
       updateHud();
     }
+    // Pick a sound based on what the choice did
     if (c.combat) {
+      Sound.play("select");
       Combat.start(c.combat);
       return;
     }
-    if (c.next) {
-      goto(c.next);
-    }
+    if (state.hp > before.hp)        Sound.play("heal");
+    else if (state.food > before.food || state.ammo > before.ammo) Sound.play("pickup");
+    else if (state.hp < before.hp)   Sound.play("damage");
+    else                             Sound.play("click");
+
+    if (c.next) goto(c.next);
   }
 
   function updateHud() {
@@ -137,6 +157,13 @@ window.Game = (function () {
     document.getElementById("stat-stammax").textContent = state.stamMax;
     document.getElementById("stat-ammo").textContent = state.ammo;
     document.getElementById("stat-food").textContent = state.food;
+  }
+
+  function toggleMute() {
+    const m = Sound.toggleMute();
+    const btn = document.getElementById("mute-btn");
+    if (btn) btn.textContent = m ? "🔇" : "🔊";
+    toast(m ? "Sound off" : "Sound on");
   }
 
   function openInventory() {
@@ -241,10 +268,16 @@ window.Game = (function () {
   // Init
   document.addEventListener("DOMContentLoaded", refreshContinueBtn);
 
+  // On load, sync the mute button icon with saved preference
+  document.addEventListener("DOMContentLoaded", () => {
+    const btn = document.getElementById("mute-btn");
+    if (btn && Sound.isMuted()) btn.textContent = "🔇";
+  });
+
   return {
     startNew, continueGame, save, quitToTitle, goto,
     openInventory, closeInventory, showCredits, hideCredits,
-    toast,
+    toggleMute, toast,
     get state() { return state; },
   };
 })();

@@ -63,6 +63,7 @@
       <div class="footer-controls">
         <button class="icon-btn" onclick="Game.openInventory()" title="Inventory">🎒</button>
         <button class="icon-btn" onclick="Game.save()" title="Save">💾</button>
+        <button class="icon-btn" id="mute-btn" onclick="Game.toggleMute()" title="Mute">🔊</button>
         <button class="icon-btn" onclick="Game.quitToTitle()" title="Quit">🚪</button>
       </div>
     </div>
@@ -124,6 +125,7 @@
 
   </div>
 
+  <script src="js/sound.js"></script>
   <script src="js/story.js"></script>
   <script src="js/combat.js"></script>
   <script src="js/game.js"></script>
