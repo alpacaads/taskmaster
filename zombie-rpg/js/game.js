@@ -313,10 +313,17 @@ window.Game = (function () {
     if (btn && Sound.isMuted()) btn.textContent = "🔇";
   });
 
+  function fallbackToSVG(sceneId) {
+    if (!window.Scenes || !Scenes.renderSVG) return;
+    const art = document.getElementById("scene-art");
+    if (!art) return;
+    art.innerHTML = Scenes.renderSVG(sceneId);
+  }
+
   return {
     startNew, continueGame, save, quitToTitle, goto,
     openInventory, closeInventory, showCredits, hideCredits,
-    toggleMute, toast,
+    toggleMute, toast, fallbackToSVG,
     get state() { return state; },
   };
 })();
