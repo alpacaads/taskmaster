@@ -248,6 +248,32 @@ html, body {
 .anim-fly       { animation: chFly 4s linear infinite; }
 .scene-svg .fire { animation: chFire 0.4s steps(3) infinite; transform-origin: center bottom; transform-box: fill-box; }
 
+/* Animations for inline SVG illustrated characters (transform-origin via fill-box). */
+.scene-svg .svg-char {
+  transform-origin: center bottom;
+  transform-box: fill-box;
+}
+.svg-anim-breathe   { animation: svgBreathe 3.4s ease-in-out infinite; }
+.svg-anim-stand     { animation: svgBreathe 5s ease-in-out infinite; }
+.svg-anim-shamble   { animation: svgShamble 2.6s ease-in-out infinite; }
+.svg-anim-shamble-2 { animation: svgShamble 3.1s ease-in-out infinite reverse; }
+.svg-anim-lurch     { animation: svgLurch 1.5s ease-in-out infinite; }
+
+@keyframes svgBreathe {
+  0%, 100% { transform: translateY(0) scale(1); }
+  50%      { transform: translateY(-1px) scale(1.015); }
+}
+@keyframes svgShamble {
+  0%, 100% { transform: translateX(0) rotate(-2deg); }
+  25%      { transform: translateX(-2px) rotate(-5deg) translateY(-1px); }
+  50%      { transform: translateX(0) rotate(0deg); }
+  75%      { transform: translateX(2px) rotate(5deg) translateY(-1px); }
+}
+@keyframes svgLurch {
+  0%, 100% { transform: rotate(-7deg) translateX(-2px); }
+  50%      { transform: rotate(7deg) translateX(2px) translateY(-2px); }
+}
+
 /* Char animations preserve --flip via translate(-50%,-100%) base + scaleX(var(--flip)) */
 @keyframes chBreathe {
   0%, 100% { transform: translate(-50%, -100%) scaleX(var(--flip,1)) translateY(0) scale(1); }

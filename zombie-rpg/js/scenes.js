@@ -250,7 +250,7 @@ window.Scenes = (function () {
     const ty = y - height;
     const sx = flip ? -1 : 1;
     const transform = `translate(${tx + width/2},${ty}) scale(${(width/100) * sx},${height/200}) translate(-50,0)`;
-    return `<g class="char anim-${anim}" transform="${transform}">
+    return `<g class="svg-char svg-anim-${anim}" transform="${transform}">
       <ellipse cx="50" cy="198" rx="22" ry="3" fill="#000" opacity="0.55"/>
       <path d="M 35 195 L 38 130 L 47 130 L 45 195 Z" fill="#100c08"/>
       <path d="M 53 195 L 55 130 L 64 130 L 62 195 Z" fill="#100c08"/>
@@ -297,7 +297,7 @@ window.Scenes = (function () {
     const ty = y - height;
     const sx = flip ? -1 : 1;
     const transform = `translate(${tx + width/2},${ty}) scale(${(width/100) * sx},${height/200}) translate(-50,0)`;
-    return `<g class="char anim-${anim}" transform="${transform}">
+    return `<g class="svg-char svg-anim-${anim}" transform="${transform}">
       <ellipse cx="50" cy="198" rx="22" ry="3" fill="#000" opacity="0.55"/>
       <path d="M 36 195 L 39 130 L 47 130 L 45 195 Z" fill="#0a0a08"/>
       <path d="M 53 195 L 55 130 L 64 130 L 61 195 Z" fill="#0a0a08"/>
