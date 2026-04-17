@@ -215,6 +215,52 @@ html, body {
   filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.7));
   z-index: 2;
 }
+.scene-svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+.scene-svg .char {
+  transform-origin: center bottom;
+  transform-box: fill-box;
+}
+.scene-svg .anim-breathe { animation: chBreathe 3.4s ease-in-out infinite; }
+.scene-svg .anim-stand   { animation: chBreathe 5s ease-in-out infinite; }
+.scene-svg .anim-shamble { animation: chShamble 2.6s ease-in-out infinite; }
+.scene-svg .anim-shamble-2 { animation: chShamble 3.1s ease-in-out infinite reverse; }
+.scene-svg .anim-lurch   { animation: chLurch 1.5s ease-in-out infinite; }
+.scene-svg .anim-rest    { animation: chRest 4.5s ease-in-out infinite; }
+.scene-svg .anim-fly     { animation: chFly 4s linear infinite; }
+.scene-svg .fire         { animation: chFire 0.4s steps(3) infinite; transform-origin: center bottom; transform-box: fill-box; }
+
+@keyframes chBreathe {
+  0%, 100% { transform: translateY(0) scale(1); }
+  50%      { transform: translateY(-1px) scale(1.012); }
+}
+@keyframes chShamble {
+  0%, 100% { transform: translateX(0) rotate(-2deg); }
+  25%      { transform: translateX(-2px) rotate(-4deg) translateY(-1px); }
+  50%      { transform: translateX(0) rotate(0deg); }
+  75%      { transform: translateX(2px) rotate(4deg) translateY(-1px); }
+}
+@keyframes chLurch {
+  0%, 100% { transform: rotate(-6deg) translateX(-3px); }
+  50%      { transform: rotate(6deg) translateX(3px) translateY(-2px); }
+}
+@keyframes chRest {
+  0%, 100% { transform: translateY(0) scale(1); }
+  50%      { transform: translateY(-0.5px) scale(1.005); }
+}
+@keyframes chFly {
+  0%   { transform: translateX(-30px) translateY(0); }
+  50%  { transform: translateX(0) translateY(-3px); }
+  100% { transform: translateX(40px) translateY(0); }
+}
+@keyframes chFire {
+  0%   { transform: scaleY(1)    scaleX(1); }
+  50%  { transform: scaleY(1.15) scaleX(0.92); }
+  100% { transform: scaleY(0.9)  scaleX(1.06); }
+}
 
 /* Per-grapheme animation layer */
 .scene-art .g {

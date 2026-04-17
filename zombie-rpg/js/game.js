@@ -94,7 +94,12 @@ window.Game = (function () {
     else if (nodeId === "greenbelt_in") Sound.play("radio");
     else if (nodeId === "freezer") Sound.play("door");
     const art = document.getElementById("scene-art");
-    renderAnimatedArt(art, node.art || "");
+    const sceneId = resolveScene(nodeId, node);
+    if (sceneId && window.Scenes) {
+      art.innerHTML = Scenes.render(sceneId);
+    } else {
+      renderAnimatedArt(art, node.art || "");
+    }
     art.classList.remove("shake");
     if (node.sceneClass === "blood") {
       void art.offsetWidth;
@@ -205,6 +210,34 @@ window.Game = (function () {
     void el.offsetWidth;
     el.style.animation = "";
     toast._t = setTimeout(() => el.classList.add("hidden"), 2500);
+  }
+
+  // Map story node ID -> scene ID. Most match by name; aliases below.
+  const SCENE_ALIASES = {
+    stairwell_first:    "stairwell",
+    alone_street_sneak: "alone_street",
+    grocery_quick_exit: "grocery_inside",
+    street_plan:        "meet_maya",
+    road_out:           "highway_dawn",
+    road_out_child:     "highway_with_child",
+    ambush:             "forest_ambush",
+    sacrifice_intro:    "sacrifice",
+    after_ambush_mercy: "forest_ambush",
+    after_ambush_fight: "forest_ambush",
+    greenbelt_gate_hero:"greenbelt_gate",
+    greenbelt_in:       "greenbelt_camp",
+    horde_warning:      "horde_charge",
+    ending_hero:        "horde_wall",
+    ending_fallen:      "ending_grave",
+    ending_escape:      "ending_road",
+    ending_final_hero:  "ending_dawn",
+    ending_final_fallen:"ending_grave",
+    ending_final_escape:"ending_road",
+  };
+  function resolveScene(nodeId, node) {
+    if (node.scene) return node.scene;
+    if (window.Scenes && Scenes.SCENES[nodeId]) return nodeId;
+    return SCENE_ALIASES[nodeId] || null;
   }
 
   // Map a grapheme (single visible glyph) to an animation class.

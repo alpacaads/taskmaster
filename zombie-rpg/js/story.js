@@ -7,6 +7,7 @@
 window.Story = {
 
   intro: {
+    scene: "intro",
     art: "🌆🚁💨",
     sceneClass: "city",
     chapter: "Day 1 — The Outbreak",

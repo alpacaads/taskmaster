@@ -1,0 +1,584 @@
+// SVG scene renderer for Dead Light.
+// Composes painted environments with silhouette characters and props.
+// Each scene is a viewBox 0 0 400 200, drawn as inline SVG injected into .scene-art.
+window.Scenes = (function () {
+
+  // ---------- shared SVG defs (gradients, filters) ----------
+  const DEFS = `
+    <defs>
+      <linearGradient id="skyNight" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%"  stop-color="#070d18"/>
+        <stop offset="60%" stop-color="#101a2c"/>
+        <stop offset="100%" stop-color="#1a2436"/>
+      </linearGradient>
+      <linearGradient id="skyDusk" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%"  stop-color="#1a1430"/>
+        <stop offset="55%" stop-color="#5b2a3a"/>
+        <stop offset="100%" stop-color="#a8552e"/>
+      </linearGradient>
+      <linearGradient id="skyDawn" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%"  stop-color="#1d2a3e"/>
+        <stop offset="60%" stop-color="#c46c46"/>
+        <stop offset="100%" stop-color="#f0b07a"/>
+      </linearGradient>
+      <linearGradient id="skyForest" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%"  stop-color="#0c1410"/>
+        <stop offset="60%" stop-color="#1a2a1c"/>
+        <stop offset="100%" stop-color="#26341f"/>
+      </linearGradient>
+      <linearGradient id="skyBlood" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%"  stop-color="#1a0606"/>
+        <stop offset="50%" stop-color="#52131a"/>
+        <stop offset="100%" stop-color="#8c2a25"/>
+      </linearGradient>
+      <linearGradient id="skyIndoor" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%"  stop-color="#0e0b07"/>
+        <stop offset="100%" stop-color="#1d160d"/>
+      </linearGradient>
+      <radialGradient id="moonGlow" cx="0.5" cy="0.5" r="0.5">
+        <stop offset="0%"  stop-color="#fff8d6" stop-opacity="0.95"/>
+        <stop offset="60%" stop-color="#dfd9a2" stop-opacity="0.45"/>
+        <stop offset="100%" stop-color="#dfd9a2" stop-opacity="0"/>
+      </radialGradient>
+      <radialGradient id="fireGlow" cx="0.5" cy="0.6" r="0.5">
+        <stop offset="0%"  stop-color="#ffb84a" stop-opacity="0.9"/>
+        <stop offset="60%" stop-color="#a14017" stop-opacity="0.4"/>
+        <stop offset="100%" stop-color="#3a0c00" stop-opacity="0"/>
+      </radialGradient>
+      <radialGradient id="lampGlow" cx="0.5" cy="0.5" r="0.5">
+        <stop offset="0%"  stop-color="#ffe79a" stop-opacity="0.85"/>
+        <stop offset="100%" stop-color="#ffe79a" stop-opacity="0"/>
+      </radialGradient>
+      <radialGradient id="bloodHaze" cx="0.5" cy="1" r="0.7">
+        <stop offset="0%"  stop-color="#ff6b3a" stop-opacity="0.45"/>
+        <stop offset="100%" stop-color="#ff6b3a" stop-opacity="0"/>
+      </radialGradient>
+      <linearGradient id="groundDark" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="#0a0d08"/>
+        <stop offset="100%" stop-color="#000000"/>
+      </linearGradient>
+      <linearGradient id="roadGrad" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="#2a2722"/>
+        <stop offset="100%" stop-color="#0c0b08"/>
+      </linearGradient>
+    </defs>
+  `;
+
+  // ---------- background painters ----------
+  const BG = {
+    nightCity: () => `
+      <rect width="400" height="200" fill="url(#skyNight)"/>
+      ${stars(60)}
+      <ellipse cx="60" cy="45" rx="22" ry="22" fill="url(#moonGlow)"/>
+      <circle cx="60" cy="45" r="14" fill="#f3edc4"/>
+      <rect y="160" width="400" height="40" fill="url(#groundDark)"/>
+    `,
+    nightStreet: () => `
+      <rect width="400" height="200" fill="url(#skyNight)"/>
+      ${stars(40)}
+      <rect y="140" width="400" height="60" fill="#0a0d08"/>
+      <rect y="158" width="400" height="3" fill="#1a1d18"/>
+      <ellipse cx="320" cy="120" rx="60" ry="45" fill="url(#lampGlow)"/>
+    `,
+    forestNight: () => `
+      <rect width="400" height="200" fill="url(#skyForest)"/>
+      <ellipse cx="340" cy="35" rx="14" ry="14" fill="url(#moonGlow)"/>
+      <circle cx="340" cy="35" r="9" fill="#d8d2a0"/>
+      <rect y="155" width="400" height="45" fill="#06080a"/>
+    `,
+    forestDawn: () => `
+      <rect width="400" height="200" fill="url(#skyDawn)"/>
+      <ellipse cx="340" cy="60" rx="20" ry="20" fill="#fff1bb"/>
+      <rect y="155" width="400" height="45" fill="#1c1208"/>
+    `,
+    highway: () => `
+      <rect width="400" height="200" fill="url(#skyDusk)"/>
+      <ellipse cx="200" cy="160" rx="220" ry="18" fill="#4a2418" opacity="0.7"/>
+      <polygon points="0,200 400,200 260,140 140,140" fill="url(#roadGrad)"/>
+      <line x1="200" y1="200" x2="200" y2="142" stroke="#7a6a44" stroke-dasharray="8 8" stroke-width="2"/>
+    `,
+    indoor: () => `
+      <rect width="400" height="200" fill="url(#skyIndoor)"/>
+      <rect y="0" width="400" height="155" fill="#15110b"/>
+      <rect y="155" width="400" height="45" fill="#0a0805"/>
+      <rect x="50" y="40" width="60" height="80" fill="#0a0805" stroke="#3a2e1f" stroke-width="2"/>
+      <line x1="80" y1="40" x2="80" y2="120" stroke="#3a2e1f" stroke-width="1"/>
+      <line x1="50" y1="80" x2="110" y2="80" stroke="#3a2e1f" stroke-width="1"/>
+      <ellipse cx="80" cy="80" rx="80" ry="55" fill="url(#lampGlow)" opacity="0.45"/>
+    `,
+    indoorRuined: () => `
+      <rect width="400" height="200" fill="url(#skyIndoor)"/>
+      <rect y="0" width="400" height="155" fill="#150f0a"/>
+      <polygon points="0,155 400,155 400,200 0,200" fill="#070503"/>
+      <polygon points="220,40 250,30 270,80 230,90" fill="#1d1208"/>
+      <ellipse cx="120" cy="60" rx="60" ry="40" fill="url(#lampGlow)" opacity="0.3"/>
+    `,
+    grocery: () => `
+      <rect width="400" height="200" fill="#0d0a06"/>
+      <rect y="0" width="400" height="160" fill="#15110b"/>
+      ${shelf(20, 60)} ${shelf(20, 100)} ${shelf(20, 140)}
+      ${shelf(220, 60)} ${shelf(220, 100)} ${shelf(220, 140)}
+      <rect y="160" width="400" height="40" fill="#0a0805"/>
+      <ellipse cx="200" cy="60" rx="120" ry="40" fill="url(#lampGlow)" opacity="0.35"/>
+    `,
+    camp: () => `
+      <rect width="400" height="200" fill="url(#skyDusk)"/>
+      <ellipse cx="340" cy="55" rx="18" ry="18" fill="#fff1bb"/>
+      <rect y="150" width="400" height="50" fill="#1a0e07"/>
+      ${pine(40, 150, 0.7)} ${pine(85, 150, 0.6)} ${pine(360, 150, 0.65)}
+      ${tent(140, 150)} ${tent(260, 150)}
+      <ellipse cx="200" cy="170" rx="80" ry="30" fill="url(#fireGlow)"/>
+      ${campfire(200, 168)}
+    `,
+    bloodDawn: () => `
+      <rect width="400" height="200" fill="url(#skyBlood)"/>
+      <rect width="400" height="200" fill="url(#bloodHaze)"/>
+      <ellipse cx="200" cy="80" rx="50" ry="50" fill="#f0d896" opacity="0.9"/>
+      <rect y="155" width="400" height="45" fill="#1a0606"/>
+    `,
+    fenceForest: () => `
+      <rect width="400" height="200" fill="url(#skyForest)"/>
+      ${pine(30, 150, 0.8)} ${pine(370, 150, 0.85)}
+      <rect y="155" width="400" height="45" fill="#0a0e08"/>
+      ${fence(20, 110, 360)}
+    `,
+    cliff: () => `
+      <rect width="400" height="200" fill="url(#skyDawn)"/>
+      <polygon points="0,200 400,200 400,140 250,130 150,150 0,160" fill="#1a1208"/>
+      <polygon points="0,200 220,200 180,150 0,170" fill="#0a0604"/>
+    `,
+    bedroomNight: () => `
+      <rect width="400" height="200" fill="#0c0a08"/>
+      <rect y="0" width="400" height="160" fill="#16110c"/>
+      <rect y="160" width="400" height="40" fill="#0a0805"/>
+      <rect x="40" y="30" width="50" height="70" fill="#0a0805" stroke="#2a2018" stroke-width="2"/>
+      <ellipse cx="65" cy="65" rx="60" ry="45" fill="url(#moonGlow)" opacity="0.5"/>
+      <rect x="220" y="120" width="160" height="40" fill="#241a12" rx="3"/>
+      <rect x="225" y="115" width="150" height="10" fill="#3a2818" rx="2"/>
+      <ellipse cx="350" cy="60" rx="40" ry="30" fill="url(#lampGlow)" opacity="0.45"/>
+    `,
+  };
+
+  // ---------- atmospheric helpers ----------
+  function stars(n) {
+    let out = "";
+    let seed = 1;
+    function rng() { seed = (seed * 9301 + 49297) % 233280; return seed / 233280; }
+    for (let i = 0; i < n; i++) {
+      const x = Math.floor(rng() * 400);
+      const y = Math.floor(rng() * 130);
+      const r = rng() < 0.85 ? 0.6 : 1.1;
+      const o = (0.4 + rng() * 0.5).toFixed(2);
+      out += `<circle cx="${x}" cy="${y}" r="${r}" fill="#cfd5e8" opacity="${o}"/>`;
+    }
+    return out;
+  }
+
+  function shelf(x, y) {
+    return `
+      <rect x="${x}" y="${y}" width="160" height="20" fill="#1f1812" stroke="#2c241a" stroke-width="1"/>
+      <rect x="${x+4}"   y="${y+4}" width="14" height="14" fill="#3a2c1c"/>
+      <rect x="${x+22}"  y="${y+4}" width="14" height="14" fill="#2a3a44"/>
+      <rect x="${x+40}"  y="${y+4}" width="14" height="14" fill="#5a3018"/>
+      <rect x="${x+58}"  y="${y+4}" width="14" height="14" fill="#3a2c1c"/>
+      <rect x="${x+76}"  y="${y+4}" width="14" height="14" fill="#2a3a44"/>
+      <rect x="${x+94}"  y="${y+4}" width="14" height="14" fill="#5a3018"/>
+      <rect x="${x+112}" y="${y+4}" width="14" height="14" fill="#3a2c1c"/>
+      <rect x="${x+130}" y="${y+4}" width="14" height="14" fill="#2a3a44"/>
+    `;
+  }
+
+  function pine(x, baseY, scale = 1) {
+    const w = 22 * scale, h = 50 * scale;
+    return `
+      <g transform="translate(${x},${baseY})">
+        <rect x="${-2}" y="${-6}" width="4" height="8" fill="#180e08"/>
+        <polygon points="0,${-h} ${-w*0.6},${-h*0.55} ${-w*0.45},${-h*0.55} ${-w*0.85},${-h*0.25} ${-w*0.65},${-h*0.25} ${-w},0 ${w},0 ${w*0.65},${-h*0.25} ${w*0.85},${-h*0.25} ${w*0.45},${-h*0.55} ${w*0.6},${-h*0.55}" fill="#0a1408" stroke="#0d1c0a" stroke-width="0.5"/>
+      </g>
+    `;
+  }
+
+  function tent(x, y) {
+    return `
+      <g transform="translate(${x},${y})">
+        <polygon points="-22,0 22,0 0,-30" fill="#322014" stroke="#1a1008" stroke-width="1"/>
+        <polygon points="-3,0 3,0 0,-22" fill="#0a0604"/>
+      </g>
+    `;
+  }
+
+  function campfire(x, y) {
+    return `
+      <g transform="translate(${x},${y})" class="fire">
+        <ellipse cx="0" cy="2" rx="14" ry="3" fill="#0a0604"/>
+        <polygon points="-6,2 -2,-12 2,-6 6,-14 4,2" fill="#ffb84a"/>
+        <polygon points="-3,2 0,-8 3,2" fill="#ffe7a0"/>
+        <line x1="-10" y1="2" x2="2" y2="-2" stroke="#3a2010" stroke-width="2"/>
+        <line x1="10" y1="2" x2="-2" y2="-2" stroke="#3a2010" stroke-width="2"/>
+      </g>
+    `;
+  }
+
+  function fence(x, y, w) {
+    let out = `<rect x="${x}" y="${y}" width="${w}" height="2" fill="#2a2018"/>
+               <rect x="${x}" y="${y+25}" width="${w}" height="2" fill="#2a2018"/>`;
+    for (let i = x; i <= x + w; i += 14) {
+      out += `<rect x="${i}" y="${y-5}" width="3" height="40" fill="#1d150e"/>`;
+    }
+    return out;
+  }
+
+  // ---------- character renderers ----------
+  // All characters drawn at base scale 1, anchored at feet.
+  // tone: 'cool' (night), 'warm' (firelit), 'pale' (dawn), 'red' (blood)
+  const TONE = {
+    cool: { skin: "#1a1c22", cloth: "#0a0c10", cloth2: "#161922", hair: "#080808", rim: "#3a4a5a" },
+    warm: { skin: "#2a1d12", cloth: "#1c120a", cloth2: "#2a1c10", hair: "#0a0604", rim: "#a1502a" },
+    pale: { skin: "#322218", cloth: "#1a120c", cloth2: "#2a1c12", hair: "#0a0604", rim: "#d8a070" },
+    red:  { skin: "#1a0a0a", cloth: "#0e0404", cloth2: "#1a0808", hair: "#000000", rim: "#a02828" },
+    fire: { skin: "#2a1a0c", cloth: "#1a0c06", cloth2: "#2c1808", hair: "#0a0402", rim: "#ff9b3a" },
+  };
+
+  function survivor(x, y, opts = {}) {
+    const { scale = 1, flip = false, tone = "cool", anim = "breathe", jacket = "#1f1c14", build = "m" } = opts;
+    const t = TONE[tone] || TONE.cool;
+    const sx = (flip ? -1 : 1) * scale, sy = scale;
+    const head = build === "f" ? 7 : 7.5;
+    const torso = build === "f" ? 17 : 19;
+    return `<g class="char anim-${anim}" transform="translate(${x},${y}) scale(${sx},${sy})">
+      <ellipse cx="0" cy="-3" rx="14" ry="2" fill="#000" opacity="0.5"/>
+      <rect x="-6" y="-22" width="5" height="22" fill="${t.cloth}"/>
+      <rect x="1"  y="-22" width="5" height="22" fill="${t.cloth}"/>
+      <g class="torso">
+        <rect x="-9" y="-44" width="18" height="${torso+3}" rx="3" fill="${jacket}"/>
+        <rect x="-9" y="-44" width="18" height="6" fill="${t.cloth2}" opacity="0.6"/>
+        <rect class="arm-l" x="-13" y="-42" width="5" height="22" rx="2" fill="${jacket}"/>
+        <rect class="arm-r" x="8"   y="-42" width="5" height="22" rx="2" fill="${jacket}"/>
+        <ellipse cx="0" cy="-50" rx="${head}" ry="${head+2}" fill="${t.skin}"/>
+        <path d="M ${-head} -52 Q 0 -${58+(build==="f"?2:0)} ${head} -52 L ${head} -47 L ${-head} -47 Z" fill="${t.hair}"/>
+        ${build === "f" ? `<path d="M ${-head} -47 Q ${-head-1} -42 ${-head+1} -38" fill="${t.hair}"/>
+                           <path d="M ${head} -47 Q ${head+1} -42 ${head-1} -38" fill="${t.hair}"/>` : ""}
+        <ellipse cx="-2" cy="-50" rx="0.6" ry="0.6" fill="${t.rim}" opacity="0.8"/>
+      </g>
+    </g>`;
+  }
+
+  function child(x, y, opts = {}) {
+    const { scale = 0.75, flip = false, tone = "cool", anim = "breathe" } = opts;
+    return survivor(x, y, { scale, flip, tone, anim, jacket: "#3a2818", build: "f" });
+  }
+
+  function zombie(x, y, opts = {}) {
+    const { scale = 1, flip = false, tone = "cool", variant = "walker", anim = "shamble" } = opts;
+    const t = TONE[tone] || TONE.cool;
+    const sx = (flip ? -1 : 1) * scale, sy = scale;
+    const slump = variant === "runner" ? -2 : 6;
+    const skin = variant === "bloater" ? "#3a4030" : "#2a2a22";
+    return `<g class="char anim-${anim}" transform="translate(${x},${y}) scale(${sx},${sy})">
+      <ellipse cx="0" cy="-3" rx="14" ry="2" fill="#000" opacity="0.45"/>
+      <rect x="-6" y="-22" width="5" height="22" fill="#0a0a08"/>
+      <rect x="1"  y="-22" width="5" height="22" fill="#0a0a08"/>
+      <g transform="translate(0, ${slump})">
+        <rect x="-10" y="-44" width="20" height="22" rx="2" fill="#1a1812"/>
+        <path d="M -10 -34 L -3 -28 L 0 -34 L 4 -27 L 10 -33" stroke="#5a1818" stroke-width="1.5" fill="none"/>
+        <rect class="arm-l zombie-arm" x="-16" y="-42" width="5" height="24" rx="2" fill="#1a1812"/>
+        <rect class="arm-r zombie-arm" x="11"  y="-42" width="5" height="24" rx="2" fill="#1a1812"/>
+        <ellipse cx="-13" cy="-22" rx="3" ry="3" fill="${skin}"/>
+        <ellipse cx="14"  cy="-22" rx="3" ry="3" fill="${skin}"/>
+        <ellipse cx="2" cy="-50" rx="8" ry="9" fill="${skin}"/>
+        <path d="M -6 -55 Q 2 -${variant === 'bloater' ? 64 : 60} 9 -53" stroke="#1a1010" stroke-width="2" fill="none"/>
+        <ellipse cx="-1" cy="-50" rx="1.2" ry="0.8" fill="#6a1818"/>
+        <ellipse cx="4"  cy="-50" rx="1.2" ry="0.8" fill="#6a1818"/>
+        <path d="M -3 -45 Q 2 -42 6 -45" stroke="#3a0808" stroke-width="1" fill="none"/>
+      </g>
+    </g>`;
+  }
+
+  function bandit(x, y, opts = {}) {
+    const { scale = 1, flip = false, tone = "cool", weapon = "rifle" } = opts;
+    const t = TONE[tone] || TONE.cool;
+    const sx = (flip ? -1 : 1) * scale, sy = scale;
+    const wpn = weapon === "rifle"
+      ? `<rect x="6" y="-38" width="22" height="3" fill="#1a1208"/>
+         <rect x="22" y="-40" width="6" height="6" fill="#0a0604"/>`
+      : `<rect x="6" y="-36" width="10" height="3" fill="#1a1208"/>`;
+    return `<g class="char anim-stand" transform="translate(${x},${y}) scale(${sx},${sy})">
+      <ellipse cx="0" cy="-3" rx="14" ry="2" fill="#000" opacity="0.5"/>
+      <rect x="-6" y="-22" width="5" height="22" fill="#0a0a08"/>
+      <rect x="1"  y="-22" width="5" height="22" fill="#0a0a08"/>
+      <rect x="-10" y="-46" width="20" height="26" rx="3" fill="#241c12"/>
+      <rect x="-13" y="-44" width="5" height="22" rx="2" fill="#241c12"/>
+      <rect x="8"   y="-44" width="5" height="22" rx="2" fill="#241c12"/>
+      ${wpn}
+      <ellipse cx="0" cy="-52" rx="7.5" ry="9" fill="${t.skin}"/>
+      <rect x="-8" y="-58" width="16" height="6" fill="#1a1208"/>
+      <rect x="-9" y="-54" width="18" height="3" fill="#0a0604"/>
+    </g>`;
+  }
+
+  function horde(x, y, opts = {}) {
+    const { scale = 1 } = opts;
+    let out = "";
+    const slots = [
+      { x: -50, s: 0.85, t: 0,  v: "walker"  },
+      { x: -25, s: 0.95, t: 5,  v: "runner"  },
+      { x: 0,   s: 1.0,  t: 0,  v: "walker"  },
+      { x: 25,  s: 0.92, t: -3, v: "bloater" },
+      { x: 50,  s: 0.88, t: 2,  v: "walker"  },
+      { x: -38, s: 0.7,  t: 12, v: "walker"  },
+      { x: 38,  s: 0.7,  t: 12, v: "runner"  },
+    ];
+    slots.forEach((s, i) => {
+      out += zombie(x + s.x * scale, y + s.t * scale, { scale: s.s * scale, variant: s.v, anim: i % 2 ? "shamble" : "shamble-2" });
+    });
+    return out;
+  }
+
+  function chopper(x, y) {
+    return `<g class="prop anim-fly" transform="translate(${x},${y})">
+      <ellipse cx="0" cy="0" rx="14" ry="4" fill="#0c100a"/>
+      <rect x="8" y="-1" width="14" height="3" fill="#0c100a"/>
+      <line x1="-22" y1="-4" x2="22" y2="-4" stroke="#0c100a" stroke-width="1.5"/>
+      <line x1="0" y1="-4" x2="0" y2="-8" stroke="#0c100a" stroke-width="1"/>
+    </g>`;
+  }
+
+  function ruinedBuilding(x, y, w, h, opts = {}) {
+    const { tone = "#0a0a0c" } = opts;
+    let windows = "";
+    const cols = Math.floor(w / 14), rows = Math.floor(h / 18);
+    let seed = x + y;
+    function rng() { seed = (seed * 9301 + 49297) % 233280; return seed / 233280; }
+    for (let r = 0; r < rows; r++) {
+      for (let c = 0; c < cols; c++) {
+        const wx = x + 4 + c * 14, wy = y + 6 + r * 18;
+        const lit = rng() < 0.18;
+        const broken = rng() < 0.35;
+        const fill = lit ? "#ffd76b" : (broken ? "#000" : "#1a1814");
+        windows += `<rect x="${wx}" y="${wy}" width="6" height="9" fill="${fill}" opacity="${lit ? 0.85 : 1}"/>`;
+      }
+    }
+    const roof = rng() < 0.5
+      ? `<polygon points="${x},${y} ${x+w*0.5},${y-6} ${x+w},${y} ${x+w*0.7},${y+4} ${x+w*0.3},${y+4}" fill="${tone}"/>`
+      : `<rect x="${x}" y="${y-3}" width="${w}" height="3" fill="${tone}"/>`;
+    return `${roof}<rect x="${x}" y="${y}" width="${w}" height="${h}" fill="${tone}"/>${windows}`;
+  }
+
+  function car(x, y, opts = {}) {
+    const { flip = false, color = "#1a1814" } = opts;
+    const sx = flip ? -1 : 1;
+    return `<g transform="translate(${x},${y}) scale(${sx},1)">
+      <rect x="-25" y="-8" width="50" height="10" rx="2" fill="${color}"/>
+      <rect x="-18" y="-16" width="36" height="9" rx="3" fill="${color}"/>
+      <rect x="-13" y="-15" width="11" height="7" fill="#2a2820"/>
+      <rect x="2"   y="-15" width="11" height="7" fill="#2a2820"/>
+      <ellipse cx="-15" cy="3" rx="5" ry="4" fill="#0a0a08"/>
+      <ellipse cx="15"  cy="3" rx="5" ry="4" fill="#0a0a08"/>
+      <ellipse cx="-22" cy="-4" rx="2" ry="2" fill="#3a2a08"/>
+    </g>`;
+  }
+
+  function streetlamp(x, y) {
+    return `<g transform="translate(${x},${y})">
+      <rect x="-1" y="-90" width="2" height="90" fill="#1a1812"/>
+      <path d="M 0 -90 Q 14 -90 14 -78" stroke="#1a1812" stroke-width="2" fill="none"/>
+      <ellipse cx="14" cy="-72" rx="6" ry="4" fill="#3a2c1c"/>
+      <ellipse cx="14" cy="-72" rx="3" ry="2" fill="#ffe79a"/>
+    </g>`;
+  }
+
+  function gate(x, y) {
+    return `<g transform="translate(${x},${y})">
+      <rect x="-4" y="-90" width="3" height="90" fill="#241c12"/>
+      <rect x="60" y="-90" width="3" height="90" fill="#241c12"/>
+      ${"".concat(...Array.from({length: 12}, (_, i) =>
+        `<line x1="0" y1="${-i*7}" x2="60" y2="${-i*7}" stroke="#3a2c1c" stroke-width="0.5"/>` +
+        `<line x1="${i*5}" y1="0" x2="${i*5}" y2="-84" stroke="#3a2c1c" stroke-width="0.5"/>`
+      ))}
+      <path d="M 0 -90 L 30 -100 L 60 -90" stroke="#5a1818" stroke-width="1" fill="none"/>
+    </g>`;
+  }
+
+  function bed(x, y) {
+    return `<g transform="translate(${x},${y})">
+      <rect x="0" y="0" width="120" height="22" fill="#2a1c10" rx="2"/>
+      <rect x="2" y="-6" width="116" height="8" fill="#3a2820" rx="1"/>
+      <rect x="6" y="-12" width="40" height="10" fill="#5a4030" rx="2"/>
+    </g>`;
+  }
+
+  function moon(x, y, r = 18) {
+    return `<ellipse cx="${x}" cy="${y}" rx="${r+8}" ry="${r+8}" fill="url(#moonGlow)"/>
+            <circle cx="${x}" cy="${y}" r="${r-4}" fill="#f3edc4"/>`;
+  }
+
+  // ---------- scene compositions ----------
+  // Each scene returns an SVG body (not the wrapper).
+  const SCENES = {
+
+    intro: () => BG.nightCity() + chopper(370, 35) +
+      ruinedBuilding(20,  120, 60, 75) +
+      ruinedBuilding(95,  100, 80, 95) +
+      ruinedBuilding(190, 110, 60, 85) +
+      ruinedBuilding(265, 95,  85, 100) +
+      ruinedBuilding(360, 115, 40, 80) +
+      survivor(200, 175, { tone: "cool" }),
+
+    apt_hallway: () => BG.indoor() +
+      `<rect x="280" y="40" width="50" height="120" fill="#0a0805" stroke="#3a2e1f" stroke-width="2"/>
+       <ellipse cx="305" cy="100" rx="40" ry="30" fill="url(#lampGlow)" opacity="0.3"/>
+       <path d="M 100 200 L 180 195 L 200 198 L 220 196" stroke="#5a1818" stroke-width="1.2" fill="none" opacity="0.7"/>` +
+      survivor(180, 178, { tone: "warm" }),
+
+    neighbour_apt: () => BG.indoor() +
+      `<rect x="200" y="120" width="60" height="40" fill="#2a1c10"/>
+       <rect x="200" y="115" width="60" height="6" fill="#3a2818"/>
+       <rect x="280" y="80" width="80" height="80" fill="#1a1208" stroke="#3a2c1c"/>` +
+      survivor(120, 178, { tone: "warm" }),
+
+    neighbour_wake: () => BG.indoorRuined() +
+      zombie(220, 178, { tone: "warm", variant: "walker", anim: "lurch" }) +
+      survivor(120, 178, { tone: "warm", flip: true }),
+
+    stairwell: () => `<rect width="400" height="200" fill="#06070a"/>
+      ${"".concat(...Array.from({length: 6}, (_, i) =>
+        `<polygon points="${50+i*40},200 ${90+i*40},200 ${90+i*40},${175-i*15} ${50+i*40},${175-i*15}" fill="#0c0e10" stroke="#1a1c22" stroke-width="0.5"/>`
+      ))}
+      <ellipse cx="100" cy="120" rx="60" ry="50" fill="url(#lampGlow)" opacity="0.4"/>
+      ${survivor(100, 178, { tone: "cool" })}`,
+
+    meet_maya: () => BG.nightStreet() +
+      streetlamp(330, 180) +
+      survivor(160, 178, { tone: "cool" }) +
+      survivor(220, 178, { tone: "cool", build: "f", flip: true, jacket: "#2a3024" }),
+
+    alone_street: () => BG.nightStreet() +
+      streetlamp(50, 180) +
+      car(120, 175, { color: "#1a1814" }) +
+      car(260, 175, { flip: true, color: "#221a14" }) +
+      zombie(330, 178, { tone: "cool", variant: "walker" }) +
+      survivor(60, 178, { tone: "cool" }),
+
+    grocery_front: () => BG.grocery() +
+      zombie(180, 178, { tone: "warm", variant: "walker" }) +
+      zombie(240, 178, { tone: "warm", variant: "runner", flip: true }) +
+      survivor(80, 178, { tone: "warm" }),
+
+    grocery_inside: () => BG.grocery() +
+      survivor(200, 178, { tone: "warm" }),
+
+    freezer: () => `<rect width="400" height="200" fill="#0a0e10"/>
+      <rect y="0" width="400" height="160" fill="#101418"/>
+      <rect y="160" width="400" height="40" fill="#06080a"/>
+      <rect x="40" y="40" width="320" height="120" fill="none" stroke="#2a3038" stroke-width="2"/>
+      <ellipse cx="200" cy="80" rx="120" ry="40" fill="#cfdde8" opacity="0.08"/>
+      ${child(280, 175, { tone: "pale" })}
+      ${survivor(120, 178, { tone: "pale" })}`,
+
+    highway_dawn: () => BG.highway() +
+      car(80, 175, { color: "#1a1814" }) +
+      car(320, 175, { flip: true, color: "#221814" }) +
+      survivor(190, 178, { tone: "pale" }),
+
+    highway_with_child: () => BG.highway() +
+      car(60, 175) +
+      survivor(190, 178, { tone: "pale" }) +
+      child(215, 178, { tone: "pale", flip: true }),
+
+    forest_ambush: () => BG.forestNight() +
+      pine(40, 155, 1.0) + pine(80, 155, 0.8) + pine(360, 155, 1.1) + pine(330, 155, 0.7) +
+      bandit(280, 178, { tone: "cool", weapon: "rifle" }) +
+      bandit(330, 178, { tone: "cool", weapon: "shotgun", flip: true }) +
+      survivor(120, 178, { tone: "cool" }),
+
+    sacrifice: () => BG.forestNight() +
+      pine(40, 155, 1.0) + pine(360, 155, 1.0) +
+      survivor(160, 178, { tone: "cool" }) +
+      child(110, 178, { tone: "cool" }) +
+      bandit(290, 178, { tone: "cool", flip: true }),
+
+    greenbelt_gate: () => BG.fenceForest() +
+      gate(170, 155) +
+      survivor(80, 178, { tone: "warm" }) +
+      survivor(310, 178, { tone: "warm", build: "f", jacket: "#2a3024", flip: true }),
+
+    greenbelt_camp: () => BG.camp() +
+      survivor(110, 178, { tone: "fire" }) +
+      survivor(180, 178, { tone: "fire", build: "f", jacket: "#2a3024" }) +
+      survivor(290, 178, { tone: "fire", build: "f", jacket: "#3a2820", flip: true }),
+
+    greenbelt_morning: () => BG.forestDawn() +
+      pine(50, 155, 0.8) + pine(360, 155, 0.9) +
+      tent(120, 165) + tent(280, 165) +
+      survivor(200, 178, { tone: "pale" }),
+
+    medbay: () => BG.indoor() +
+      bed(100, 140) +
+      survivor(160, 162, { tone: "warm", build: "f", jacket: "#2a3024", anim: "rest" }) +
+      survivor(250, 178, { tone: "warm" }),
+
+    bonfire_night: () => `<rect width="400" height="200" fill="url(#skyNight)"/>
+      ${stars(50)}
+      ${pine(30, 155, 0.9)} ${pine(370, 155, 0.85)}
+      <rect y="155" width="400" height="45" fill="#0a0805"/>
+      <ellipse cx="200" cy="170" rx="90" ry="35" fill="url(#fireGlow)"/>
+      ${campfire(200, 168)}
+      ${survivor(140, 178, { tone: "fire" })}
+      ${survivor(260, 178, { tone: "fire", build: "f", jacket: "#2a3024", flip: true })}`,
+
+    intimate_bedroom: () => BG.bedroomNight() +
+      bed(220, 145) +
+      `<g transform="translate(280, 135)" class="anim-breathe">
+         <ellipse cx="0" cy="0" rx="40" ry="6" fill="#3a2820"/>
+         <ellipse cx="-12" cy="-4" rx="8" ry="6" fill="#1a1c22"/>
+         <ellipse cx="14"  cy="-4" rx="8" ry="6" fill="#1a1c22"/>
+       </g>`,
+
+    cliff_dawn: () => BG.cliff() +
+      survivor(180, 165, { tone: "pale" }) +
+      survivor(220, 165, { tone: "pale", build: "f", jacket: "#2a3024", flip: true }),
+
+    horde_wall: () => BG.bloodDawn() +
+      fence(20, 130, 360) +
+      horde(200, 175, { scale: 0.95 }) +
+      survivor(110, 178, { tone: "fire" }) +
+      survivor(290, 178, { tone: "fire", flip: true }),
+
+    horde_charge: () => BG.bloodDawn() +
+      horde(200, 178, { scale: 1.05 }),
+
+    ending_dawn: () => BG.bloodDawn() +
+      fence(20, 130, 360) +
+      survivor(180, 178, { tone: "fire" }) +
+      survivor(220, 178, { tone: "fire", build: "f", jacket: "#2a3024", flip: true }),
+
+    ending_grave: () => `<rect width="400" height="200" fill="url(#skyDusk)"/>
+      <rect y="155" width="400" height="45" fill="#1a0e07"/>
+      ${pine(50, 155, 0.7)} ${pine(360, 155, 0.7)}
+      <rect x="190" y="120" width="20" height="40" fill="#3a2820" rx="2"/>
+      <rect x="180" y="115" width="40" height="6" fill="#3a2820"/>
+      <ellipse cx="200" cy="165" rx="30" ry="4" fill="#0a0604"/>
+      ${survivor(280, 178, { tone: "warm", build: "f", jacket: "#2a3024" })}`,
+
+    ending_road: () => BG.highway() +
+      survivor(180, 178, { tone: "pale" }) +
+      survivor(210, 178, { tone: "pale", build: "f", jacket: "#2a3024" }) +
+      child(238, 178, { tone: "pale", flip: true }) +
+      survivor(265, 178, { tone: "pale" }),
+
+    death: () => `<rect width="400" height="200" fill="#0a0404"/>
+      <rect width="400" height="200" fill="url(#bloodHaze)"/>
+      <ellipse cx="200" cy="180" rx="80" ry="8" fill="#3a0808"/>
+      <text x="200" y="100" text-anchor="middle" fill="#5a1818" font-size="48" font-family="serif" font-weight="900" opacity="0.7">✝</text>`,
+  };
+
+  // ---------- public render ----------
+  function render(sceneId) {
+    const fn = SCENES[sceneId];
+    const body = fn ? fn() : BG.nightCity();
+    return `<svg class="scene-svg" viewBox="0 0 400 200" preserveAspectRatio="xMidYMid slice">${DEFS}${body}</svg>`;
+  }
+
+  return { render, SCENES };
+})();
+
