@@ -239,6 +239,99 @@ window.Scenes = (function () {
     fire: { skin: "#2a1a0c", cloth: "#1a0c06", cloth2: "#2c1808", hair: "#0a0402", rim: "#ff9b3a" },
   };
 
+  // ---- Detailed graphic-novel-style characters (proof of concept) ----
+  // Drawn in a 100x200 local viewBox, transformed into scene coordinates.
+  function mayaPortrait(x, y, opts = {}) {
+    const { scale = 1, flip = false, anim = "breathe" } = opts;
+    // y is feet position; height is ~75 in scene units, anchored at feet.
+    const height = 75 * scale;
+    const width  = 36 * scale;
+    const tx = x - width / 2;
+    const ty = y - height;
+    const sx = flip ? -1 : 1;
+    const transform = `translate(${tx + width/2},${ty}) scale(${(width/100) * sx},${height/200}) translate(-50,0)`;
+    return `<g class="char anim-${anim}" transform="${transform}">
+      <ellipse cx="50" cy="198" rx="22" ry="3" fill="#000" opacity="0.55"/>
+      <path d="M 35 195 L 38 130 L 47 130 L 45 195 Z" fill="#100c08"/>
+      <path d="M 53 195 L 55 130 L 64 130 L 62 195 Z" fill="#100c08"/>
+      <ellipse cx="40" cy="195" rx="10" ry="4" fill="#050302"/>
+      <ellipse cx="60" cy="195" rx="10" ry="4" fill="#050302"/>
+      <rect x="33" y="125" width="34" height="7" fill="#0a0604"/>
+      <rect x="48" y="123" width="4" height="11" fill="#3a2818"/>
+      <rect x="62" y="128" width="3" height="14" fill="#2a2218"/>
+      <rect x="60.5" y="142" width="6" height="9" fill="#3a3a3a"/>
+      <path d="M 36 78 L 30 132 L 38 132 L 42 78 Z" fill="#2a2a30"/>
+      <path d="M 64 78 L 70 132 L 62 132 L 58 78 Z" fill="#2a2a30"/>
+      <path d="M 32 80 L 26 132 L 38 132 L 41 80 Z" fill="#3d4a2a"/>
+      <path d="M 68 80 L 74 132 L 62 132 L 59 80 Z" fill="#3d4a2a"/>
+      <path d="M 32 80 L 26 132 L 30 132 L 36 80 Z" fill="#283520"/>
+      <path d="M 68 80 L 74 132 L 70 132 L 64 80 Z" fill="#283520"/>
+      <path d="M 36 78 L 50 92 L 64 78 L 62 86 L 50 96 L 38 86 Z" fill="#283520"/>
+      <path d="M 26 80 Q 18 105 22 134 L 33 134 L 36 105 L 32 80 Z" fill="#3d4a2a"/>
+      <path d="M 74 80 Q 82 105 78 134 L 67 134 L 64 105 L 68 80 Z" fill="#3d4a2a"/>
+      <path d="M 26 80 Q 18 105 22 134 L 26 134 L 28 105 L 27 80 Z" fill="#283520"/>
+      <ellipse cx="22" cy="135" rx="5" ry="6" fill="#caa382"/>
+      <ellipse cx="78" cy="135" rx="5" ry="6" fill="#caa382"/>
+      <rect x="43" y="66" width="14" height="14" fill="#caa382"/>
+      <path d="M 43 66 L 57 66 L 55 80 L 45 80 Z" fill="#a8866a"/>
+      <ellipse cx="50" cy="50" rx="16" ry="19" fill="#caa382"/>
+      <path d="M 35 50 L 35 60 Q 36 56 38 53 Q 36 48 36 42 Q 38 32 50 30 Q 64 32 65 44 Q 66 52 64 58 L 67 64 Q 64 50 60 46 Q 50 40 42 46 Q 36 56 35 65 Z" fill="#7a2e10"/>
+      <path d="M 60 38 Q 70 50 67 70 Q 64 76 60 78 Q 64 60 62 48 Z" fill="#5a1f08"/>
+      <path d="M 35 50 Q 33 64 36 78 L 39 76 Q 37 64 39 54 Z" fill="#9a3a14"/>
+      <ellipse cx="42" cy="42" rx="3" ry="1.5" fill="#0a0604" opacity="0.7"/>
+      <ellipse cx="58" cy="42" rx="3" ry="1.5" fill="#0a0604" opacity="0.7"/>
+      <path d="M 41 51 Q 44 50 47 51" stroke="#0a0604" stroke-width="0.8" fill="none" stroke-linecap="round"/>
+      <path d="M 53 51 Q 56 50 59 51" stroke="#0a0604" stroke-width="0.8" fill="none" stroke-linecap="round"/>
+      <path d="M 50 56 L 49 60 L 51 60 Z" fill="#a08266"/>
+      <path d="M 46 64 Q 50 65 54 64" stroke="#5a2010" stroke-width="0.9" fill="none" stroke-linecap="round"/>
+      <path d="M 60 75 Q 70 78 75 95" stroke="#7a8854" stroke-width="0.7" fill="none" opacity="0.7"/>
+      <path d="M 65 35 Q 67 32 67 28" stroke="#7a8854" stroke-width="0.6" fill="none" opacity="0.6"/>
+    </g>`;
+  }
+
+  function ellisPortrait(x, y, opts = {}) {
+    const { scale = 1, flip = false, anim = "breathe" } = opts;
+    const height = 78 * scale;
+    const width  = 38 * scale;
+    const tx = x - width / 2;
+    const ty = y - height;
+    const sx = flip ? -1 : 1;
+    const transform = `translate(${tx + width/2},${ty}) scale(${(width/100) * sx},${height/200}) translate(-50,0)`;
+    return `<g class="char anim-${anim}" transform="${transform}">
+      <ellipse cx="50" cy="198" rx="22" ry="3" fill="#000" opacity="0.55"/>
+      <path d="M 36 195 L 39 130 L 47 130 L 45 195 Z" fill="#0a0a08"/>
+      <path d="M 53 195 L 55 130 L 64 130 L 61 195 Z" fill="#0a0a08"/>
+      <ellipse cx="40" cy="195" rx="10" ry="4" fill="#040302"/>
+      <ellipse cx="60" cy="195" rx="10" ry="4" fill="#040302"/>
+      <rect x="34" y="124" width="32" height="8" fill="#0a0604"/>
+      <path d="M 34 78 L 28 132 L 72 132 L 66 78 Z" fill="#1c2a3a"/>
+      <path d="M 34 78 L 28 132 L 36 132 L 40 78 Z" fill="#14202c"/>
+      <path d="M 66 78 L 72 132 L 64 132 L 60 78 Z" fill="#14202c"/>
+      <path d="M 28 80 Q 22 105 25 134 L 35 134 L 38 105 L 34 80 Z" fill="#1c2a3a"/>
+      <path d="M 72 80 Q 78 105 75 134 L 65 134 L 62 105 L 66 80 Z" fill="#1c2a3a"/>
+      <path d="M 38 80 L 50 92 L 62 80 L 60 88 L 50 96 L 40 88 Z" fill="#0e1620"/>
+      <rect x="46" y="86" width="8" height="6" fill="#a82820"/>
+      <rect x="49" y="84" width="2" height="10" fill="#a82820"/>
+      <ellipse cx="25" cy="135" rx="5" ry="6" fill="#b88860"/>
+      <rect x="20" y="118" width="3" height="22" fill="#5a4a3a"/>
+      <rect x="18" y="114" width="7" height="6" fill="#3a3a40"/>
+      <ellipse cx="75" cy="135" rx="5" ry="6" fill="#b88860"/>
+      <rect x="44" y="66" width="12" height="14" fill="#b88860"/>
+      <path d="M 44 66 L 56 66 L 55 80 L 45 80 Z" fill="#8a6448"/>
+      <ellipse cx="50" cy="52" rx="14" ry="17" fill="#b88860"/>
+      <path d="M 36 50 Q 36 38 50 36 Q 64 38 64 50 L 64 44 Q 60 38 50 38 Q 40 38 36 44 Z" fill="#1a1208"/>
+      <path d="M 38 44 Q 50 41 62 44 L 60 47 Q 50 44 40 47 Z" fill="#0a0604"/>
+      <ellipse cx="43" cy="52" rx="2" ry="1.5" fill="#0a0604"/>
+      <ellipse cx="57" cy="52" rx="2" ry="1.5" fill="#0a0604"/>
+      <path d="M 41 49 L 46 49" stroke="#1a1208" stroke-width="0.7"/>
+      <path d="M 54 49 L 59 49" stroke="#1a1208" stroke-width="0.7"/>
+      <path d="M 50 56 L 49 60 L 51 60 Z" fill="#8a6448"/>
+      <path d="M 46 65 L 54 65" stroke="#3a1a08" stroke-width="0.8" stroke-linecap="round"/>
+      <path d="M 40 50 L 38 78" stroke="#1a1208" stroke-width="0.4" opacity="0.5"/>
+      <path d="M 60 75 Q 70 80 76 100" stroke="#3a4a5a" stroke-width="0.7" fill="none" opacity="0.7"/>
+    </g>`;
+  }
+
   // Render a character as a sized emoji inside the SVG scene.
   // The emoji sits naturally in the painted environment and gets per-character
   // animation via a wrapping <g class="char anim-…">.
@@ -425,8 +518,8 @@ window.Scenes = (function () {
 
     meet_maya: () => BG.nightStreet() +
       streetlamp(330, 180) +
-      survivor(160, 178, { tone: "cool" }) +
-      survivor(220, 178, { tone: "cool", build: "f", flip: true, jacket: "#2a3024" }),
+      ellisPortrait(150, 188, { scale: 1.05 }) +
+      mayaPortrait(240, 188, { scale: 1.05, flip: true }),
 
     alone_street: () => BG.nightStreet() +
       streetlamp(50, 180) +
