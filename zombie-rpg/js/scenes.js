@@ -242,23 +242,14 @@ window.Scenes = (function () {
   // Render a character as a sized emoji inside the SVG scene.
   // The emoji sits naturally in the painted environment and gets per-character
   // animation via a wrapping <g class="char anim-…">.
+  // Characters are encoded as HTML comment markers in the SVG output.
+  // The render() function strips them out and renders them as positioned
+  // HTML divs over the SVG, sidestepping all SVG-text emoji rendering issues.
   function emojiChar(x, y, glyph, opts = {}) {
-    const { size = 44, anim = "breathe", flip = false, dim = false } = opts;
-    const sx = flip ? -1 : 1;
-    const opacity = dim ? 0.85 : 1;
-    const fox = x - size, foy = y - size;
-    const w = size * 2, h = size * 1.15;
-    const divStyle =
-      `font-size:${size}px;line-height:1;text-align:center;` +
-      `transform:scaleX(${sx});transform-origin:center bottom;` +
-      `filter:drop-shadow(0 2px 3px rgba(0,0,0,0.75));opacity:${opacity};` +
-      `font-family:'Apple Color Emoji','Segoe UI Emoji','Noto Color Emoji',sans-serif;`;
-    return `<g class="char anim-${anim}">
-      <ellipse cx="${x}" cy="${y+2}" rx="${size*0.4}" ry="${size*0.08}" fill="#000" opacity="0.55"/>
-      <foreignObject x="${fox}" y="${foy}" width="${w}" height="${h}">
-        <div xmlns="http://www.w3.org/1999/xhtml" style="${divStyle}">${glyph}</div>
-      </foreignObject>
-    </g>`;
+    const { size = 50, anim = "breathe", flip = false } = opts;
+    // Encode glyph as URL-safe (it's pure unicode so just use as-is)
+    return `<!--CHAR|${glyph}|${x}|${y}|${size}|${anim}|${flip ? 1 : 0}-->` +
+      `<ellipse cx="${x}" cy="${y+2}" rx="${size*0.4}" ry="${size*0.08}" fill="#000" opacity="0.5"/>`;
   }
 
   function survivor(x, y, opts = {}) {
@@ -632,10 +623,37 @@ window.Scenes = (function () {
   };
 
   // ---------- public render ----------
+  // Extracts CHAR markers from the SVG body and renders characters as
+  // absolutely-positioned HTML divs (so emoji always render correctly).
   function render(sceneId) {
     const fn = SCENES[sceneId];
-    const body = fn ? fn() : BG.nightCity();
-    return `<svg class="scene-svg" viewBox="0 0 400 200" preserveAspectRatio="xMidYMid slice">${DEFS}${body}</svg>`;
+    let body = fn ? fn() : BG.nightCity();
+
+    const chars = [];
+    body = body.replace(
+      /<!--CHAR\|([^|]+)\|([^|]+)\|([^|]+)\|([^|]+)\|([^|]+)\|([^|]+)-->/g,
+      (_, glyph, x, y, size, anim, flip) => {
+        chars.push({ glyph, x: +x, y: +y, size: +size, anim, flip: flip === "1" });
+        return "";
+      }
+    );
+
+    const charLayer = chars.map(c => {
+      const leftPct = (c.x / 400) * 100;
+      const topPct  = (c.y / 200) * 100;
+      const sizePct = (c.size / 200) * 100; // size relative to 200-unit viewBox height
+      const sx = c.flip ? -1 : 1;
+      const wrap =
+        `position:absolute;left:${leftPct}%;top:${topPct}%;` +
+        `transform:translate(-50%,-100%);font-size:${sizePct}cqh;line-height:1;` +
+        `--flip:${sx};filter:drop-shadow(0 2px 3px rgba(0,0,0,0.75));`;
+      return `<div class="char-emoji anim-${c.anim}" style="${wrap}">${c.glyph}</div>`;
+    }).join("");
+
+    return `<div class="scene-stage">` +
+      `<svg class="scene-svg" viewBox="0 0 400 200" preserveAspectRatio="xMidYMid slice">${DEFS}${body}</svg>` +
+      `<div class="char-layer">${charLayer}</div>` +
+      `</div>`;
   }
 
   return { render, SCENES };
