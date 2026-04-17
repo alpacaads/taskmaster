@@ -302,34 +302,393 @@ window.Story = {
     art: "⛺🔥🍲",
     sceneClass: "forest",
     chapter: "Day 3 — Greenbelt Camp",
-    text: "Inside: tents, solar lamps, the smell of stew. A radio crackles weather reports.\n\nA man with a medic's patch bandages your arm. \"You're lucky. Most don't make it this far.\"\n\nThat night, you hear the horde.",
+    text: "Inside: tents, solar lamps, the smell of stew. A radio crackles weather reports.\n\nA medic with calm hands and a quiet voice bandages your arm. \"You're lucky. Most don't make it this far. I'm Ren.\"\n\nA woman in tactical kit nods at you across the fire — Captain Vega. \"Eat. Sleep. We talk in the morning.\"",
     choices: [
       { label: "Sleep. Tomorrow is another day.",
         effect: s => { s.hp = s.hpMax; s.stam = s.stamMax; Game.toast("❤️ ⚡ restored"); },
-        next: "horde_warning" },
+        next: "camp_morning" },
+    ]
+  },
+
+  camp_morning: {
+    scene: "greenbelt_morning",
+    sceneClass: "forest",
+    chapter: "Day 4 — Greenbelt",
+    speaker: "Captain Vega",
+    text: "Coffee that tastes like dirt. Sun coming up through the pines.\n\n\"You earned a day before we put you to work,\" Vega says. \"Pick a hand to lend. Or don't. Free country — what's left of it.\"",
+    choices: [
+      { label: "Help Ren in the medbay", tag: "BOND", tagClass: "warn", next: "chore_medbay" },
+      { label: "Walk the perimeter with Maya",
+        require: s => s.flags.maya,
+        tag: "BOND", tagClass: "warn", next: "chore_perimeter" },
+      { label: "Cook for the camp", next: "chore_kitchen" },
+    ]
+  },
+
+  chore_medbay: {
+    scene: "medbay",
+    sceneClass: "indoor",
+    chapter: "Day 4 — Medbay",
+    speaker: "Ren",
+    text: "Ren's medbay is a converted shipping container. Antiseptic, clean linen, a guitar in the corner.\n\n\"Hold this. Hands steady.\" You're stitching a cut on a kid's knee. Ren watches you work. \"You've done this before.\"\n\n\"Paramedic. East side.\"\n\n\"Then you know how it gets — losing them.\" A long beat. \"Tell me one you saved.\"",
+    choices: [
+      { label: "Tell them about the boy in the subway fire",
+        effect: s => { s.bonds.ren += 2; Game.toast("Ren's trust +2"); },
+        next: "chore_done" },
+      { label: "Change the subject. Some doors stay shut.",
+        effect: s => { s.bonds.ren += 1; },
+        next: "chore_done" },
+    ]
+  },
+
+  chore_perimeter: {
+    scene: "perimeter",
+    sceneClass: "forest",
+    chapter: "Day 4 — Perimeter",
+    speaker: "Maya",
+    text: "Maya climbs the watchtower like she was born there. You hand up coffee. She drinks it without taking her eyes off the treeline.\n\n\"My brother used to do this watch with me. Before.\" She doesn't look at you. \"Six months. Feels like six years.\"\n\nThe wind moves through the pines. She's closer than she needs to be.",
+    choices: [
+      { label: "\"Tell me about him.\"",
+        effect: s => { s.bonds.maya += 2; Game.toast("Maya's trust +2"); },
+        next: "chore_done" },
+      { label: "Stand watch in silence. Some things don't need words.",
+        effect: s => { s.bonds.maya += 1; },
+        next: "chore_done" },
+    ]
+  },
+
+  chore_kitchen: {
+    scene: "camp_kitchen",
+    sceneClass: "forest",
+    chapter: "Day 4 — Kitchen",
+    text: "You spend the morning peeling potatoes and listening to camp gossip. Three meals out of one rabbit. Magic.\n\nVega slaps your shoulder on her way past. \"You'll do.\"",
+    choices: [
+      { label: "Wash up and report in",
+        effect: s => { s.food += 2; Game.toast("+2 🥫"); },
+        next: "chore_done" },
+    ]
+  },
+
+  chore_done: {
+    scene: "briefing_tent",
+    sceneClass: "indoor",
+    chapter: "Day 4 — Briefing",
+    speaker: "Captain Vega",
+    text: "\"Old Mercy Hospital. Three klicks south. Pharmacy on the second floor — antibiotics, painkillers, anything that hasn't walked off.\"\n\nShe spreads a hand-drawn map. \"In and out. Don't be a hero. Pick someone to take.\"",
+    choices: [
+      { label: "Take Maya — she knows how to fight",
+        require: s => s.flags.maya,
+        effect: s => { s.flags.missionPartner = "maya"; },
+        next: "mission_journey" },
+      { label: "Take Ren — they know what to grab",
+        effect: s => { s.flags.missionPartner = "ren"; },
+        next: "mission_journey" },
+      { label: "Go alone. Less mouths, less risk.",
+        effect: s => { s.flags.missionPartner = null; s.flags.solo_mission = true; },
+        next: "mission_journey" },
     ]
   },
 
   horde_warning: {
-    art: "🌑🧟🧟🧟",
-    sceneClass: "night",
-    chapter: "Day 4 — Pre-dawn",
-    speaker: "Maya / Captain",
-    text: "A siren wakes the camp at 4 AM. A horde — hundreds — moving down the old highway. It'll hit the fence by sunrise.\n\n\"We hold the wall, or we run. Your call.\"",
+    scene: "horde_charge",
+    sceneClass: "blood",
+    chapter: "Day 5 — Sunrise",
+    speaker: "Captain Vega",
+    text: function(s) {
+      let intro = "A siren shatters the morning. A horde — hundreds — pouring down the old highway. They'll hit the fence in minutes.\n\n";
+      if (s.flags.exposedTraitor) intro += "Vega has the camp ready. The fence is reinforced. Every rifle is loaded. Calder is in restraints.\n\n";
+      else if (s.flags.killedTraitor) intro += "No one knows what you did at the south fence. The camp is calm — until it isn't.\n\n";
+      else intro += "Something's wrong with the south fence — whatever it is, there's no time to fix it now.\n\n";
+      return intro + "\"We hold, or we run. Choose.\"";
+    },
     choices: [
-      { label: "Hold the wall. Fight for the camp.", tag: "COMBAT", tagClass: "danger",
-        combat: { enemy: "horde", onWin: "ending_hero", onLose: "ending_fallen" } },
-      { label: "Take the survivors and slip out the back", next: "ending_escape" },
+      { label: "Hold the wall.", tag: "COMBAT", tagClass: "danger",
+        combat: { enemy: "horde", onWin: "post_horde_win", onLose: "post_horde_lose" } },
+      { label: "Get the survivors out the back.", next: "post_horde_flee" },
     ]
   },
 
-  ending_hero: {
-    art: "🌅🛡️🕊️",
-    sceneClass: "forest",
-    chapter: "Ending — Dawn at the Wall",
-    text: "By sunrise, the horde is a field of still bodies. The fence holds. The camp holds.\n\nSomeone is crying. Someone is laughing. A child — maybe Nora — hugs your leg.\n\nYou survived. More than that: you mattered.",
+  post_horde_win: {
+    scene: "ending_dawn",
+    sceneClass: "blood",
+    chapter: "Sunrise — After",
+    text: function(s) {
+      if (s.romance === "maya" && s.flags.lovedMaya) {
+        return "Maya finds you in the smoke, blood on her sleeve and most of it not hers. She presses her forehead to yours and breathes out — a long, shaking exhale. Alive. Both of you. Alive.";
+      }
+      if (s.romance === "ren" && s.flags.lovedRen) {
+        return "Ren is already at work — bandaging, splinting, refusing to look at the bodies on the fence. When you reach them they don't speak. They just bury their face in your shoulder and stay there for a long time.";
+      }
+      return "The horde is a still field. The fence holds. Someone is laughing through tears. A child finds your hand.";
+    },
     choices: [
-      { label: "— THE END —", next: "ending_final_hero" },
+      { label: "— THE END —", next: function(s) {
+        return s.romance ? "ending_final_lovers" : "ending_final_hero";
+      } },
+    ]
+  },
+
+  post_horde_lose: {
+    scene: "ending_grave",
+    sceneClass: "blood",
+    chapter: "Sunset — A Memorial",
+    text: function(s) {
+      if (s.romance === "maya" && s.flags.lovedMaya) {
+        return "Maya carries you to the back of the camp when your legs give out. She's saying something — your name, over and over. The world dims softly, like a lantern turned down.\n\nShe holds your hand until it's cold.";
+      }
+      if (s.romance === "ren" && s.flags.lovedRen) {
+        return "Ren sings the song. The one their grandmother taught them. They sing it the whole way through, and then again, and then once more.\n\nYou hear all three.";
+      }
+      return "They'll say you held the line longer than any one person should. They'll carve your name beside the others.";
+    },
+    choices: [
+      { label: "— THE END —", next: function(s) {
+        return s.romance ? "ending_final_loverlost" : "ending_final_fallen";
+      } },
+    ]
+  },
+
+  post_horde_flee: {
+    scene: "ending_road",
+    sceneClass: "forest",
+    chapter: "Dawn — The Long Road",
+    text: function(s) {
+      if (s.romance === "maya" && s.flags.lovedMaya) {
+        return "Twenty survivors follow your light through the pines. Maya walks beside you, her hand finding yours in the dark. Neither of you lets go.";
+      }
+      if (s.romance === "ren" && s.flags.lovedRen) {
+        return "Ren walks at the back, helping the slow ones. When you look over your shoulder, they look up at you and smile — small and certain.";
+      }
+      if (s.companion2 === "Nora") {
+        return "Nora's hand is sticky in yours. She doesn't ask where you're going. None of them do. They follow your light.";
+      }
+      return "The camp burns behind you. You don't know where you're going. You know you'll keep going.";
+    },
+    choices: [
+      { label: "— THE END —", next: function(s) {
+        return s.romance ? "ending_final_lovers_road" : "ending_final_escape";
+      } },
+    ]
+  },
+
+  mission_journey: {
+    scene: "highway_dawn",
+    sceneClass: "forest",
+    chapter: "Day 4 — South Road",
+    text: function(s) {
+      if (s.flags.missionPartner === "maya") {
+        return "Maya walks point. Three steps ahead, eyes everywhere. The pines thin into a service road.\n\n\"You ever miss anything from before?\" she asks, not turning around.";
+      }
+      if (s.flags.missionPartner === "ren") {
+        return "Ren keeps pace beside you. They hum, low — a song you almost recognise.\n\n\"My grandmother used to sing it,\" they say when they catch you listening. \"It's the only thing of hers I have left.\"";
+      }
+      return "You walk alone. Every shadow is a question. Every step is loud.";
+    },
+    choices: [
+      { label: "\"Coffee. Real coffee.\"",
+        require: s => s.flags.missionPartner === "maya",
+        effect: s => { s.bonds.maya += 1; },
+        next: "hospital_arrive" },
+      { label: "\"My sister. She made me feel less alone.\"",
+        require: s => s.flags.missionPartner === "maya",
+        effect: s => { s.bonds.maya += 2; Game.toast("Maya's trust +2"); },
+        next: "hospital_arrive" },
+      { label: "\"Sing it for me.\"",
+        require: s => s.flags.missionPartner === "ren",
+        effect: s => { s.bonds.ren += 2; Game.toast("Ren's trust +2"); },
+        next: "hospital_arrive" },
+      { label: "Walk in companionable silence",
+        require: s => s.flags.missionPartner === "ren",
+        effect: s => { s.bonds.ren += 1; },
+        next: "hospital_arrive" },
+      { label: "Push on alone",
+        require: s => s.flags.solo_mission,
+        next: "hospital_arrive" },
+    ]
+  },
+
+  hospital_arrive: {
+    scene: "hospital_ext",
+    sceneClass: "city",
+    chapter: "Day 4 — Old Mercy",
+    text: "The hospital squats against the dusk like a wounded animal. The red cross above the door has bled brown.\n\nSomething moves inside.",
+    choices: [
+      { label: "Through the front. Loud and fast.",
+        next: "pharmacy_combat" },
+    ]
+  },
+
+  pharmacy_combat: {
+    scene: "pharmacy_fight",
+    sceneClass: "blood",
+    chapter: "Day 4 — Pharmacy",
+    text: "Two of them lurch out of the dark between the shelves. Pill bottles roll under your boots.",
+    choices: [
+      { label: "Fight", tag: "COMBAT", tagClass: "danger",
+        combat: { enemy: "walker_pair", onWin: "hospital_lobby", onLose: "death" } },
+    ]
+  },
+
+  hospital_lobby: {
+    scene: "hospital_lobby",
+    sceneClass: "indoor",
+    chapter: "Day 4 — Lobby",
+    speaker: function(s) {
+      return s.flags.missionPartner === "maya" ? "Maya"
+           : s.flags.missionPartner === "ren"  ? "Ren"
+           : "";
+    },
+    text: function(s) {
+      if (s.flags.missionPartner === "maya") {
+        return "You drop into a row of waiting chairs. Maya sits beside you — not touching, but close.\n\n\"You handle yourself. I noticed.\"\n\nA streetlight, somehow still alive, hums outside. She hasn't looked away from you.";
+      }
+      if (s.flags.missionPartner === "ren") {
+        return "Ren is shaking. They sit on the floor, back to a vending machine, knees up.\n\n\"I hate this part. After. When my hands remember.\"\n\nYou sit beside them. Their breath slows when you do.";
+      }
+      return "You sit alone in the dark. Stuff a backpack with what you came for. The hospital exhales around you — old breath, no life.";
+    },
+    choices: [
+      { label: "Lean closer. Let her see you see her.",
+        require: s => s.flags.missionPartner === "maya",
+        effect: s => { s.bonds.maya += 2; Game.toast("Maya's trust +2"); },
+        next: "mission_return" },
+      { label: "Keep it professional. Stand up.",
+        require: s => s.flags.missionPartner === "maya",
+        next: "mission_return" },
+      { label: "Take their hand. Say nothing.",
+        require: s => s.flags.missionPartner === "ren",
+        effect: s => { s.bonds.ren += 2; Game.toast("Ren's trust +2"); },
+        next: "mission_return" },
+      { label: "Give them space. Pack the bag.",
+        require: s => s.flags.missionPartner === "ren",
+        next: "mission_return" },
+      { label: "Pack and leave",
+        require: s => s.flags.solo_mission,
+        next: "mission_return" },
+    ]
+  },
+
+  mission_return: {
+    scene: "greenbelt_camp",
+    sceneClass: "forest",
+    chapter: "Day 4 — Camp, dusk",
+    text: "You hand the meds to Ren — who beams, just for a second — and then notice something at the south fence: a chain link, cleanly cut. Not zombies. Hands.",
+    choices: [
+      { label: "Investigate the cut fence", tag: "CLUE", tagClass: "warn",
+        effect: s => { s.flags.foundCut = true; },
+        next: "investigate_traitor" },
+      { label: "Mention it to Vega in the morning. Get warm by the fire.",
+        next: "bonfire_invite" },
+    ]
+  },
+
+  investigate_traitor: {
+    scene: "gate_ajar_night",
+    sceneClass: "night",
+    chapter: "Day 4 — South Fence",
+    text: "Bolt cutters in the brush. Fresh boot prints. Whoever did this is in the camp — and they're coming back.",
+    choices: [
+      { label: "Lie in wait", tag: "RISKY", tagClass: "warn", next: "confront_traitor" },
+      { label: "Tell Vega and bring the cavalry",
+        effect: s => { s.flags.toldVega = true; },
+        next: "confront_traitor" },
+    ]
+  },
+
+  confront_traitor: {
+    scene: "confront_traitor",
+    sceneClass: "night",
+    chapter: "Day 4 — South Fence",
+    speaker: "???",
+    text: "He freezes when he sees you. A trader from two tents over — Calder. Sleeve pushed up. The bite mark on his forearm is fresh and black.\n\n\"Please. They said if I let them in, they'd let me live. I have a daughter.\"\n\nHis daughter died in March. Everyone knows it.",
+    choices: [
+      { label: "End it. Quick. Quiet.", tag: "HARD", tagClass: "danger",
+        effect: s => { s.flags.killedTraitor = true; Game.toast("The camp will not know."); },
+        next: "bonfire_invite" },
+      { label: "Drag him to Vega. Let the camp decide.",
+        effect: s => { s.flags.exposedTraitor = true; Game.toast("The camp prepares."); },
+        next: "bonfire_invite" },
+    ]
+  },
+
+  bonfire_invite: {
+    scene: "bonfire_night",
+    sceneClass: "night",
+    chapter: "Day 4 — Bonfire",
+    text: function(s) {
+      const m = s.bonds.maya, r = s.bonds.ren;
+      let lines = "The fire burns low. Most of the camp has turned in. Two figures linger.\n\n";
+      if (s.flags.maya && m >= 3) lines += "Maya catches your eye and tilts her head — toward her tent.\n";
+      if (r >= 3) lines += "Ren leaves their guitar against the log when they stand. They wait, looking at you.\n";
+      if ((!s.flags.maya || m < 3) && r < 3) lines += "You sit alone with the dying flames.\n";
+      return lines;
+    },
+    choices: [
+      { label: "Follow Maya", tag: "ROMANCE", tagClass: "warn",
+        require: s => s.flags.maya && s.bonds.maya >= 3,
+        effect: s => { s.romance = "maya"; },
+        next: "romance_maya" },
+      { label: "Follow Ren", tag: "ROMANCE", tagClass: "warn",
+        require: s => s.bonds.ren >= 3,
+        effect: s => { s.romance = "ren"; },
+        next: "romance_ren" },
+      { label: "Sit with the fire. Sleep alone.",
+        effect: s => { s.hp = s.hpMax; s.stam = s.stamMax; Game.toast("Rested"); },
+        next: "horde_warning" },
+    ]
+  },
+
+  romance_maya: {
+    scene: "intimate_bedroom",
+    sceneClass: "indoor",
+    chapter: "Day 4 — Maya's tent",
+    speaker: "Maya",
+    text: "Inside, she stops you with a hand on your chest. Not pushing. Just feeling.\n\n\"I'm not — I don't do soft. Not anymore. But I want this.\" Her voice is rougher than you've heard it. \"Tell me you do too.\"\n\nYou tell her.\n\nShe pulls you in, and the rest of the world goes quiet — the camp, the fence, the dead in the dark. Just her hands, your mouth, the small breath she lets out when you find the place at her throat where the muscle softens.\n\n*Later, the lantern out, her head on your shoulder.*",
+    choices: [
+      { label: "\"Don't disappear in the morning.\"",
+        effect: s => { s.bonds.maya += 3; s.flags.lovedMaya = true; },
+        next: "morning_after_maya" },
+      { label: "Kiss her temple. Let her sleep.",
+        effect: s => { s.bonds.maya += 2; s.flags.lovedMaya = true; },
+        next: "morning_after_maya" },
+    ]
+  },
+
+  romance_ren: {
+    scene: "intimate_bedroom",
+    sceneClass: "indoor",
+    chapter: "Day 4 — Ren's medbay",
+    speaker: "Ren",
+    text: "They light a single candle. Their hands shake — not from fear. From wanting.\n\n\"I haven't — since. I wasn't sure I still could.\" A small, embarrassed laugh. \"Be patient with me.\"\n\nYou take their hand and lay it flat against your chest, over your heart. Let them feel it.\n\nWhat happens next is slow. Slow as snow. Their mouth on yours, your fingers in their hair, both of you learning how to be this human again. After, they cry a little. They laugh through it. They thank you, which breaks something in you in a good way.\n\n*The candle gutters. Their breathing evens out against your ribs.*",
+    choices: [
+      { label: "\"I've got you.\"",
+        effect: s => { s.bonds.ren += 3; s.flags.lovedRen = true; },
+        next: "morning_after_ren" },
+      { label: "Hold them till the candle dies",
+        effect: s => { s.bonds.ren += 2; s.flags.lovedRen = true; },
+        next: "morning_after_ren" },
+    ]
+  },
+
+  morning_after_maya: {
+    scene: "greenbelt_morning",
+    sceneClass: "forest",
+    chapter: "Day 5 — Pre-dawn",
+    speaker: "Maya",
+    text: "She's already dressed when you wake. Rifle slung. She kisses the corner of your mouth like it's the most natural thing in the world.\n\n\"Whatever happens today,\" she says, \"I'm glad I met you in that stairwell.\"\n\nThe siren starts.",
+    choices: [
+      { label: "\"Together.\"", next: "horde_warning" },
+    ]
+  },
+
+  morning_after_ren: {
+    scene: "greenbelt_morning",
+    sceneClass: "forest",
+    chapter: "Day 5 — Pre-dawn",
+    speaker: "Ren",
+    text: "They wake you with coffee. Their hair is doing something unholy. They look at you like you're a small impossible thing.\n\n\"Don't die today,\" they say. \"I just got you.\"\n\nThe siren starts.",
+    choices: [
+      { label: "\"You either.\"", next: "horde_warning" },
     ]
   },
 
@@ -353,9 +712,12 @@ window.Story = {
     ]
   },
 
-  ending_final_hero: { art: "🌅", sceneClass: "forest", chapter: "Ending A — Defender", text: "You chose to stand. You chose to matter.\n\nThanks for playing Dead Light.", choices: [{ label: "Back to title", next: "__title__" }] },
-  ending_final_fallen: { art: "🕯️", sceneClass: "blood", chapter: "Ending B — Martyr", text: "You gave everything. They remember.\n\nThanks for playing Dead Light.", choices: [{ label: "Back to title", next: "__title__" }] },
-  ending_final_escape: { art: "🌲", sceneClass: "forest", chapter: "Ending C — Survivor", text: "You chose to keep walking. For yourself. For them.\n\nThanks for playing Dead Light.", choices: [{ label: "Back to title", next: "__title__" }] },
+  ending_final_hero:        { scene: "ending_dawn",  sceneClass: "forest", chapter: "Ending A — Defender",  text: "You chose to stand. You chose to matter.\n\nThanks for playing Dead Light.", choices: [{ label: "Back to title", next: "__title__" }] },
+  ending_final_fallen:      { scene: "ending_grave", sceneClass: "blood",  chapter: "Ending B — Martyr",    text: "You gave everything. They remember.\n\nThanks for playing Dead Light.",       choices: [{ label: "Back to title", next: "__title__" }] },
+  ending_final_escape:      { scene: "ending_road",  sceneClass: "forest", chapter: "Ending C — Survivor",  text: "You chose to keep walking. For yourself. For them.\n\nThanks for playing Dead Light.", choices: [{ label: "Back to title", next: "__title__" }] },
+  ending_final_lovers:      { scene: "ending_dawn",  sceneClass: "forest", chapter: "Ending D — Lovers, Saved", text: "You held the wall. You found someone worth holding the wall for.\n\nThanks for playing Dead Light.", choices: [{ label: "Back to title", next: "__title__" }] },
+  ending_final_loverlost:   { scene: "ending_grave", sceneClass: "blood",  chapter: "Ending E — Lover Lost", text: "You loved them. You lost them. You loved them anyway.\n\nThanks for playing Dead Light.", choices: [{ label: "Back to title", next: "__title__" }] },
+  ending_final_lovers_road: { scene: "ending_road",  sceneClass: "forest", chapter: "Ending F — Lovers, Walking", text: "Twenty people. One light. One hand in yours.\n\nThanks for playing Dead Light.", choices: [{ label: "Back to title", next: "__title__" }] },
 
   death: {
     art: "💀",

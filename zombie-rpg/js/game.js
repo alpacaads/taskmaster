@@ -110,7 +110,8 @@ window.Game = (function () {
     document.getElementById("scene-chapter").textContent = node.chapter || "";
 
     // Narrative
-    document.getElementById("speaker").textContent = node.speaker || "";
+    const speaker = typeof node.speaker === "function" ? node.speaker(state) : node.speaker;
+    document.getElementById("speaker").textContent = speaker || "";
     const text = typeof node.text === "function" ? node.text(state) : node.text;
     document.getElementById("story-text").textContent = text || "";
 
@@ -151,7 +152,10 @@ window.Game = (function () {
     else if (state.hp < before.hp)   Sound.play("damage");
     else                             Sound.play("click");
 
-    if (c.next) goto(c.next);
+    if (c.next) {
+      const nextId = typeof c.next === "function" ? c.next(state) : c.next;
+      goto(nextId);
+    }
   }
 
   function updateHud() {
