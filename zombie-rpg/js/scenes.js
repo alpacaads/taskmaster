@@ -518,11 +518,13 @@ window.Scenes = (function () {
 
     meet_maya: () => imageScene(
       "cinematic still from a post-apocalyptic survival horror video game, " +
-      "two survivors meeting on a dark abandoned city street at night, " +
-      "single broken streetlamp casting moody yellow light, fog, ruined cars, " +
-      "dramatic chiaroscuro lighting, gritty photorealistic, " +
-      "in the style of The Last of Us, 16:9 widescreen, no text",
-      { seed: 1042 }
+      "tense first meeting between two strangers in a dim concrete stairwell " +
+      "of a rundown apartment building at night, a tough woman in a faded " +
+      "army jacket cautiously holding out a crowbar toward a wary man with " +
+      "a flashlight, dust suspended in the flashlight beam, peeling paint, " +
+      "dripping water, claustrophobic, moody chiaroscuro lighting, " +
+      "photorealistic, in the style of The Last of Us, 16:9 widescreen, no text",
+      { seed: 2206 }
     ),
 
     alone_street: () => BG.nightStreet() +
