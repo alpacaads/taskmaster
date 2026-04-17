@@ -23,11 +23,28 @@ window.Game = (function () {
 
   let state = DEFAULT_STATE();
 
+  let preloadHandle = null;
+  function startPreload() {
+    if (preloadHandle || !window.Scenes || !Scenes.preloadAll) return;
+    preloadHandle = Scenes.preloadAll({
+      delayMs: 2000,
+      onProgress: ({ done, failed, total, finished }) => {
+        const el = document.getElementById("preload-bar");
+        const totalPrompts = Object.keys(Scenes.PROMPTS).length;
+        if (!el) return;
+        if (finished) { el.classList.add("hidden"); return; }
+        el.classList.remove("hidden");
+        el.textContent = `scene art loading ${done}/${totalPrompts}`;
+      },
+    });
+  }
+
   function startNew() {
     state = DEFAULT_STATE();
     Sound.init(); Sound.play("select");
     show("game-screen");
     hide("title-screen");
+    startPreload();
     goto("intro");
   }
 
@@ -39,6 +56,7 @@ window.Game = (function () {
       Sound.init(); Sound.play("select");
       show("game-screen");
       hide("title-screen");
+      startPreload();
       goto(state.node || "intro");
     } catch (e) {
       toast("Save corrupted");

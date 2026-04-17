@@ -897,6 +897,43 @@ window.Scenes = (function () {
       `</div>`;
   }
 
-  return { render, renderSVG, SCENES, PROMPTS };
+  // Preload all scene images in the background, spaced out to avoid
+  // rate limits. By the time the player reaches each scene, the image
+  // is typically already in the browser HTTP cache.
+  function preloadAll({ delayMs = 1500, onProgress } = {}) {
+    const ids = Object.keys(PROMPTS);
+    let done = 0, failed = 0;
+    let cancelled = false;
+    function next() {
+      if (cancelled) return;
+      if (ids.length === 0) {
+        if (onProgress) onProgress({ done, failed, total: done + failed, finished: true });
+        return;
+      }
+      const id = ids.shift();
+      const seed = hashSeed(id);
+      const prompt = PROMPTS[id] + STYLE_SUFFIX;
+      const url = imageURL(prompt, { seed, model: "flux" });
+      const img = new Image();
+      img.decoding = "async";
+      let settled = false;
+      function settle(ok) {
+        if (settled) return;
+        settled = true;
+        if (ok) done++; else failed++;
+        if (onProgress) onProgress({ done, failed, total: done + failed, id, ok });
+        setTimeout(next, delayMs);
+      }
+      img.onload  = () => settle(true);
+      img.onerror = () => settle(false);
+      img.src = url;
+      // Hard timeout so one slow image doesn't stall the queue
+      setTimeout(() => settle(false), 45000);
+    }
+    next();
+    return { cancel: () => { cancelled = true; } };
+  }
+
+  return { render, renderSVG, preloadAll, SCENES, PROMPTS };
 })();
 
