@@ -566,6 +566,79 @@ window.Scenes = (function () {
       child(238, 178, { tone: "pale", flip: true }) +
       survivor(265, 178, { tone: "pale" }),
 
+    camp_kitchen: () => BG.camp() +
+      `<rect x="170" y="155" width="60" height="20" fill="#3a2818" rx="2"/>
+       <ellipse cx="200" cy="155" rx="22" ry="6" fill="#1a1208"/>
+       <ellipse cx="200" cy="150" rx="14" ry="4" fill="#2a3a44" opacity="0.5"/>` +
+      survivor(140, 178, { tone: "fire" }) +
+      survivor(260, 178, { tone: "fire", build: "f", jacket: "#2a3024", flip: true }),
+
+    perimeter: () => BG.fenceForest() +
+      `<rect x="80" y="60" width="40" height="100" fill="#1a1208" stroke="#2a1c10" stroke-width="2"/>
+       <rect x="78" y="58" width="44" height="6" fill="#3a2818"/>
+       <line x1="100" y1="160" x2="100" y2="60" stroke="#2a1c10" stroke-width="1"/>` +
+      survivor(100, 80, { scale: 0.6, tone: "cool" }) +
+      survivor(220, 178, { tone: "cool" }) +
+      survivor(280, 178, { tone: "cool", build: "f", jacket: "#2a3024", flip: true }),
+
+    briefing_tent: () => `<rect width="400" height="200" fill="#0d0a06"/>
+      <polygon points="0,200 400,200 400,40 200,15 0,40" fill="#231609"/>
+      <polygon points="0,200 400,200 400,50 200,25 0,50" fill="#1a0f06" opacity="0.6"/>
+      <rect x="180" y="120" width="40" height="55" fill="#1a1208" rx="2"/>
+      <rect x="178" y="115" width="44" height="8" fill="#3a2818"/>
+      <ellipse cx="200" cy="100" rx="80" ry="40" fill="url(#lampGlow)" opacity="0.5"/>
+      ${survivor(120, 178, { tone: "warm" })}
+      ${survivor(280, 178, { tone: "warm", flip: true, jacket: "#2a2418" })}`,
+
+    hospital_ext: () => `<rect width="400" height="200" fill="url(#skyDusk)"/>
+      ${ruinedBuilding(60, 30, 280, 130, { tone: "#15110b" })}
+      <rect x="170" y="120" width="60" height="40" fill="#0a0805"/>
+      <rect x="172" y="115" width="56" height="6" fill="#5a1818"/>
+      <text x="200" y="108" text-anchor="middle" font-size="9" fill="#7a2020" font-family="serif">+</text>
+      <rect y="160" width="400" height="40" fill="#0a0604"/>
+      ${survivor(140, 178, { tone: "warm" })}
+      ${survivor(180, 178, { tone: "warm", build: "f", jacket: "#2a3024", flip: true })}`,
+
+    hospital_lobby: () => `<rect width="400" height="200" fill="#0a0c10"/>
+      <rect y="0" width="400" height="160" fill="#10141a"/>
+      <rect y="160" width="400" height="40" fill="#06080a"/>
+      <rect x="40" y="90" width="320" height="6" fill="#1a2028"/>
+      <rect x="60" y="96" width="40" height="40" fill="#1a2028"/>
+      <rect x="120" y="96" width="40" height="40" fill="#1a2028"/>
+      <rect x="240" y="96" width="40" height="40" fill="#1a2028"/>
+      <rect x="300" y="96" width="40" height="40" fill="#1a2028"/>
+      <rect x="180" y="40" width="40" height="50" fill="#0a0c10" stroke="#2a3038"/>
+      <ellipse cx="200" cy="80" rx="100" ry="35" fill="url(#lampGlow)" opacity="0.3"/>
+      ${survivor(160, 178, { tone: "cool" })}
+      ${survivor(240, 178, { tone: "cool", build: "f", jacket: "#2a3024", flip: true })}`,
+
+    pharmacy_fight: () => BG.grocery() +
+      zombie(160, 178, { tone: "cool", variant: "walker" }) +
+      zombie(220, 178, { tone: "cool", variant: "runner", flip: true }) +
+      survivor(80, 178, { tone: "cool" }),
+
+    gate_ajar_night: () => BG.fenceForest() +
+      `<g transform="translate(170,155) rotate(-22 0 -90)">
+         <rect x="-4" y="-90" width="3" height="90" fill="#241c12"/>
+         <rect x="60" y="-90" width="3" height="90" fill="#241c12"/>
+         ${"".concat(...Array.from({length: 12}, (_, i) =>
+           `<line x1="0" y1="${-i*7}" x2="60" y2="${-i*7}" stroke="#3a2c1c" stroke-width="0.5"/>` +
+           `<line x1="${i*5}" y1="0" x2="${i*5}" y2="-84" stroke="#3a2c1c" stroke-width="0.5"/>`))}
+       </g>` +
+      survivor(280, 178, { tone: "cool" }),
+
+    confront_traitor: () => BG.fenceForest() +
+      survivor(140, 178, { tone: "cool" }) +
+      survivor(260, 178, { tone: "cool", flip: true, jacket: "#3a2820" }),
+
+    rooftop_dawn: () => BG.bloodDawn() +
+      `<polygon points="0,200 400,200 400,140 0,140" fill="#1a1208"/>
+       <rect x="0" y="140" width="400" height="6" fill="#2a1c10"/>
+       <rect x="80" y="100" width="20" height="40" fill="#1a1208"/>
+       <rect x="320" y="80" width="20" height="60" fill="#1a1208"/>` +
+      survivor(180, 140, { tone: "fire" }) +
+      survivor(220, 140, { tone: "fire", build: "f", jacket: "#2a3024", flip: true }),
+
     death: () => `<rect width="400" height="200" fill="#0a0404"/>
       <rect width="400" height="200" fill="url(#bloodHaze)"/>
       <ellipse cx="200" cy="180" rx="80" ry="8" fill="#3a0808"/>

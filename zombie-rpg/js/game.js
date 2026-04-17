@@ -13,6 +13,8 @@ window.Game = (function () {
     companion2: null,
     node: "intro",
     flags: {},
+    bonds: { maya: 0, ren: 0 },
+    romance: null,
     inventory: [
       { id: "crowbar", name: "🔧 Crowbar", desc: "Dependable. Heavy." },
       { id: "bandages", name: "🩹 Bandages", desc: "For the small cuts.", qty: 2 },
