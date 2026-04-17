@@ -246,12 +246,18 @@ window.Scenes = (function () {
     const { size = 44, anim = "breathe", flip = false, dim = false } = opts;
     const sx = flip ? -1 : 1;
     const opacity = dim ? 0.85 : 1;
-    const style = "filter: drop-shadow(0 2px 3px rgba(0,0,0,0.75)); font-family: 'Apple Color Emoji','Segoe UI Emoji','Noto Color Emoji',sans-serif;";
-    return `<g class="char anim-${anim}" transform="translate(${x},${y})">
-      <ellipse cx="0" cy="2" rx="${size*0.4}" ry="${size*0.08}" fill="#000" opacity="0.55"/>
-      <g transform="scale(${sx},1)" opacity="${opacity}">
-        <text x="0" y="0" font-size="${size}" text-anchor="middle" style="${style}">${glyph}</text>
-      </g>
+    const fox = x - size, foy = y - size;
+    const w = size * 2, h = size * 1.15;
+    const divStyle =
+      `font-size:${size}px;line-height:1;text-align:center;` +
+      `transform:scaleX(${sx});transform-origin:center bottom;` +
+      `filter:drop-shadow(0 2px 3px rgba(0,0,0,0.75));opacity:${opacity};` +
+      `font-family:'Apple Color Emoji','Segoe UI Emoji','Noto Color Emoji',sans-serif;`;
+    return `<g class="char anim-${anim}">
+      <ellipse cx="${x}" cy="${y+2}" rx="${size*0.4}" ry="${size*0.08}" fill="#000" opacity="0.55"/>
+      <foreignObject x="${fox}" y="${foy}" width="${w}" height="${h}">
+        <div xmlns="http://www.w3.org/1999/xhtml" style="${divStyle}">${glyph}</div>
+      </foreignObject>
     </g>`;
   }
 
