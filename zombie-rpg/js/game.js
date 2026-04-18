@@ -25,18 +25,9 @@ window.Game = (function () {
 
   let preloadHandle = null;
   function startPreload() {
-    if (preloadHandle || !window.Scenes || !Scenes.preloadAll) return;
-    preloadHandle = Scenes.preloadAll({
-      delayMs: 2000,
-      onProgress: ({ done, failed, total, finished }) => {
-        const el = document.getElementById("preload-bar");
-        const totalPrompts = Object.keys(Scenes.PROMPTS).length;
-        if (!el) return;
-        if (finished) { el.classList.add("hidden"); return; }
-        el.classList.remove("hidden");
-        el.textContent = `scene art loading ${done}/${totalPrompts}`;
-      },
-    });
+    // Disabled: we serve local committed images, no Pollinations preload needed.
+    // Preloading was saturating Safari's connection pool and blocking local
+    // image loads.
   }
 
   function startNew() {
