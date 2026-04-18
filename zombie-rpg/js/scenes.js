@@ -729,10 +729,13 @@ window.Scenes = (function () {
     "in the style of The Last of Us video game, gritty, 16:9 widescreen, " +
     "highly detailed, no text, no logo, no watermark";
 
-  // Absolute base for committed scene images. We use GitHub's raw content
-  // server directly so there's no third-party CDN caching layer to fight.
-  const IMG_BASE = "https://raw.githubusercontent.com/alpacaads/taskmaster/claude/zombie-rpg-game-lyC6D/zombie-rpg/images/";
-  const IMG_CACHE_KEY = "23";
+  // Absolute base for committed scene images. rawcdn.githack.com is a
+  // production CDN for GitHub assets that strips the sandbox CSP header
+  // GitHub adds to raw.githubusercontent.com (which Safari blocks).
+  // Uses the branch name here — rawcdn caches for 1 year per URL, and
+  // we push a new commit each time game code changes anyway.
+  const IMG_BASE = "https://rawcdn.githack.com/alpacaads/taskmaster/claude/zombie-rpg-game-lyC6D/zombie-rpg/images/";
+  const IMG_CACHE_KEY = "26";
   const PROMPTS = {
     intro:               "ruined city skyline at night, military helicopter flying away into the distance, abandoned skyscrapers, smoke rising, broken cars on the street, lone hooded survivor watching from a rooftop, faint moonlight",
     apt_hallway:         "dark narrow apartment building hallway at night, single flickering ceiling bulb, dried blood streak on the floor leading away, peeling wallpaper, ajar door with chain dangling, claustrophobic horror atmosphere",
