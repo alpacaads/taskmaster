@@ -302,7 +302,7 @@ window.Story = {
     art: "⛺🔥🍲",
     sceneClass: "forest",
     chapter: "Day 3 — Greenbelt Camp",
-    text: "Inside: tents, solar lamps, the smell of stew. A radio crackles weather reports.\n\nA medic with calm hands and a quiet voice bandages your arm. \"You're lucky. Most don't make it this far. I'm Ren.\"\n\nA woman in tactical kit nods at you across the fire — Captain Vega. \"Eat. Sleep. We talk in the morning.\"",
+    text: "Inside: tents, solar lamps, the smell of stew. A radio crackles weather reports.\n\nA young woman with calm hands and a quiet voice bandages your arm. \"You're lucky. Most don't make it this far. I'm Ren.\"\n\nAcross the fire, another woman in tactical kit nods at you — Captain Vega. \"Eat. Sleep. We talk in the morning.\"",
     choices: [
       { label: "Sleep. Tomorrow is another day.",
         effect: s => { s.hp = s.hpMax; s.stam = s.stamMax; Game.toast("❤️ ⚡ restored"); },
@@ -380,7 +380,7 @@ window.Story = {
         require: s => s.flags.maya,
         effect: s => { s.flags.missionPartner = "maya"; },
         next: "mission_journey" },
-      { label: "Take Ren — they know what to grab",
+      { label: "Take Ren — she knows what to grab",
         effect: s => { s.flags.missionPartner = "ren"; },
         next: "mission_journey" },
       { label: "Go alone. Less mouths, less risk.",
@@ -417,7 +417,7 @@ window.Story = {
         return "Maya finds you in the smoke, blood on her sleeve and most of it not hers. She presses her forehead to yours and breathes out — a long, shaking exhale. Alive. Both of you. Alive.";
       }
       if (s.romance === "ren" && s.flags.lovedRen) {
-        return "Ren is already at work — bandaging, splinting, refusing to look at the bodies on the fence. When you reach them they don't speak. They just bury their face in your shoulder and stay there for a long time.";
+        return "Ren is already at work — bandaging, splinting, refusing to look at the bodies on the fence. When you reach her she doesn't speak. She just buries her face in your shoulder and stays there for a long time.";
       }
       return "The horde is a still field. The fence holds. Someone is laughing through tears. A child finds your hand.";
     },
@@ -437,7 +437,7 @@ window.Story = {
         return "Maya carries you to the back of the camp when your legs give out. She's saying something — your name, over and over. The world dims softly, like a lantern turned down.\n\nShe holds your hand until it's cold.";
       }
       if (s.romance === "ren" && s.flags.lovedRen) {
-        return "Ren sings the song. The one their grandmother taught them. They sing it the whole way through, and then again, and then once more.\n\nYou hear all three.";
+        return "Ren sings the song. The one her grandmother taught her. She sings it the whole way through, and then again, and then once more.\n\nYou hear all three.";
       }
       return "They'll say you held the line longer than any one person should. They'll carve your name beside the others.";
     },
@@ -457,7 +457,7 @@ window.Story = {
         return "Twenty survivors follow your light through the pines. Maya walks beside you, her hand finding yours in the dark. Neither of you lets go.";
       }
       if (s.romance === "ren" && s.flags.lovedRen) {
-        return "Ren walks at the back, helping the slow ones. When you look over your shoulder, they look up at you and smile — small and certain.";
+        return "Ren walks at the back, helping the slow ones. When you look over your shoulder, she looks up at you and smiles — small and certain.";
       }
       if (s.companion2 === "Nora") {
         return "Nora's hand is sticky in yours. She doesn't ask where you're going. None of them do. They follow your light.";
@@ -480,7 +480,7 @@ window.Story = {
         return "Maya walks point. Three steps ahead, eyes everywhere. The pines thin into a service road.\n\n\"You ever miss anything from before?\" she asks, not turning around.";
       }
       if (s.flags.missionPartner === "ren") {
-        return "Ren keeps pace beside you. They hum, low — a song you almost recognise.\n\n\"My grandmother used to sing it,\" they say when they catch you listening. \"It's the only thing of hers I have left.\"";
+        return "Ren keeps pace beside you. She hums, low — a song you almost recognise.\n\n\"My grandmother used to sing it,\" she says when she catches you listening. \"It's the only thing of hers I have left.\"";
       }
       return "You walk alone. Every shadow is a question. Every step is loud.";
     },
@@ -543,7 +543,7 @@ window.Story = {
         return "You drop into a row of waiting chairs. Maya sits beside you — not touching, but close.\n\n\"You handle yourself. I noticed.\"\n\nA streetlight, somehow still alive, hums outside. She hasn't looked away from you.";
       }
       if (s.flags.missionPartner === "ren") {
-        return "Ren is shaking. They sit on the floor, back to a vending machine, knees up.\n\n\"I hate this part. After. When my hands remember.\"\n\nYou sit beside them. Their breath slows when you do.";
+        return "Ren is shaking. She sits on the floor, back to a vending machine, knees up.\n\n\"I hate this part. After. When my hands remember.\"\n\nYou sit beside her. Her breath slows when you do.";
       }
       return "You sit alone in the dark. Stuff a backpack with what you came for. The hospital exhales around you — old breath, no life.";
     },
@@ -555,11 +555,11 @@ window.Story = {
       { label: "Keep it professional. Stand up.",
         require: s => s.flags.missionPartner === "maya",
         next: "mission_return" },
-      { label: "Take their hand. Say nothing.",
+      { label: "Take her hand. Say nothing.",
         require: s => s.flags.missionPartner === "ren",
         effect: s => { s.bonds.ren += 2; Game.toast("Ren's trust +2"); },
         next: "mission_return" },
-      { label: "Give them space. Pack the bag.",
+      { label: "Give her space. Pack the bag.",
         require: s => s.flags.missionPartner === "ren",
         next: "mission_return" },
       { label: "Pack and leave",
@@ -619,7 +619,7 @@ window.Story = {
       const m = s.bonds.maya, r = s.bonds.ren;
       let lines = "The fire burns low. Most of the camp has turned in. Two figures linger.\n\n";
       if (s.flags.maya && m >= 3) lines += "Maya catches your eye and tilts her head — toward her tent.\n";
-      if (r >= 3) lines += "Ren leaves their guitar against the log when they stand. They wait, looking at you.\n";
+      if (r >= 3) lines += "Ren leaves her guitar against the log when she stands. She waits, looking at you.\n";
       if ((!s.flags.maya || m < 3) && r < 3) lines += "You sit alone with the dying flames.\n";
       return lines;
     },
@@ -659,12 +659,12 @@ window.Story = {
     sceneClass: "indoor",
     chapter: "Day 4 — Ren's medbay",
     speaker: "Ren",
-    text: "They light a single candle. Their hands shake — not from fear. From wanting.\n\n\"I haven't — since. I wasn't sure I still could.\" A small, embarrassed laugh. \"Be patient with me.\"\n\nYou take their hand and lay it flat against your chest, over your heart. Let them feel it.\n\nWhat happens next is slow. Slow as snow. Their mouth on yours, your fingers in their hair, both of you learning how to be this human again. After, they cry a little. They laugh through it. They thank you, which breaks something in you in a good way.\n\n*The candle gutters. Their breathing evens out against your ribs.*",
+    text: "She lights a single candle. Her hands shake — not from fear. From wanting.\n\n\"I haven't — since. I wasn't sure I still could.\" A small, embarrassed laugh. \"Be patient with me.\"\n\nYou take her hand and lay it flat against your chest, over your heart. Let her feel it.\n\nWhat happens next is slow. Slow as snow. Her mouth on yours, your fingers in her hair, both of you learning how to be this human again. After, she cries a little. She laughs through it. She thanks you, which breaks something in you in a good way.\n\n*The candle gutters. Her breathing evens out against your ribs.*",
     choices: [
       { label: "\"I've got you.\"",
         effect: s => { s.bonds.ren += 3; s.flags.lovedRen = true; },
         next: "morning_after_ren" },
-      { label: "Hold them till the candle dies",
+      { label: "Hold her till the candle dies",
         effect: s => { s.bonds.ren += 2; s.flags.lovedRen = true; },
         next: "morning_after_ren" },
     ]
@@ -686,7 +686,7 @@ window.Story = {
     sceneClass: "forest",
     chapter: "Day 5 — Pre-dawn",
     speaker: "Ren",
-    text: "They wake you with coffee. Their hair is doing something unholy. They look at you like you're a small impossible thing.\n\n\"Don't die today,\" they say. \"I just got you.\"\n\nThe siren starts.",
+    text: "She wakes you with coffee. Her hair is doing something unholy. She looks at you like you're a small impossible thing.\n\n\"Don't die today,\" she says. \"I just got you.\"\n\nThe siren starts.",
     choices: [
       { label: "\"You either.\"", next: "horde_warning" },
     ]

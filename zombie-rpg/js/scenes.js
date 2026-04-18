@@ -349,7 +349,7 @@ window.Scenes = (function () {
     const { scale = 1, flip = false, anim = "breathe", build = "m", named = null } = opts;
     let glyph = build === "f" ? "🧍‍♀️" : "🧍";
     if (named === "maya")  glyph = "👩‍🦰";
-    if (named === "ren")   glyph = "🧑‍⚕️";
+    if (named === "ren")   glyph = "👩‍⚕️";
     if (named === "vega")  glyph = "👩‍✈️";
     if (named === "ellis") glyph = "🧑";
     return emojiChar(x, y, glyph, { size: 50 * scale, anim, flip });
@@ -758,7 +758,7 @@ window.Scenes = (function () {
     greenbelt_gate_hero: "tall razor-wire fence at the edge of a forest, exhausted survivor carrying a sleeping young girl on their back approaching a fortified gate, female guard lowering her rifle, warm dusk light, emotional moment",
     greenbelt_in:        "fortified survivor camp at dusk inside a pine forest, canvas tents, central bonfire with stew pot, solar lanterns hanging from ropes, calm community of weary survivors, smoke rising, hope amid ruin, painterly",
     camp_morning:        "fortified survivor camp at sunrise in pine forest, woman captain in tactical gear handing a steaming mug of coffee to a survivor, mist rising, golden hour light, hopeful peaceful moment",
-    chore_medbay:        "improvised medbay inside a converted shipping container, calm medic stitching a small child's knee while another survivor assists, antiseptic supplies on shelves, acoustic guitar in corner, warm lamp light, intimate quiet moment",
+    chore_medbay:        "improvised medbay inside a converted shipping container, calm gentle young woman medic with dark hair tending a small child's bandaged knee while another survivor assists, antiseptic supplies on shelves, acoustic guitar in corner, warm lamp light, intimate quiet caring moment",
     chore_perimeter:     "two survivors on a wooden watchtower at the perimeter of a forest camp, woman in army jacket gripping a rifle scanning the treeline, the other handing her a coffee, golden morning light filtering through pines, quiet companionship",
     chore_kitchen:       "communal outdoor camp kitchen at sunrise, survivor peeling potatoes over a battered iron pot on a campfire, other survivors chatting around tents, warm sunrise light, slice of life moment in the apocalypse",
     chore_done:          "interior of a tactical command tent at dusk, female captain in fatigues spreading a hand-drawn map across a folding table, lit by a hurricane lamp, two survivors leaning in to study a marked hospital, mission briefing, intense focus",
@@ -773,7 +773,7 @@ window.Scenes = (function () {
     romance_maya:        "intimate emotional moment in a dimly lit canvas tent at night, a man and a red-haired woman in an army jacket facing each other very close, her hand on his chest, candlelight glow, soft focus, suggestive but tasteful, deep emotional tone",
     romance_ren:         "intimate emotional moment in a small medbay at night, a single candle on a metal table, two figures sitting close on a cot, hands touching tenderly, soft warm candlelight, suggestive but tasteful, deep emotional tone, vulnerable",
     morning_after_maya:  "soft pre-dawn light inside a canvas tent, a red-haired woman in fatigues kissing a man on the corner of his mouth, a rifle slung over her shoulder, gentle warm light, tender quiet moment before danger",
-    morning_after_ren:   "soft pre-dawn light inside a small medbay, gentle medic with messy hair handing a steaming mug of coffee to a survivor still in bed, warm intimate moment, soft focus, painterly",
+    morning_after_ren:   "soft pre-dawn light inside a small medbay, young woman medic with messy dark hair handing a steaming mug of coffee to a survivor still in a cot, warm intimate moment, soft focus, painterly",
     horde_warning:       "ominous massive zombie horde at pre-dawn, hundreds of silhouetted shambling figures advancing down an abandoned highway toward a fortified survivor camp, blood red sky, smoke, dread, wide cinematic shot",
     post_horde_win:      "blood-red dawn after a battle, fortified survivor camp behind a battered chainlink fence, smoking bodies of fallen zombies in a field, weary survivors embracing on the wall, hope amid devastation, cinematic emotional",
     post_horde_lose:     "somber sunset memorial scene, simple wooden grave markers in a forest clearing beside a battered survivor camp, lone mourner kneeling, flickering candles in jars, soft golden light, deep grief and quiet reverence",
