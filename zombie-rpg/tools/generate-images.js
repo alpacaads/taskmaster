@@ -110,6 +110,10 @@ async function generate(id, prompt) {
 
 const sleep = (ms) => new Promise(r => setTimeout(r, ms));
 
+// Don't let unhandled errors abort the whole run — log + continue.
+process.on("unhandledRejection", (e) => console.error("unhandledRejection:", e && e.message));
+process.on("uncaughtException",  (e) => console.error("uncaughtException:",  e && e.message));
+
 (async () => {
   const ids = Object.keys(PROMPTS);
   let done = 0, skipped = 0, failed = 0;
@@ -126,10 +130,15 @@ const sleep = (ms) => new Promise(r => setTimeout(r, ms));
       console.log("OK");
     } catch (e) {
       failed++;
-      console.log("FAIL: " + e.message);
+      console.log("FAIL: " + (e && e.message ? e.message : String(e)).slice(0, 200));
     }
-    await sleep(1200); // gentle pacing for rate limits
+    await sleep(1500); // gentle pacing for rate limits
   }
   console.log(`\nDone. ${ids.length - skipped - failed} new, ${skipped} skipped, ${failed} failed.`);
   if (failed > 0) console.log("Re-run the script — failed scenes will be retried.");
-})();
+  // Always exit 0 — the workflow's commit step will pick up whatever was saved.
+  process.exit(0);
+})().catch(e => {
+  console.error("top-level:", e && e.message);
+  process.exit(0);
+});
