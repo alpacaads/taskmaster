@@ -804,17 +804,18 @@ window.Scenes = (function () {
   // 1) try local images/<scene>.png  2) try flux  3) try turbo  4) SVG fallback
   function renderImageScene(sceneId) {
     const seed = hashSeed(sceneId);
-    const prompt = PROMPTS[sceneId] + STYLE_SUFFIX;
+    const prompt = (PROMPTS[sceneId] || "post-apocalyptic atmospheric scene") + STYLE_SUFFIX;
     const localUrl = `images/${sceneId}.png?v=${IMG_CACHE_KEY}`;
     const fluxUrl  = imageURL(prompt, { seed, model: "flux" });
     const turboUrl = imageURL(prompt, { seed, model: "turbo" });
+    // Fallback chain is local -> flux -> turbo -> retry turbo with new seed.
+    // No SVG/emoji fallback by design.
     const onLoad  = "this.closest('.scene-stage').classList.add('loaded');";
     const onError =
       "var i=this; var t=i.dataset.try;" +
       "if(t==='1'){i.dataset.try='2';i.src='" + fluxUrl + "';}" +
       "else if(t==='2'){i.dataset.try='3';i.src='" + turboUrl + "';}" +
-      "else{i.closest('.scene-stage').classList.add('failed');" +
-      "if(window.Game&&Game.fallbackToSVG)Game.fallbackToSVG('" + sceneId + "');}";
+      "else if(t==='3'){i.dataset.try='4'; setTimeout(function(){ i.src='" + turboUrl + "&r='+Math.random(); }, 2000);}";
     return `<div class="scene-stage scene-image-stage">` +
       `<div class="scene-image-loading">generating scene…</div>` +
       `<img class="scene-image" alt="" data-try="1" src="${localUrl}" ` +
@@ -855,10 +856,10 @@ window.Scenes = (function () {
   // Extracts CHAR markers from the SVG body and renders characters as
   // absolutely-positioned HTML divs (so emoji always render correctly).
   function render(sceneId) {
-    // If we have an AI prompt for this scene, render an AI image (preferred).
-    if (PROMPTS[sceneId]) {
-      return renderImageScene(sceneId);
-    }
+    // Always render as an AI image scene. The fallback chain inside
+    // renderImageScene tries local PNG, then Pollinations flux, then turbo.
+    return renderImageScene(sceneId);
+    // (Old SVG composition path retained below but unreachable.)
     const fn = SCENES[sceneId];
     let body = fn ? fn() : BG.nightCity();
 

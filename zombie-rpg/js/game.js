@@ -114,12 +114,8 @@ window.Game = (function () {
     else if (nodeId === "greenbelt_in") Sound.play("radio");
     else if (nodeId === "freezer") Sound.play("door");
     const art = document.getElementById("scene-art");
-    const sceneId = resolveScene(nodeId, node);
-    if (sceneId && window.Scenes) {
-      art.innerHTML = Scenes.render(sceneId);
-    } else {
-      renderAnimatedArt(art, node.art || "");
-    }
+    const sceneId = resolveScene(nodeId, node) || nodeId;
+    art.innerHTML = Scenes.render(sceneId);
     art.classList.remove("shake");
     if (node.sceneClass === "blood") {
       void art.offsetWidth;
