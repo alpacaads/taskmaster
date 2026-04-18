@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+  <meta http-equiv="Pragma" content="no-cache" />
+  <meta http-equiv="Expires" content="0" />
+  <meta name="theme-color" content="#0b0f0a" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <title>Dead Light — A Zombie RPG</title>
+  <link rel="stylesheet" href="css/style.css?v=27" />
+</head>
+<body>
+
+  <div id="phone-frame">
+
+    <!-- Title screen -->
+    <div id="title-screen" class="screen">
+      <div class="title-bg">
+        <div class="moon">🌕</div>
+        <div class="smoke"></div>
+        <div class="ruins">🏚️ 🏢 🏚️ 🏬 🏚️</div>
+      </div>
+      <div class="title-text">
+        <h1>DEAD LIGHT</h1>
+        <p class="tagline">A survivor's tale</p>
+      </div>
+      <div class="title-actions">
+        <button class="primary-btn" onclick="Game.startNew()">▶ New Game</button>
+        <button class="secondary-btn" id="continue-btn" onclick="Game.continueGame()">Continue</button>
+        <button class="secondary-btn" onclick="Game.showCredits()">About</button>
+      </div>
+    </div>
+
+    <!-- Main game screen -->
+    <div id="game-screen" class="screen hidden">
+      <!-- HUD -->
+      <div class="hud">
+        <div class="hud-name" id="hud-name">Ellis</div>
+        <div class="hud-stats">
+          <span class="stat" title="Health">❤️ <b id="stat-hp">10</b>/<span id="stat-hpmax">10</span></span>
+          <span class="stat" title="Stamina">⚡ <b id="stat-stam">5</b>/<span id="stat-stammax">5</span></span>
+          <span class="stat" title="Ammo">🔫 <b id="stat-ammo">3</b></span>
+          <span class="stat" title="Food">🥫 <b id="stat-food">2</b></span>
+        </div>
+      </div>
+
+      <!-- Scene -->
+      <div class="scene" id="scene">
+        <div class="scene-art" id="scene-art"></div>
+        <div class="scene-chapter" id="scene-chapter"></div>
+      </div>
+
+      <!-- Narrative -->
+      <div class="narrative" id="narrative">
+        <div class="speaker" id="speaker"></div>
+        <div class="text" id="story-text"></div>
+      </div>
+
+      <!-- Choices -->
+      <div class="choices" id="choices"></div>
+
+      <!-- Footer controls -->
+      <div class="footer-controls">
+        <span id="preload-bar" class="preload-bar hidden"></span>
+        <button class="icon-btn" onclick="Game.openInventory()" title="Inventory">🎒</button>
+        <button class="icon-btn" onclick="Game.save()" title="Save">💾</button>
+        <button class="icon-btn" id="mute-btn" onclick="Game.toggleMute()" title="Mute">🔊</button>
+        <button class="icon-btn" onclick="Game.quitToTitle()" title="Quit">🚪</button>
+      </div>
+    </div>
+
+    <!-- Combat overlay -->
+    <div id="combat-screen" class="screen hidden">
+      <div class="combat-top">
+        <div class="combat-enemy">
+          <div class="enemy-art" id="enemy-art">🧟</div>
+          <div class="enemy-name" id="enemy-name">Walker</div>
+          <div class="hp-bar"><div class="hp-fill" id="enemy-hp-fill"></div></div>
+        </div>
+      </div>
+      <div class="combat-log" id="combat-log"></div>
+      <div class="combat-hero">
+        <div class="hero-art">🧍</div>
+        <div class="hero-stats">
+          <div>❤️ <span id="c-hp">10</span>/<span id="c-hpmax">10</span></div>
+          <div>⚡ <span id="c-stam">5</span></div>
+          <div>🔫 <span id="c-ammo">3</span></div>
+        </div>
+      </div>
+      <div class="combat-actions">
+        <button class="combat-btn" onclick="Combat.act('melee')">🔪 Melee</button>
+        <button class="combat-btn" onclick="Combat.act('shoot')">🔫 Shoot</button>
+        <button class="combat-btn" onclick="Combat.act('brace')">🛡️ Brace</button>
+        <button class="combat-btn" onclick="Combat.act('flee')">🏃 Flee</button>
+      </div>
+    </div>
+
+    <!-- Inventory modal -->
+    <div id="inventory-modal" class="modal hidden">
+      <div class="modal-panel">
+        <div class="modal-title">🎒 Inventory</div>
+        <div id="inv-list" class="inv-list"></div>
+        <div class="modal-actions">
+          <button class="primary-btn" onclick="Game.closeInventory()">Close</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Toast -->
+    <div id="toast" class="toast hidden"></div>
+
+    <!-- Credits -->
+    <div id="credits-modal" class="modal hidden">
+      <div class="modal-panel">
+        <div class="modal-title">About</div>
+        <p style="font-size:14px;line-height:1.5;color:#cfd3c8">
+          <b>Dead Light</b> is a short text-driven RPG inspired by survival stories
+          like <i>The Walking Dead</i> and <i>The Last of Us</i>.
+          Choose carefully — the dead don't forgive.
+        </p>
+        <div class="modal-actions">
+          <button class="primary-btn" onclick="Game.hideCredits()">Back</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <script src="js/sound.js?v=27"></script>
+  <script src="js/scenes.js?v=27"></script>
+  <script src="js/story.js?v=27"></script>
+  <script src="js/combat.js?v=27"></script>
+  <script src="js/game.js?v=27"></script>
+</body>
+</html>
