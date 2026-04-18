@@ -260,6 +260,8 @@ window.Game = (function () {
   };
   function resolveScene(nodeId, node) {
     if (node.scene) return node.scene;
+    // Prefer the node ID when we have a baked AI image for it (PROMPTS key).
+    if (window.Scenes && Scenes.PROMPTS && Scenes.PROMPTS[nodeId]) return nodeId;
     if (window.Scenes && Scenes.SCENES[nodeId]) return nodeId;
     return SCENE_ALIASES[nodeId] || null;
   }
