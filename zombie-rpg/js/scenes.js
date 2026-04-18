@@ -800,20 +800,23 @@ window.Scenes = (function () {
   }
 
   // Build the image scene element with an inline retry/fallback handler.
-  // First try flux model, then turbo, then fall back to the SVG composition.
+  // 1) try local images/<scene>.png  2) try flux  3) try turbo  4) SVG fallback
   function renderImageScene(sceneId) {
     const seed = hashSeed(sceneId);
     const prompt = PROMPTS[sceneId] + STYLE_SUFFIX;
+    const localUrl = `images/${sceneId}.png`;
     const fluxUrl  = imageURL(prompt, { seed, model: "flux" });
     const turboUrl = imageURL(prompt, { seed, model: "turbo" });
-    // Inline JS handlers walk through fallbacks on error.
     const onLoad  = "this.closest('.scene-stage').classList.add('loaded');";
-    const onError = "var i=this; if(i.dataset.try==='1'){i.dataset.try='2';i.src='" + turboUrl + "';}" +
-                    "else if(i.dataset.try==='2'){i.dataset.try='3';i.closest('.scene-stage').dataset.fallback='" + sceneId + "';" +
-                    "i.closest('.scene-stage').classList.add('failed'); if(window.Game&&Game.fallbackToSVG)Game.fallbackToSVG('" + sceneId + "');}";
+    const onError =
+      "var i=this; var t=i.dataset.try;" +
+      "if(t==='1'){i.dataset.try='2';i.src='" + fluxUrl + "';}" +
+      "else if(t==='2'){i.dataset.try='3';i.src='" + turboUrl + "';}" +
+      "else{i.closest('.scene-stage').classList.add('failed');" +
+      "if(window.Game&&Game.fallbackToSVG)Game.fallbackToSVG('" + sceneId + "');}";
     return `<div class="scene-stage scene-image-stage">` +
       `<div class="scene-image-loading">generating scene…</div>` +
-      `<img class="scene-image" alt="" data-try="1" src="${fluxUrl}" ` +
+      `<img class="scene-image" alt="" data-try="1" src="${localUrl}" ` +
       `onload="${onLoad}" onerror="${onError.replace(/"/g, '&quot;')}"/>` +
       `</div>`;
   }
