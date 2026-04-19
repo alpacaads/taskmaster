@@ -733,13 +733,27 @@ window.Scenes = (function () {
   // GitHub Pages serves them directly with correct MIME types and no
   // sandbox CSP, so relative paths work reliably.
   const IMG_BASE = "images/";
-  // Smart cache-bust: only appended after an admin commit so normal
-  // gameplay keeps using the browser's HTTP cache (fast), but the
-  // committer sees the new file immediately instead of waiting for
-  // GitHub Pages' Cache-Control: max-age=600 to expire.
-  function imgCacheBust() {
+  // Smart cache-bust: only applied to scenes the admin has marked as
+  // recently committed. Normal (unchanged) scenes keep using the
+  // browser's HTTP cache for speed.
+  //
+  // dl_committed_overrides is written by admin.html on every successful
+  // commit as { sceneId: timestampMs }. We read it here and append the
+  // scene's timestamp as ?v=... to force Safari past its 10-minute
+  // Cache-Control: max-age=600 on just that file.
+  function readCommitTimes() {
+    try { return JSON.parse(localStorage.getItem("dl_committed_overrides") || "{}") || {}; }
+    catch (e) { return {}; }
+  }
+  function globalCacheBust() {
     try { return localStorage.getItem("dl_game_cache_bust") || ""; }
     catch (e) { return ""; }
+  }
+  function imgUrlFor(sceneId) {
+    const perScene = readCommitTimes()[sceneId];
+    const global = globalCacheBust();
+    const v = perScene || global;
+    return IMG_BASE + sceneId + ".png" + (v ? "?v=" + v : "");
   }
   const PROMPTS = {
     intro:               "ruined city skyline at night, military helicopter flying away into the distance, abandoned skyscrapers, smoke rising, broken cars on the street, lone hooded survivor watching from a rooftop, faint moonlight",
@@ -822,9 +836,7 @@ window.Scenes = (function () {
     // window.__OVERRIDES[sceneId] holds an objectURL for that blob.
     // Lets you preview a new image in-game before committing it.
     const override = (window.__OVERRIDES && window.__OVERRIDES[sceneId]) || null;
-    const bust = imgCacheBust();
-    const localUrl = override
-      || `${IMG_BASE}${sceneId}.png${bust ? "?v=" + bust : ""}`;
+    const localUrl = override || imgUrlFor(sceneId);
     const onLoad  = "this.closest('.scene-stage').classList.add('loaded');";
     const onError =
       "var s=this.closest('.scene-stage');" +
@@ -844,13 +856,11 @@ window.Scenes = (function () {
   // Preload a batch of scene images in the background. Called by game.js
   // with the node's choices so the next screens are already cached.
   function preloadScenes(ids) {
-    const bust = imgCacheBust();
-    const suffix = bust ? "?v=" + bust : "";
     (ids || []).forEach(id => {
       if (!id) return;
       const img = new Image();
       img.decoding = "async";
-      img.src = IMG_BASE + id + ".png" + suffix;
+      img.src = imgUrlFor(id);
     });
   }
 

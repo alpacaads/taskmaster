@@ -247,8 +247,8 @@
   </footer>
 
   <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
-  <script src="js/overrides.js?v=39"></script>
-  <script src="js/scenes.js?v=39"></script>
+  <script src="js/overrides.js?v=40"></script>
+  <script src="js/scenes.js?v=40"></script>
   <script>
     (async function () {
       const PROMPTS = (window.Scenes && window.Scenes.PROMPTS) || {};
@@ -533,6 +533,11 @@
       // Load override blobs → objectURL map for instant thumb rendering.
       await Overrides.loadAll();
       const overrideMap = () => window.__OVERRIDES || {};
+
+      // Bump the game-side cache-bust on every admin open so any stale
+      // images in Safari's cache are force-refreshed next time the game
+      // loads. Cheap: just one extra fetch per image per admin visit.
+      bumpGameCacheBust();
 
       countEl.textContent = ids.length + " scenes";
       refreshTokenStatus();
