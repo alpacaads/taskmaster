@@ -733,7 +733,11 @@ window.Scenes = (function () {
   // GitHub Pages serves them directly with correct MIME types and no
   // sandbox CSP, so relative paths work reliably.
   const IMG_BASE = "images/";
-  const IMG_CACHE_KEY = "31";
+  // Per-page-load cache buster. Any deploy that changes a PNG needs
+  // this to be fresh, otherwise Safari can keep serving a stale 404
+  // from before the commit. Date.now() on every module load guarantees
+  // a fresh URL each time the user opens the app.
+  const IMG_CACHE_KEY = String(Date.now());
   const PROMPTS = {
     intro:               "ruined city skyline at night, military helicopter flying away into the distance, abandoned skyscrapers, smoke rising, broken cars on the street, lone hooded survivor watching from a rooftop, faint moonlight",
     apt_hallway:         "dark narrow apartment building hallway at night, single flickering ceiling bulb, dried blood streak on the floor leading away, peeling wallpaper, ajar door with chain dangling, claustrophobic horror atmosphere",
@@ -821,6 +825,8 @@ window.Scenes = (function () {
     const onError =
       "var s=this.closest('.scene-stage');" +
       "s.classList.add('loaded','error');" +
+      "var e=s.querySelector('.scene-image-error');" +
+      "if(e)e.textContent='image failed: '+this.src;" +
       "this.style.display='none';";
     return `<div class="scene-stage scene-image-stage">` +
       `<div class="scene-image-loading">loading…</div>` +
