@@ -127,6 +127,67 @@
       background: var(--panel); padding: 2px 5px; border-radius: 3px;
       color: var(--accent-2);
     }
+
+    /* Settings modal */
+    .modal-backdrop {
+      position: fixed; inset: 0; background: rgba(0,0,0,0.75);
+      z-index: 50; display: flex; align-items: center; justify-content: center;
+      padding: 20px;
+    }
+    .modal-backdrop[hidden] { display: none; }
+    .modal {
+      background: var(--panel); border: 1px solid var(--border);
+      border-radius: 10px; padding: 20px; width: 100%; max-width: 480px;
+      display: flex; flex-direction: column; gap: 12px;
+    }
+    .modal h2 { margin: 0; font-size: 16px; color: var(--accent-2); }
+    .modal p { margin: 0; font-size: 13px; color: var(--text-dim); line-height: 1.5; }
+    .modal label { font-size: 12px; color: var(--text-dim); }
+    .modal input {
+      background: #0e140a; color: var(--text);
+      border: 1px solid var(--border); border-radius: 6px;
+      padding: 8px 10px; font-size: 13px; width: 100%;
+      font-family: ui-monospace, "SF Mono", Menlo, monospace;
+    }
+    .modal-row { display: flex; gap: 8px; flex-wrap: wrap; }
+    .modal-row button, .modal-row a.btn {
+      background: var(--panel-2); color: var(--text);
+      border: 1px solid var(--border); border-radius: 6px;
+      padding: 8px 12px; font-size: 13px; cursor: pointer;
+      text-decoration: none; display: inline-flex; align-items: center;
+    }
+    .modal-row button.primary {
+      background: var(--accent); color: #0b0f0a; border-color: var(--accent);
+      font-weight: 600;
+    }
+    .token-status {
+      font-size: 12px; padding: 6px 8px; border-radius: 4px;
+    }
+    .token-status.ok { background: #1a3010; color: var(--accent-2); }
+    .token-status.missing { background: #3a1a1a; color: #e0a0a0; }
+
+    /* Toast */
+    #toast {
+      position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%);
+      background: #0e140a; border: 1px solid var(--border); color: var(--text);
+      padding: 10px 16px; border-radius: 8px; font-size: 13px;
+      z-index: 100; max-width: 90%; text-align: center;
+      box-shadow: 0 6px 24px rgba(0,0,0,0.6);
+    }
+    #toast[hidden] { display: none; }
+    #toast.ok { border-color: var(--accent); color: var(--accent-2); }
+    #toast.err { border-color: var(--danger); color: #ffb0b3; }
+
+    .card-actions button.commit {
+      background: #1a3010; color: var(--accent-2); border-color: var(--accent);
+    }
+    .card-actions button.commit:disabled {
+      opacity: 0.5; cursor: not-allowed;
+    }
+    header button.primary {
+      background: var(--accent); color: #0b0f0a; border-color: var(--accent);
+      font-weight: 600;
+    }
   </style>
 </head>
 <body>
@@ -134,23 +195,48 @@
     <h1>🧟 SCENE ADMIN</h1>
     <span class="sub" id="count">…</span>
     <input type="search" id="search" placeholder="Filter scenes…" />
-    <button id="download-all" title="Download all overrides as a single ZIP">⬇ Download all ZIP</button>
-    <button id="clear-all" title="Remove all preview overrides">Clear all overrides</button>
-    <a class="back" href="index.html">← Back to game</a>
+    <button id="commit-all" class="primary" title="Commit every override to the repo (main branch)">🚀 Commit all</button>
+    <button id="download-all" title="Download all overrides as a single ZIP">⬇ ZIP</button>
+    <button id="settings-btn" title="GitHub token settings">⚙ Settings</button>
+    <button id="clear-all" title="Remove all preview overrides">Clear</button>
+    <a class="back" href="index.html">← Game</a>
   </header>
+
+  <div class="modal-backdrop" id="settings-modal" hidden>
+    <div class="modal">
+      <h2>⚙ GitHub Settings</h2>
+      <p>Paste a GitHub <b>Fine-grained Personal Access Token</b> scoped to
+        <code>alpacaads/taskmaster</code> with <b>Contents: Read and write</b>.
+        The token is stored in this browser's localStorage only.</p>
+      <label for="gh-token">Token</label>
+      <input id="gh-token" type="password" placeholder="github_pat_..." autocomplete="off" spellcheck="false" />
+      <label for="gh-branch">Branch</label>
+      <input id="gh-branch" type="text" value="main" />
+      <div id="token-status" class="token-status missing">No token saved.</div>
+      <div class="modal-row">
+        <a class="btn" href="https://github.com/settings/personal-access-tokens/new" target="_blank" rel="noopener">Create token ↗</a>
+        <button id="gh-clear">Clear</button>
+        <button id="gh-test">Test</button>
+        <button id="gh-save" class="primary">Save</button>
+        <button id="gh-close">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast" hidden></div>
 
   <div class="grid" id="grid"></div>
 
   <footer>
     <p><b>How to use:</b></p>
     <ol>
-      <li>Click <b>Upload</b> on any scene to pick a new image.</li>
-      <li>The card updates and the new image is previewed in the game (stored locally in IndexedDB).</li>
-      <li>When you're happy, click <b>⬇ Download all ZIP</b> in the header to get every override in one file
-          (<code>images/&lt;id&gt;.png</code> inside the zip), or use per-scene <b>Download</b>.</li>
-      <li>Unzip into <code>zombie-rpg/images/</code> and commit to make it permanent.</li>
+      <li>Click <b>⚙ Settings</b> once, paste a GitHub token, Save.</li>
+      <li>Click <b>Upload</b> on any scene to pick a new image — previews live in the game.</li>
+      <li>Click <b>🚀 Commit</b> on a card (or <b>🚀 Commit all</b> in the header) to push directly to
+          <code>zombie-rpg/images/</code> on the selected branch.</li>
+      <li>GitHub Pages rebuilds in ~30–60 s — the committed image then serves to everyone.</li>
     </ol>
-    <p>Overrides live only in your browser — they never modify committed files.</p>
+    <p>No token? Use <b>⬇ ZIP</b> to download and commit manually. Everything lives locally until you commit.</p>
   </footer>
 
   <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
@@ -165,12 +251,198 @@
       const searchEl = document.getElementById("search");
       const clearAllBtn = document.getElementById("clear-all");
       const downloadAllBtn = document.getElementById("download-all");
+      const commitAllBtn = document.getElementById("commit-all");
+      const settingsBtn = document.getElementById("settings-btn");
+      const settingsModal = document.getElementById("settings-modal");
+      const toastEl = document.getElementById("toast");
+
+      // ---------- Toast ----------
+      let toastTimer = null;
+      function toast(msg, kind = "") {
+        toastEl.textContent = msg;
+        toastEl.className = kind;
+        toastEl.hidden = false;
+        clearTimeout(toastTimer);
+        toastTimer = setTimeout(() => { toastEl.hidden = true; }, 4500);
+      }
+
+      // ---------- GitHub client ----------
+      const GH = {
+        owner: "alpacaads",
+        repo: "taskmaster",
+        pathPrefix: "zombie-rpg/images/",
+        get token() { return localStorage.getItem("gh_token") || ""; },
+        set token(v) { v ? localStorage.setItem("gh_token", v) : localStorage.removeItem("gh_token"); },
+        get branch() { return localStorage.getItem("gh_branch") || "main"; },
+        set branch(v) { localStorage.setItem("gh_branch", v || "main"); },
+
+        async api(path, init = {}) {
+          const r = await fetch("https://api.github.com" + path, {
+            ...init,
+            headers: {
+              "Accept": "application/vnd.github+json",
+              "X-GitHub-Api-Version": "2022-11-28",
+              "Authorization": "Bearer " + this.token,
+              "Content-Type": "application/json",
+              ...(init.headers || {}),
+            },
+          });
+          if (!r.ok) {
+            let msg = r.status + " " + r.statusText;
+            try { const j = await r.json(); if (j.message) msg += " — " + j.message; } catch (e) {}
+            throw new Error(msg);
+          }
+          return r.status === 204 ? null : r.json();
+        },
+        async test() {
+          // Cheapest call that proves token + repo access
+          return this.api("/repos/" + this.owner + "/" + this.repo);
+        },
+        async commitFiles(items, message) {
+          // items = [{ path, blob }]
+          const ref = await this.api("/repos/" + this.owner + "/" + this.repo +
+            "/git/ref/heads/" + encodeURIComponent(this.branch));
+          const headSha = ref.object.sha;
+          const headCommit = await this.api("/repos/" + this.owner + "/" + this.repo +
+            "/git/commits/" + headSha);
+          const treeEntries = [];
+          for (const item of items) {
+            const b64 = await blobToBase64(item.blob);
+            const blob = await this.api("/repos/" + this.owner + "/" + this.repo + "/git/blobs", {
+              method: "POST",
+              body: JSON.stringify({ content: b64, encoding: "base64" }),
+            });
+            treeEntries.push({ path: item.path, mode: "100644", type: "blob", sha: blob.sha });
+          }
+          const tree = await this.api("/repos/" + this.owner + "/" + this.repo + "/git/trees", {
+            method: "POST",
+            body: JSON.stringify({ base_tree: headCommit.tree.sha, tree: treeEntries }),
+          });
+          const commit = await this.api("/repos/" + this.owner + "/" + this.repo + "/git/commits", {
+            method: "POST",
+            body: JSON.stringify({ message, tree: tree.sha, parents: [headSha] }),
+          });
+          await this.api("/repos/" + this.owner + "/" + this.repo +
+            "/git/refs/heads/" + encodeURIComponent(this.branch), {
+            method: "PATCH",
+            body: JSON.stringify({ sha: commit.sha }),
+          });
+          return commit;
+        },
+      };
+
+      function blobToBase64(blob) {
+        return new Promise((resolve, reject) => {
+          const r = new FileReader();
+          r.onload = () => resolve(r.result.split(",")[1]);
+          r.onerror = reject;
+          r.readAsDataURL(blob);
+        });
+      }
+
+      // ---------- Settings modal ----------
+      const tokenInput = document.getElementById("gh-token");
+      const branchInput = document.getElementById("gh-branch");
+      const tokenStatus = document.getElementById("token-status");
+
+      function refreshTokenStatus() {
+        if (GH.token) {
+          tokenStatus.className = "token-status ok";
+          tokenStatus.textContent = "Token saved (…" + GH.token.slice(-4) + ")   Branch: " + GH.branch;
+        } else {
+          tokenStatus.className = "token-status missing";
+          tokenStatus.textContent = "No token saved.";
+        }
+        commitAllBtn.disabled = !GH.token;
+        document.querySelectorAll(".card .commit").forEach(b => {
+          const has = b.closest(".card").classList.contains("replaced");
+          b.disabled = !GH.token || !has;
+        });
+      }
+
+      settingsBtn.addEventListener("click", () => {
+        tokenInput.value = "";
+        branchInput.value = GH.branch;
+        settingsModal.hidden = false;
+      });
+      document.getElementById("gh-close").addEventListener("click", () => settingsModal.hidden = true);
+      document.getElementById("gh-save").addEventListener("click", () => {
+        if (tokenInput.value.trim()) GH.token = tokenInput.value.trim();
+        GH.branch = branchInput.value.trim() || "main";
+        refreshTokenStatus();
+        toast("Settings saved.", "ok");
+        settingsModal.hidden = true;
+      });
+      document.getElementById("gh-clear").addEventListener("click", () => {
+        if (!confirm("Remove saved GitHub token?")) return;
+        GH.token = "";
+        tokenInput.value = "";
+        refreshTokenStatus();
+      });
+      document.getElementById("gh-test").addEventListener("click", async () => {
+        const prev = GH.token;
+        if (tokenInput.value.trim()) GH.token = tokenInput.value.trim();
+        try {
+          const repo = await GH.test();
+          toast("OK — " + repo.full_name + " (default: " + repo.default_branch + ")", "ok");
+        } catch (e) {
+          toast("Failed: " + e.message, "err");
+        } finally {
+          GH.token = prev; // don't save unless they hit Save
+        }
+      });
+
+      // ---------- Commit helpers ----------
+      async function commitOne(id) {
+        const blob = await Overrides.get(id);
+        if (!blob) { toast("No override for " + id, "err"); return; }
+        try {
+          const commit = await GH.commitFiles(
+            [{ path: GH.pathPrefix + id + ".png", blob }],
+            "Update scene image: " + id
+          );
+          toast("Committed " + id + " (" + commit.sha.slice(0, 7) + "). Pages rebuilding…", "ok");
+          return commit;
+        } catch (e) {
+          toast("Commit failed: " + e.message, "err");
+          throw e;
+        }
+      }
+
+      async function commitAll() {
+        if (!GH.token) { toast("Add a GitHub token in Settings first.", "err"); return; }
+        const items = await Overrides.list();
+        if (items.length === 0) { toast("No overrides to commit.", "err"); return; }
+        const ok = confirm("Commit " + items.length + " image(s) to " + GH.owner + "/" + GH.repo +
+          "@" + GH.branch + "?");
+        if (!ok) return;
+        commitAllBtn.disabled = true;
+        const prevText = commitAllBtn.textContent;
+        commitAllBtn.textContent = "Committing…";
+        try {
+          const files = items.map(({ id, blob }) => ({ path: GH.pathPrefix + id + ".png", blob }));
+          const ids = items.map(i => i.id);
+          const msg = ids.length === 1
+            ? "Update scene image: " + ids[0]
+            : "Update scene images: " + ids.join(", ");
+          const commit = await GH.commitFiles(files, msg);
+          toast("Committed " + items.length + " file(s) (" + commit.sha.slice(0, 7) + "). Pages rebuilding…", "ok");
+        } catch (e) {
+          toast("Commit failed: " + e.message, "err");
+        } finally {
+          commitAllBtn.disabled = !GH.token;
+          commitAllBtn.textContent = prevText;
+        }
+      }
+
+      commitAllBtn.addEventListener("click", commitAll);
 
       // Load override blobs → objectURL map for instant thumb rendering.
       await Overrides.loadAll();
       const overrideMap = () => window.__OVERRIDES || {};
 
       countEl.textContent = ids.length + " scenes";
+      refreshTokenStatus();
 
       function fmtSize(bytes) {
         if (bytes < 1024) return bytes + " B";
@@ -197,6 +469,7 @@
             <div class="card-prompt">${(PROMPTS[id] || "").replace(/</g, "&lt;")}</div>
             <div class="card-actions">
               <label class="upload">📤 Upload<input type="file" accept="image/*" /></label>
+              <button class="commit" disabled>🚀 Commit</button>
               <button class="download">💾 Download</button>
               <button class="revert danger" hidden disabled>↺ Revert</button>
             </div>
@@ -209,6 +482,7 @@
         const fileInput = card.querySelector('input[type="file"]');
         const downloadBtn = card.querySelector(".download");
         const revertBtn = card.querySelector(".revert");
+        const commitBtn = card.querySelector(".commit");
 
         async function refresh() {
           const url = overrideMap()[id];
@@ -217,6 +491,7 @@
             card.classList.add("replaced");
             badge.textContent = "OVERRIDE";
             revertBtn.hidden = false; revertBtn.disabled = false;
+            commitBtn.disabled = !GH.token;
             const blob = await Overrides.get(id);
             sizeEl.textContent = blob ? "(" + fmtSize(blob.size) + ")" : "";
           } else {
@@ -224,9 +499,20 @@
             card.classList.remove("replaced");
             badge.textContent = "live";
             revertBtn.hidden = true; revertBtn.disabled = true;
+            commitBtn.disabled = true;
             sizeEl.textContent = "";
           }
         }
+
+        commitBtn.addEventListener("click", async () => {
+          if (!GH.token) { toast("Add a GitHub token in Settings first.", "err"); return; }
+          commitBtn.disabled = true;
+          const prev = commitBtn.textContent;
+          commitBtn.textContent = "Committing…";
+          try { await commitOne(id); }
+          catch (e) {}
+          finally { commitBtn.textContent = prev; commitBtn.disabled = !GH.token; }
+        });
 
         img.addEventListener("error", () => {
           if (!card.classList.contains("replaced")) {
