@@ -200,6 +200,7 @@
     <span class="sub" id="count">…</span>
     <input type="search" id="search" placeholder="Filter scenes…" />
     <button id="commit-all" class="primary" title="Commit every override to the repo (main branch)">🚀 Commit all</button>
+    <button id="refresh-thumbs" title="Re-fetch every image from the server">🔄 Refresh</button>
     <button id="download-all" title="Download all overrides as a single ZIP">⬇ ZIP</button>
     <button id="settings-btn" title="GitHub token settings">⚙ Settings</button>
     <button id="clear-all" title="Remove all preview overrides">Clear</button>
@@ -244,8 +245,8 @@
   </footer>
 
   <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
-  <script src="js/overrides.js?v=34"></script>
-  <script src="js/scenes.js?v=34"></script>
+  <script src="js/overrides.js?v=35"></script>
+  <script src="js/scenes.js?v=35"></script>
   <script>
     (async function () {
       const PROMPTS = (window.Scenes && window.Scenes.PROMPTS) || {};
@@ -408,7 +409,11 @@
             [{ path: GH.pathPrefix + id + ".png", blob }],
             "Update scene image: " + id
           );
-          toast("Committed " + id + " (" + commit.sha.slice(0, 7) + "). Pages rebuilding…", "ok");
+          // Remove the local override so the admin card flips back to "live"
+          // and re-fetches the committed file from the server.
+          await Overrides.remove(id);
+          await Overrides.loadAll();
+          toast("Committed " + id + " (" + commit.sha.slice(0, 7) + "). Pages rebuilding in ~30s…", "ok");
           return commit;
         } catch (e) {
           toast("Commit failed: " + e.message, "err");
@@ -433,7 +438,15 @@
             ? "Update scene image: " + ids[0]
             : "Update scene images: " + ids.join(", ");
           const commit = await GH.commitFiles(files, msg);
-          toast("Committed " + items.length + " file(s) (" + commit.sha.slice(0, 7) + "). Pages rebuilding…", "ok");
+          // Clear the overrides we just committed so cards flip to "live".
+          for (const { id } of items) await Overrides.remove(id);
+          await Overrides.loadAll();
+          // Re-render every card so live thumbs re-fetch from the server.
+          const existing = Array.from(grid.children);
+          existing.forEach(c => c.remove());
+          const allIds = Object.keys(PROMPTS).sort();
+          allIds.forEach(id => grid.appendChild(buildCard(id)));
+          toast("Committed " + items.length + " file(s) (" + commit.sha.slice(0, 7) + "). Pages rebuilding in ~30s…", "ok");
         } catch (e) {
           toast("Commit failed: " + e.message, "err");
         } finally {
@@ -443,6 +456,14 @@
       }
 
       commitAllBtn.addEventListener("click", commitAll);
+
+      document.getElementById("refresh-thumbs").addEventListener("click", () => {
+        const existing = Array.from(grid.children);
+        existing.forEach(c => c.remove());
+        const allIds = Object.keys(PROMPTS).sort();
+        allIds.forEach(id => grid.appendChild(buildCard(id)));
+        toast("Refreshed " + allIds.length + " thumbnails.", "ok");
+      });
 
       // Load override blobs → objectURL map for instant thumb rendering.
       await Overrides.loadAll();
