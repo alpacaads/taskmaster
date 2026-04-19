@@ -371,16 +371,31 @@ window.Game = (function () {
   function show(id) { document.getElementById(id).classList.remove("hidden"); }
   function hide(id) { document.getElementById(id).classList.add("hidden"); }
 
+  // Toasts queue so rapid-fire events (loot drops, for example) all
+  // get seen instead of the last one stomping every previous message.
+  const toastQueue = [];
+  let toastActive = false;
   function toast(msg) {
+    toastQueue.push(String(msg));
+    if (!toastActive) flushToast();
+  }
+  function flushToast() {
+    if (toastQueue.length === 0) { toastActive = false; return; }
+    toastActive = true;
     const el = document.getElementById("toast");
+    const msg = toastQueue.shift();
     el.textContent = msg;
     el.classList.remove("hidden");
-    clearTimeout(toast._t);
-    // Re-trigger animation
+    // Re-trigger animation.
     el.style.animation = "none";
     void el.offsetWidth;
     el.style.animation = "";
-    toast._t = setTimeout(() => el.classList.add("hidden"), 2500);
+    // Display each message long enough to read; queue processes back-to-back.
+    const holdMs = toastQueue.length > 2 ? 900 : 1500;
+    setTimeout(() => {
+      el.classList.add("hidden");
+      setTimeout(flushToast, 120);
+    }, holdMs);
   }
 
   // Map story node ID -> scene ID. Most match by name; aliases below.
