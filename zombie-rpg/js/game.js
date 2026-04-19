@@ -18,8 +18,8 @@ window.Game = (function () {
     // Equipped weapons — starter kit gets +0 bonus; every loot drop is
     // an upgrade. Bonuses stack into the per-swing / per-shot dice in
     // combat.js on top of the base damage range.
-    bestMelee:  { name: "Crowbar", bonus: 0, slot: "melee" },
-    bestRanged: { name: "Handgun", bonus: 0, slot: "ranged" },
+    bestMelee:  { name: "Pocket Knife", bonus: 0, slot: "melee" },
+    bestRanged: { name: "Handgun",       bonus: 0, slot: "ranged" },
     // Every looted item lives here so the inventory screen can list them.
     inventory: [
       { id: "bandages", name: "🩹 Bandages", desc: "For the small cuts.", qty: 2 },
@@ -450,10 +450,28 @@ window.Game = (function () {
     art.innerHTML = Scenes.renderSVG(sceneId);
   }
 
+  // Story-side helper so narrative effects can equip a weapon without
+  // reaching into Combat's private equipWeapon() directly.
+  function giveWeapon(w) {
+    state.inventory = state.inventory || [];
+    const prev = w.slot === "ranged" ? state.bestRanged : state.bestMelee;
+    state[w.slot === "ranged" ? "bestRanged" : "bestMelee"] = w;
+    state.inventory.push({
+      id: w.name,
+      name: (w.slot === "ranged" ? "🔫 " : "🔪 ") + w.name,
+      desc: `+${w.bonus} ${w.slot} damage`,
+    });
+    if (prev && prev.name !== w.name) {
+      toast(`Equipped ${w.name} (was ${prev.name})`);
+    } else {
+      toast(`Equipped ${w.name}`);
+    }
+  }
+
   return {
     startNew, continueGame, save, quitToTitle, goto,
     openInventory, closeInventory, showCredits, hideCredits,
-    toggleMute, toast, fallbackToSVG,
+    toggleMute, toast, fallbackToSVG, giveWeapon,
     get state() { return state; },
   };
 })();

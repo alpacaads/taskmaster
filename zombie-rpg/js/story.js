@@ -71,13 +71,19 @@ window.Story = {
     sceneClass: "night",
     chapter: "Day 1 — Stairwell",
     speaker: "Maya",
-    text: "A woman, mid-thirties, army jacket, a hunting knife in her belt. \"Maya. 2F. I've been watching the street for two days — there's a pack of them at the corner store.\"\n\nShe offers you a crowbar.",
+    text: "A woman, mid-thirties, army jacket, a hunting knife in her belt. \"Maya. 2F. I've been watching the street for two days — there's a pack of them at the corner store.\"\n\nShe pulls a crowbar from her pack and hands it to you. \"Better than that letter opener.\"",
     choices: [
       { label: "\"Stick together. Two's better than one.\"",
-        effect: s => { s.companion = "Maya"; s.flags.maya = true; Game.toast("Maya joined you"); },
+        effect: s => {
+          s.companion = "Maya"; s.flags.maya = true;
+          Game.giveWeapon({ name: "Crowbar", bonus: 1, slot: "melee" });
+        },
         next: "street_plan" },
       { label: "\"I work better alone.\"",
-        effect: s => { s.flags.solo = true; },
+        effect: s => {
+          s.flags.solo = true;
+          Game.giveWeapon({ name: "Crowbar", bonus: 1, slot: "melee" });
+        },
         next: "alone_street" },
     ]
   },
