@@ -733,7 +733,7 @@ window.Scenes = (function () {
   // GitHub Pages serves them directly with correct MIME types and no
   // sandbox CSP, so relative paths work reliably.
   const IMG_BASE = "images/";
-  const IMG_CACHE_KEY = "27";
+  const IMG_CACHE_KEY = "30";
   const PROMPTS = {
     intro:               "ruined city skyline at night, military helicopter flying away into the distance, abandoned skyscrapers, smoke rising, broken cars on the street, lone hooded survivor watching from a rooftop, faint moonlight",
     apt_hallway:         "dark narrow apartment building hallway at night, single flickering ceiling bulb, dried blood streak on the floor leading away, peeling wallpaper, ajar door with chain dangling, claustrophobic horror atmosphere",
@@ -814,7 +814,10 @@ window.Scenes = (function () {
     // window.__OVERRIDES[sceneId] holds an objectURL for that blob.
     // Lets you preview a new image in-game before committing it.
     const override = (window.__OVERRIDES && window.__OVERRIDES[sceneId]) || null;
-    const localUrl = override || `${IMG_BASE}${sceneId}.png`;
+    // Version param busts stale HTTP caches after a new image is committed
+    // (otherwise a cached 404 from before the commit can trip the
+    // Pollinations fallback and the game keeps showing an AI image).
+    const localUrl = override || `${IMG_BASE}${sceneId}.png?v=${IMG_CACHE_KEY}`;
     const fluxUrl  = imageURL(prompt, { seed, model: "flux" });
     const turboUrl = imageURL(prompt, { seed, model: "turbo" });
     // Fallback chain is local -> flux -> turbo -> retry turbo with new seed.
