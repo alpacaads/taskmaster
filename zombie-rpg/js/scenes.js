@@ -753,7 +753,7 @@ window.Scenes = (function () {
     const perScene = readCommitTimes()[sceneId];
     const global = globalCacheBust();
     const v = perScene || global;
-    return IMG_BASE + sceneId + ".png" + (v ? "?v=" + v : "");
+    return IMG_BASE + sceneId + ".jpg" + (v ? "?v=" + v : "");
   }
   const PROMPTS = {
     intro:               "ruined city skyline at night, military helicopter flying away into the distance, abandoned skyscrapers, smoke rising, broken cars on the street, lone hooded survivor watching from a rooftop, faint moonlight",
@@ -846,7 +846,7 @@ window.Scenes = (function () {
       "this.style.display='none';";
     return `<div class="scene-stage scene-image-stage">` +
       `<div class="scene-image-loading">loading…</div>` +
-      `<div class="scene-image-error">image missing: ${sceneId}.png</div>` +
+      `<div class="scene-image-error">image missing: ${sceneId}.jpg</div>` +
       `<img class="scene-image" alt="" src="${localUrl}" ` +
       `loading="eager" decoding="async" fetchpriority="high" ` +
       `onload="${onLoad}" onerror="${onError.replace(/"/g, '&quot;')}"/>` +
@@ -863,6 +863,9 @@ window.Scenes = (function () {
       img.src = imgUrlFor(id);
     });
   }
+
+  // Expose the resolver so admin.html can use the same URL pattern.
+  window.sceneImageURL = imgUrlFor;
 
   // Public helper: render only the SVG (no AI image) for a scene id.
   function renderSVG(sceneId) {
