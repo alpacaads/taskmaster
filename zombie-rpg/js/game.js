@@ -314,6 +314,12 @@ window.Game = (function () {
   // Init
   document.addEventListener("DOMContentLoaded", refreshContinueBtn);
 
+  // Load admin-uploaded image overrides (if any) before any scene renders.
+  // User lands on the title screen first, so there's time for IDB to resolve.
+  document.addEventListener("DOMContentLoaded", () => {
+    if (window.Overrides) window.Overrides.loadAll();
+  });
+
   // On load, sync the mute button icon with saved preference
   document.addEventListener("DOMContentLoaded", () => {
     const btn = document.getElementById("mute-btn");

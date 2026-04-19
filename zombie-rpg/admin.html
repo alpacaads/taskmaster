@@ -91,6 +91,9 @@
       font-family: ui-monospace, "SF Mono", Menlo, monospace;
       font-size: 13px; color: var(--accent-2); font-weight: 600;
     }
+    .card-size {
+      font-size: 11px; color: var(--text-muted); margin-left: 6px;
+    }
     .card-prompt {
       font-size: 12px; color: var(--text-dim); line-height: 1.45;
       max-height: 5.5em; overflow: auto;
@@ -124,9 +127,6 @@
       background: var(--panel); padding: 2px 5px; border-radius: 3px;
       color: var(--accent-2);
     }
-    .empty {
-      padding: 48px; text-align: center; color: var(--text-dim);
-    }
   </style>
 </head>
 <body>
@@ -144,40 +144,34 @@
     <p><b>How to use:</b></p>
     <ol>
       <li>Click <b>Upload</b> on any scene to pick a new image.</li>
-      <li>The card updates instantly and the new image is previewed in the game (stored locally in your browser).</li>
-      <li>Click <b>Download</b> to save the file with the correct filename (e.g. <code>intro.png</code>).</li>
-      <li>Drop the downloaded file into <code>zombie-rpg/images/</code> and commit to make it permanent.</li>
+      <li>The card updates and the new image is previewed in the game (stored locally in IndexedDB).</li>
+      <li>Click <b>Download</b> to save the file as <code>&lt;id&gt;.png</code>.</li>
+      <li>Drop the file into <code>zombie-rpg/images/</code> and commit to make it permanent.</li>
     </ol>
-    <p>Overrides are kept in <code>localStorage</code> only — they do not modify any committed files.</p>
+    <p>Overrides live only in your browser — they never modify committed files.</p>
   </footer>
 
-  <script src="js/scenes.js?v=28"></script>
+  <script src="js/overrides.js?v=29"></script>
+  <script src="js/scenes.js?v=29"></script>
   <script>
-    (function () {
+    (async function () {
       const PROMPTS = (window.Scenes && window.Scenes.PROMPTS) || {};
-      const ids = Object.keys(PROMPTS);
+      const ids = Object.keys(PROMPTS).sort();
       const grid = document.getElementById("grid");
       const countEl = document.getElementById("count");
       const searchEl = document.getElementById("search");
       const clearAllBtn = document.getElementById("clear-all");
 
-      const OVERRIDE_PREFIX = "dl_img_override:";
+      // Load override blobs → objectURL map for instant thumb rendering.
+      await Overrides.loadAll();
+      const overrideMap = () => window.__OVERRIDES || {};
 
       countEl.textContent = ids.length + " scenes";
 
-      function getOverride(id) {
-        try { return localStorage.getItem(OVERRIDE_PREFIX + id); } catch (e) { return null; }
-      }
-      function setOverride(id, dataUrl) {
-        try { localStorage.setItem(OVERRIDE_PREFIX + id, dataUrl); }
-        catch (e) { alert("Could not save override (likely localStorage quota). Try a smaller image."); }
-      }
-      function clearOverride(id) {
-        try { localStorage.removeItem(OVERRIDE_PREFIX + id); } catch (e) {}
-      }
-
-      function imageSrcFor(id) {
-        return getOverride(id) || ("images/" + id + ".png?v=admin" + Date.now());
+      function fmtSize(bytes) {
+        if (bytes < 1024) return bytes + " B";
+        if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(0) + " KB";
+        return (bytes / 1024 / 1024).toFixed(1) + " MB";
       }
 
       function buildCard(id) {
@@ -186,98 +180,105 @@
         card.dataset.id = id;
         card.dataset.search = (id + " " + (PROMPTS[id] || "")).toLowerCase();
 
-        const hasOverride = !!getOverride(id);
-        if (hasOverride) card.classList.add("replaced");
-
         card.innerHTML = `
           <div class="card-art">
             <img alt="${id}" />
-            <span class="badge">${hasOverride ? "OVERRIDE" : "live"}</span>
+            <span class="badge">live</span>
           </div>
           <div class="card-body">
-            <div class="card-id">${id}</div>
+            <div>
+              <span class="card-id">${id}</span>
+              <span class="card-size"></span>
+            </div>
             <div class="card-prompt">${(PROMPTS[id] || "").replace(/</g, "&lt;")}</div>
             <div class="card-actions">
               <label class="upload">📤 Upload<input type="file" accept="image/*" /></label>
               <button class="download">💾 Download</button>
-              <button class="revert danger" ${hasOverride ? "" : "disabled hidden"}>↺ Revert</button>
+              <button class="revert danger" hidden disabled>↺ Revert</button>
             </div>
           </div>
         `;
 
         const img = card.querySelector("img");
         const badge = card.querySelector(".badge");
+        const sizeEl = card.querySelector(".card-size");
         const fileInput = card.querySelector('input[type="file"]');
         const downloadBtn = card.querySelector(".download");
         const revertBtn = card.querySelector(".revert");
 
-        function refresh() {
-          const ov = getOverride(id);
-          img.src = ov || ("images/" + id + ".png?t=" + Date.now());
-          if (ov) {
+        async function refresh() {
+          const url = overrideMap()[id];
+          if (url) {
+            img.src = url;
             card.classList.add("replaced");
             badge.textContent = "OVERRIDE";
             revertBtn.hidden = false; revertBtn.disabled = false;
+            const blob = await Overrides.get(id);
+            sizeEl.textContent = blob ? "(" + fmtSize(blob.size) + ")" : "";
           } else {
+            img.src = "images/" + id + ".png?t=" + Date.now();
             card.classList.remove("replaced");
             badge.textContent = "live";
             revertBtn.hidden = true; revertBtn.disabled = true;
+            sizeEl.textContent = "";
           }
         }
 
         img.addEventListener("error", () => {
-          img.replaceWith(Object.assign(document.createElement("div"), {
-            className: "missing",
-            textContent: "no image at images/" + id + ".png",
-          }));
-        });
-
-        fileInput.addEventListener("change", (e) => {
-          const file = e.target.files && e.target.files[0];
-          if (!file) return;
-          const reader = new FileReader();
-          reader.onload = () => {
-            setOverride(id, reader.result);
-            refresh();
-          };
-          reader.readAsDataURL(file);
-          fileInput.value = "";
-        });
-
-        downloadBtn.addEventListener("click", () => {
-          const ov = getOverride(id);
-          const url = ov || ("images/" + id + ".png");
-          // For overrides (data URL), download directly. For live images,
-          // fetch and download with the canonical filename.
-          if (ov) {
-            const a = document.createElement("a");
-            a.href = ov;
-            a.download = id + ".png";
-            document.body.appendChild(a); a.click(); a.remove();
-          } else {
-            fetch(url).then(r => r.blob()).then(blob => {
-              const a = document.createElement("a");
-              a.href = URL.createObjectURL(blob);
-              a.download = id + ".png";
-              document.body.appendChild(a); a.click();
-              setTimeout(() => URL.revokeObjectURL(a.href), 1000);
-              a.remove();
-            }).catch(() => alert("No committed image to download for " + id));
+          if (!card.classList.contains("replaced")) {
+            const ph = document.createElement("div");
+            ph.className = "missing";
+            ph.textContent = "no image at images/" + id + ".png";
+            img.replaceWith(ph);
           }
         });
 
-        revertBtn.addEventListener("click", () => {
-          if (!confirm("Remove preview override for " + id + "?")) return;
-          clearOverride(id);
-          refresh();
+        fileInput.addEventListener("change", async (e) => {
+          const file = e.target.files && e.target.files[0];
+          if (!file) return;
+          try {
+            await Overrides.save(id, file);
+            await Overrides.loadAll(); // refresh objectURL map
+            await refresh();
+          } catch (err) {
+            alert("Could not save: " + (err && err.message ? err.message : err));
+          }
+          fileInput.value = "";
         });
 
-        // initial
+        downloadBtn.addEventListener("click", async () => {
+          let blob = await Overrides.get(id);
+          if (!blob) {
+            try {
+              blob = await fetch("images/" + id + ".png").then(r => {
+                if (!r.ok) throw new Error(r.status);
+                return r.blob();
+              });
+            } catch (e) {
+              alert("No image to download for " + id);
+              return;
+            }
+          }
+          const a = document.createElement("a");
+          a.href = URL.createObjectURL(blob);
+          a.download = id + ".png";
+          document.body.appendChild(a); a.click();
+          setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+          a.remove();
+        });
+
+        revertBtn.addEventListener("click", async () => {
+          if (!confirm("Remove preview override for " + id + "?")) return;
+          await Overrides.remove(id);
+          await Overrides.loadAll();
+          await refresh();
+        });
+
         refresh();
         return card;
       }
 
-      ids.sort().forEach(id => grid.appendChild(buildCard(id)));
+      ids.forEach(id => grid.appendChild(buildCard(id)));
 
       searchEl.addEventListener("input", () => {
         const q = searchEl.value.trim().toLowerCase();
@@ -290,17 +291,17 @@
         countEl.textContent = shown + " / " + ids.length + " scenes";
       });
 
-      clearAllBtn.addEventListener("click", () => {
-        const overridden = ids.filter(getOverride);
-        if (overridden.length === 0) { alert("No overrides to clear."); return; }
-        if (!confirm("Remove " + overridden.length + " preview override(s)?")) return;
-        overridden.forEach(clearOverride);
-        grid.querySelectorAll(".card").forEach(card => {
-          // re-render that card
-          const id = card.dataset.id;
-          const fresh = buildCard(id);
-          card.replaceWith(fresh);
-        });
+      clearAllBtn.addEventListener("click", async () => {
+        const map = overrideMap();
+        const n = Object.keys(map).length;
+        if (n === 0) { alert("No overrides to clear."); return; }
+        if (!confirm("Remove " + n + " preview override(s)?")) return;
+        await Overrides.clear();
+        await Overrides.loadAll();
+        // Re-render every card
+        const existing = Array.from(grid.children);
+        existing.forEach(c => c.remove());
+        ids.forEach(id => grid.appendChild(buildCard(id)));
       });
     })();
   </script>
