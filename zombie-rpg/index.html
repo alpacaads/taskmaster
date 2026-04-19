@@ -40,8 +40,14 @@
       <div class="hud">
         <div class="hud-name" id="hud-name">Ellis</div>
         <div class="hud-stats">
-          <span class="stat" title="Health">❤️ <b id="stat-hp">10</b>/<span id="stat-hpmax">10</span></span>
-          <span class="stat" title="Stamina">⚡ <b id="stat-stam">5</b>/<span id="stat-stammax">5</span></span>
+          <span class="stat stat-bar" title="Health">❤️
+            <span class="stat-bar-track"><span class="stat-bar-fill hp" id="stat-hp-fill"></span></span>
+            <b id="stat-hp">10</b>/<span id="stat-hpmax">10</span>
+          </span>
+          <span class="stat stat-bar" title="Stamina">⚡
+            <span class="stat-bar-track"><span class="stat-bar-fill stam" id="stat-stam-fill"></span></span>
+            <b id="stat-stam">5</b>/<span id="stat-stammax">5</span>
+          </span>
           <span class="stat" title="Ammo">🔫 <b id="stat-ammo">3</b></span>
           <span class="stat" title="Food">🥫 <b id="stat-food">2</b></span>
         </div>
@@ -95,9 +101,20 @@
       <div class="combat-log" id="combat-log"></div>
 
       <div class="combat-hero">
-        <div>HP <b id="c-hp">10</b>/<span id="c-hpmax">10</span></div>
-        <div>STAM <b id="c-stam">5</b>/5</div>
-        <div>AMMO <b id="c-ammo">3</b></div>
+        <div class="hero-stat">
+          <span class="hero-lbl">HP</span>
+          <span class="hero-bar"><span class="hero-bar-fill hp" id="c-hp-fill"></span></span>
+          <span class="hero-num"><b id="c-hp">10</b>/<span id="c-hpmax">10</span></span>
+        </div>
+        <div class="hero-stat">
+          <span class="hero-lbl">STAM</span>
+          <span class="hero-bar"><span class="hero-bar-fill stam" id="c-stam-fill"></span></span>
+          <span class="hero-num"><b id="c-stam">5</b>/5</span>
+        </div>
+        <div class="hero-stat ammo">
+          <span class="hero-lbl">AMMO</span>
+          <span class="hero-num"><b id="c-ammo">3</b></span>
+        </div>
       </div>
 
       <div class="combat-actions">
@@ -165,11 +182,11 @@
 
   </div>
 
-  <script src="js/sound.js?v=59"></script>
-  <script src="js/overrides.js?v=59"></script>
-  <script src="js/scenes.js?v=59"></script>
-  <script src="js/story.js?v=59"></script>
-  <script src="js/combat.js?v=59"></script>
-  <script src="js/game.js?v=59"></script>
+  <script src="js/sound.js?v=60"></script>
+  <script src="js/overrides.js?v=60"></script>
+  <script src="js/scenes.js?v=60"></script>
+  <script src="js/story.js?v=60"></script>
+  <script src="js/combat.js?v=60"></script>
+  <script src="js/game.js?v=60"></script>
 </body>
 </html>

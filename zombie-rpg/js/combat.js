@@ -230,10 +230,16 @@ window.Combat = (function () {
 
   function refreshHud() {
     const s = Game.state;
-    document.getElementById("c-hp").textContent = s.hp;
+    document.getElementById("c-hp").textContent = Math.max(0, s.hp);
     document.getElementById("c-hpmax").textContent = s.hpMax;
     document.getElementById("c-stam").textContent = s.stam;
     document.getElementById("c-ammo").textContent = s.ammo;
+    const hpPct   = Math.max(0, s.hp)   / Math.max(1, s.hpMax)   * 100;
+    const stamPct = Math.max(0, s.stam) / Math.max(1, s.stamMax) * 100;
+    const hpFill   = document.getElementById("c-hp-fill");
+    const stamFill = document.getElementById("c-stam-fill");
+    if (hpFill)   hpFill.style.width   = hpPct + "%";
+    if (stamFill) stamFill.style.width = stamPct + "%";
   }
 
   function updateEnemyHp() {
