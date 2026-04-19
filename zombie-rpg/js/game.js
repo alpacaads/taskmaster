@@ -209,13 +209,21 @@ window.Game = (function () {
     ];
     if (state.bestMelee) {
       items.push({ name: "🔪 " + state.bestMelee.name,
-        desc: `+${state.bestMelee.bonus} melee damage` });
+        desc: `Equipped · +${state.bestMelee.bonus} melee damage` });
     }
     if (state.bestRanged) {
       items.push({ name: "🔫 " + state.bestRanged.name,
-        desc: `+${state.bestRanged.bonus} ranged damage` });
+        desc: `Equipped · +${state.bestRanged.bonus} ranged damage` });
     }
-    items.push(...(state.inventory || []));
+    // Drop the duplicate listings of equipped weapons from .inventory.
+    const equippedNames = new Set();
+    if (state.bestMelee)  equippedNames.add(state.bestMelee.name);
+    if (state.bestRanged) equippedNames.add(state.bestRanged.name);
+    (state.inventory || []).forEach(it => {
+      const plainName = (it.name || "").replace(/^[^\s]+\s+/, "");
+      if (equippedNames.has(plainName)) return;
+      items.push(it);
+    });
     items.forEach(it => {
       const row = document.createElement("div");
       row.className = "inv-item";

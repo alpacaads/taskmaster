@@ -92,9 +92,8 @@ window.Combat = (function () {
         Game.toast(`+${d.n} 🥫`);
       } else if (d.kind === "weapon") {
         const pick = d.pool[Math.floor(Math.random() * d.pool.length)];
-        equipWeapon(pick);
+        equipWeapon(pick);          // toasts "Equipped X" itself
         if (pick.ammo) s.ammo += pick.ammo;
-        Game.toast("Found: " + pick.name);
       } else if (d.kind === "item") {
         if (d.effect) d.effect(s);
         s.inventory = s.inventory || [];
@@ -104,15 +103,24 @@ window.Combat = (function () {
     });
   }
 
+  // Always auto-equip a looted weapon. Every loot entry is designed to
+  // be an upgrade (or at worst a lateral swap), so there's no menu —
+  // you find it, you use it.
   function equipWeapon(w) {
     const s = Game.state;
     s.inventory = s.inventory || [];
-    s.inventory.push({ id: w.name, name: (w.slot === "ranged" ? "🔫 " : "🔪 ") + w.name,
-      desc: `+${w.bonus} ${w.slot} damage` });
-    if (w.slot === "melee") {
-      if (!s.bestMelee || w.bonus > s.bestMelee.bonus) s.bestMelee = w;
-    } else if (w.slot === "ranged") {
-      if (!s.bestRanged || w.bonus > s.bestRanged.bonus) s.bestRanged = w;
+    s.inventory.push({
+      id: w.name,
+      name: (w.slot === "ranged" ? "🔫 " : "🔪 ") + w.name,
+      desc: `+${w.bonus} ${w.slot} damage`,
+    });
+    const slot = w.slot === "ranged" ? "bestRanged" : "bestMelee";
+    const prev = s[slot];
+    s[slot] = w;
+    if (prev) {
+      Game.toast(`Equipped ${w.name} (was ${prev.name})`);
+    } else {
+      Game.toast(`Equipped ${w.name}`);
     }
   }
 
