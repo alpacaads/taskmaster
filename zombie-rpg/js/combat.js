@@ -129,6 +129,55 @@ window.Combat = (function () {
   function lovedMaya()      { return !!(Game.state.flags && Game.state.flags.lovedMaya); }
   function lovedRen()       { return !!(Game.state.flags && Game.state.flags.lovedRen);  }
 
+  // Maya teaches you to read walkers. Base dodge bump while she's
+  // with you, scales with bond (capped), extra if you're lovers.
+  //   companion present : +0.20
+  //   each bond point   : +0.02  (up to +0.10 for 5 bonds)
+  //   loved             : +0.05 flat
+  // Max cumulative ~0.35 (on top of normal ~0.10 base miss chance).
+  function mayaDodge() {
+    const s = Game.state;
+    if (!mayaPresent()) return 0;
+    let d = 0.20;
+    const bond = Math.min(5, (s.bonds && s.bonds.maya) || 0);
+    d += bond * 0.02;
+    if (lovedMaya()) d += 0.05;
+    return d;
+  }
+
+  // Ren stacks the cap buff and the heal amount with bond + love.
+  // Used by game.js applyPartyBuffs for cap scaling and here for heals.
+  function renCapMult() {
+    const s = Game.state;
+    if (!renPresent() && !lovedRen()) return 1;
+    let m = 1.20;
+    const bond = Math.min(5, (s.bonds && s.bonds.ren) || 0);
+    m += bond * 0.02;
+    if (lovedRen()) m += 0.05;
+    return m;
+  }
+  function renHealAmount() {
+    const s = Game.state;
+    const bond = Math.min(5, (s.bonds && s.bonds.ren) || 0);
+    return 1 + Math.floor(bond / 2) + (lovedRen() ? 1 : 0);
+  }
+  function renHealCooldown() {
+    const bond = Math.min(5, (Game.state.bonds && Game.state.bonds.ren) || 0);
+    if (lovedRen()) return 3;
+    if (bond >= 3)  return 3;
+    return 4;
+  }
+
+  // Nora's spotting sharpens as you look out for each other.
+  // We haven't been tracking Nora's bond explicitly, so +1 base plus a
+  // crit chance bump while she's with you.
+  function noraCritBump() {
+    return Game.state.companion2 === "Nora" ? 0.05 : 0;
+  }
+
+  // Expose for game.js applyPartyBuffs.
+  window.CombatBuffs = { mayaDodge, renCapMult, renHealAmount, renHealCooldown, noraBonus, noraCritBump };
+
   let state = null;
 
   // ---------- companion helpers ----------
@@ -286,7 +335,7 @@ window.Combat = (function () {
       s.stam -= 1;
       const base = rand(1, 3);
       const weaponBonus = s.bestMelee ? s.bestMelee.bonus : 0;
-      const crit = Math.random() < 0.12;
+      const crit = Math.random() < (0.12 + noraCritBump());
       const dmg = base + weaponBonus + noraBonus();
       const total = crit ? dmg + 2 : dmg;
       state.enemy.hp -= total;
@@ -531,10 +580,17 @@ window.Combat = (function () {
 
     if (state.bracing) dmg = Math.max(0, dmg - (savage ? 1 : 2));
 
-    // Misses are rare; you get hit.
-    const hit = Math.random() < (e.human ? 0.82 : 0.92);
+    // Misses are rare; you get hit. Maya teaches you to slip hits —
+    // her dodge bonus is subtracted from the enemy's hit chance, with
+    // a floor so the fight still matters.
+    const baseHit = e.human ? 0.82 : 0.92;
+    const hitChance = Math.max(0.45, baseHit - mayaDodge());
+    const hit = Math.random() < hitChance;
     if (!hit) {
-      log(`${e.name} lunges — you twist away.`, "info");
+      const line = mayaPresent() && Math.random() < 0.5
+        ? `Maya's shout — you slip the ${e.name}'s lunge.`
+        : `${e.name} lunges — you twist away.`;
+      log(line, "info");
       Sound.play("dodge");
     } else if (dmg === 0) {
       log(`${e.name} hits — you absorb it.`, "ally");
@@ -608,12 +664,12 @@ window.Combat = (function () {
 
     if (renPresent()) {
       state.renCd = (state.renCd || 0) - 1;
-      // Lovers heal harder. +1 HP (2 total) and a tighter cooldown.
-      const heal = lovedRen() ? 2 : 1;
-      const cd   = lovedRen() ? 3 : 4;
+      // Heal amount + cooldown both scale with bond / love.
+      const heal = renHealAmount();
+      const cd   = renHealCooldown();
       if (state.renCd <= 0 && s.hp < s.hpMax) {
         s.hp = Math.min(s.hpMax, s.hp + heal);
-        log(`Ren patches a cut — +${heal} HP.`, "ally");
+        log(`Ren patches you — +${heal} HP.`, "ally");
         Sound.play("heal");
         floatDamage(heal, "heal");
         refreshHud();

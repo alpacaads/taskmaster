@@ -201,10 +201,12 @@ window.Game = (function () {
   function applyPartyBuffs() {
     let hpMax = BASE_HP_MAX;
     let stamMax = BASE_STAM_MAX;
-    const f = state.flags || {};
-    if (f.missionPartner === "ren" || f.lovedRen) {
-      hpMax   = Math.round(hpMax   * 1.2);
-      stamMax = Math.round(stamMax * 1.2);
+    // Ren's cap multiplier scales with her bond + love; CombatBuffs
+    // owns the math so gameplay logic stays in one file.
+    if (window.CombatBuffs && window.CombatBuffs.renCapMult) {
+      const m = window.CombatBuffs.renCapMult();
+      hpMax   = Math.round(hpMax   * m);
+      stamMax = Math.round(stamMax * m);
     }
     state.hpMax   = hpMax;
     state.stamMax = stamMax;
