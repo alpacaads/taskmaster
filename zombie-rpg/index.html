@@ -10,7 +10,7 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <title>Dead Light — A Zombie RPG</title>
-  <link rel="stylesheet" href="css/style.css?v=45" />
+  <link rel="stylesheet" href="css/style.css?v=46" />
 </head>
 <body>
 
@@ -74,28 +74,37 @@
 
     <!-- Combat overlay -->
     <div id="combat-screen" class="screen hidden">
-      <div class="combat-top">
-        <div class="combat-enemy">
-          <div class="enemy-art" id="enemy-art">🧟</div>
-          <div class="enemy-name" id="enemy-name">Walker</div>
-          <div class="hp-bar"><div class="hp-fill" id="enemy-hp-fill"></div></div>
-        </div>
-        <div class="combat-allies" id="combat-allies"></div>
+      <div class="combat-backdrop" id="combat-backdrop"></div>
+      <div class="combat-grain"></div>
+
+      <div class="combat-slug">
+        <span id="combat-chapter">CONTACT</span>
+        <span class="combat-state">HOSTILE</span>
       </div>
+
+      <div class="combat-enemy" id="combat-enemy">
+        <div class="combat-tag">HOSTILE</div>
+        <div class="enemy-name" id="enemy-name">Walker</div>
+        <div class="enemy-desc" id="enemy-desc"></div>
+        <div class="hp-strip" id="enemy-hp-strip"></div>
+        <div class="enemy-art hidden" id="enemy-art">🧟</div>
+      </div>
+
+      <div class="combat-allies" id="combat-allies"></div>
+
       <div class="combat-log" id="combat-log"></div>
-      <div class="combat-hero">
-        <div class="hero-art">🧍</div>
-        <div class="hero-stats">
-          <div>❤️ <span id="c-hp">10</span>/<span id="c-hpmax">10</span></div>
-          <div>⚡ <span id="c-stam">5</span></div>
-          <div>🔫 <span id="c-ammo">3</span></div>
-        </div>
-      </div>
+
       <div class="combat-actions">
-        <button class="combat-btn" onclick="Combat.act('melee')">🔪 Melee</button>
-        <button class="combat-btn" onclick="Combat.act('shoot')">🔫 Shoot</button>
-        <button class="combat-btn" onclick="Combat.act('brace')">🛡️ Brace</button>
-        <button class="combat-btn" onclick="Combat.act('flee')">🏃 Flee</button>
+        <button class="combat-btn" onclick="Combat.act('melee')"><span class="k">01</span>Strike</button>
+        <button class="combat-btn" onclick="Combat.act('shoot')"><span class="k">02</span>Fire</button>
+        <button class="combat-btn" onclick="Combat.act('brace')"><span class="k">03</span>Brace</button>
+        <button class="combat-btn flee" onclick="Combat.act('flee')"><span class="k">04</span>Flee</button>
+      </div>
+
+      <div class="combat-hero">
+        <div>HP <b id="c-hp">10</b>/<span id="c-hpmax">10</span></div>
+        <div>STAM <b id="c-stam">5</b>/5</div>
+        <div>AMMO <b id="c-ammo">3</b></div>
       </div>
     </div>
 
@@ -130,11 +139,11 @@
 
   </div>
 
-  <script src="js/sound.js?v=45"></script>
-  <script src="js/overrides.js?v=45"></script>
-  <script src="js/scenes.js?v=45"></script>
-  <script src="js/story.js?v=45"></script>
-  <script src="js/combat.js?v=45"></script>
-  <script src="js/game.js?v=45"></script>
+  <script src="js/sound.js?v=46"></script>
+  <script src="js/overrides.js?v=46"></script>
+  <script src="js/scenes.js?v=46"></script>
+  <script src="js/story.js?v=46"></script>
+  <script src="js/combat.js?v=46"></script>
+  <script src="js/game.js?v=46"></script>
 </body>
 </html>

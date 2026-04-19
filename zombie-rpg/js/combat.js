@@ -61,17 +61,29 @@ window.Combat = (function () {
       bracing: false,
       mayaCd: 1,
       renCd:  2,
+      startMs: Date.now(),
     };
 
+    const combatScreen = document.getElementById("combat-screen");
     document.getElementById("game-screen").classList.add("hidden");
-    document.getElementById("combat-screen").classList.remove("hidden");
+    combatScreen.classList.remove("hidden");
+
+    // Use the currently-rendered scene image as the combat backdrop.
+    const scnImg = document.querySelector("#scene-art .scene-image");
+    combatScreen.style.setProperty(
+      "--combat-backdrop",
+      scnImg && scnImg.src ? `url("${scnImg.src}")` : "none"
+    );
 
     document.getElementById("enemy-art").textContent = state.enemy.art;
     document.getElementById("enemy-name").textContent = state.enemy.name;
+    const descEl = document.getElementById("enemy-desc");
+    if (descEl) descEl.textContent = state.enemy.desc || "";
+    const chEl = document.getElementById("combat-chapter");
+    if (chEl) chEl.textContent = "CONTACT";
 
     const logEl = document.getElementById("combat-log");
     logEl.innerHTML = "";
-    log(state.enemy.desc, "info");
 
     if (config.enemy === "horde") Sound.play("hordeRoar");
     else if (config.enemy === "runner") Sound.play("runnerScream");
@@ -87,7 +99,11 @@ window.Combat = (function () {
     const logEl = document.getElementById("combat-log");
     const line = document.createElement("div");
     line.className = "line " + (cls || "");
-    line.textContent = msg;
+    const secs = state ? Math.floor((Date.now() - state.startMs) / 1000) : 0;
+    const mm = String(Math.floor(secs / 60)).padStart(2, "0");
+    const ss = String(secs % 60).padStart(2, "0");
+    line.dataset.ts = `[+${mm}:${ss}]`;
+    line.appendChild(document.createTextNode(msg));
     logEl.appendChild(line);
     logEl.scrollTop = logEl.scrollHeight;
   }
@@ -101,8 +117,30 @@ window.Combat = (function () {
   }
 
   function updateEnemyHp() {
-    const pct = Math.max(0, (state.enemy.hp / state.enemy.maxHp) * 100);
-    document.getElementById("enemy-hp-fill").style.width = pct + "%";
+    // 14-tick segmented HP strip
+    const strip = document.getElementById("enemy-hp-strip");
+    if (!strip) return;
+    const total = 14;
+    const hp = Math.max(0, state.enemy.hp);
+    const ratio = hp / state.enemy.maxHp;
+    const full = Math.round(total * ratio);
+    strip.innerHTML = "";
+    for (let i = 0; i < total; i++) {
+      const s = document.createElement("span");
+      if (i >= full) s.className = "empty";
+      strip.appendChild(s);
+    }
+  }
+
+  // Float a damage number over the enemy block.
+  function floatDamage(n, kind) {
+    const host = document.getElementById("combat-enemy");
+    if (!host) return;
+    const el = document.createElement("div");
+    el.className = "dmg-float" + (kind ? " " + kind : "");
+    el.textContent = (kind === "heal" ? "+" : "-") + n;
+    host.appendChild(el);
+    setTimeout(() => el.remove(), 900);
   }
 
   function rand(min, max) { return Math.floor(Math.random() * (max - min + 1)) + min; }
@@ -129,6 +167,7 @@ window.Combat = (function () {
         : `You swing — ${total} damage.`,
         crit ? "crit" : "hero");
       Sound.play(crit ? "crit" : "melee");
+      floatDamage(total, crit ? "crit" : null);
       hitFlash();
     }
     else if (action === "shoot") {
@@ -141,6 +180,7 @@ window.Combat = (function () {
         const dmg = state.enemy.human ? rand(3, 5) : rand(2, 4);
         state.enemy.hp -= dmg;
         log(`You fire — ${dmg} damage.`, "hero");
+        floatDamage(dmg);
         hitFlash();
       }
     }
@@ -234,8 +274,10 @@ window.Combat = (function () {
     const el = document.getElementById("combat-screen");
     if (!el) return;
     el.classList.remove("shake");
+    el.classList.remove("hit-red");
     void el.offsetWidth;
     el.classList.add("shake");
+    el.classList.add("hit-red");
   }
 
   // ---------- companion turn ----------
@@ -250,6 +292,7 @@ window.Combat = (function () {
         state.enemy.hp -= dmg;
         log(`Maya fires from cover — ${dmg} damage.`, "ally");
         Sound.play("gunshot");
+        floatDamage(dmg);
         hitFlash();
         updateEnemyHp();
         state.mayaCd = 3;
@@ -268,10 +311,11 @@ window.Combat = (function () {
         s.hp = Math.min(s.hpMax, s.hp + 1);
         log("Ren patches a cut — +1 HP.", "ally");
         Sound.play("heal");
+        floatDamage(1, "heal");
         refreshHud();
         state.renCd = 4;
       } else if (state.renCd <= 0) {
-        state.renCd = 1; // keep her ready; don't waste the tick
+        state.renCd = 1;
       }
     }
   }

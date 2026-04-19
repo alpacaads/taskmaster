@@ -633,100 +633,207 @@ html, body {
 }
 .icon-btn:active { background: var(--panel-2); }
 
-/* Combat */
+/* ---------- Combat (tactical HUD) ---------- */
 #combat-screen {
-  background: linear-gradient(180deg, #1a0808 0%, #0a0303 100%);
+  background: #050507;
   padding: 0;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  color: #e6e3d8;
 }
-.combat-top {
-  padding: 20px 16px 12px;
-  text-align: center;
-  background: radial-gradient(ellipse at top, rgba(122, 31, 34, 0.4), transparent 70%);
-  border-bottom: 1px solid var(--border);
+.combat-backdrop {
+  position: absolute; inset: 0;
+  background: var(--combat-backdrop, none) center/cover no-repeat, #060608;
+  filter: grayscale(0.35) contrast(1.05) brightness(0.5);
+  z-index: 0;
 }
-.enemy-art {
-  font-size: 84px;
-  display: inline-block;
-  filter: drop-shadow(0 0 12px rgba(122, 31, 34, 0.6));
-  animation: enemyIdle 2.4s ease-in-out infinite;
-  transform-origin: center bottom;
+.combat-backdrop::after {
+  content: "";
+  position: absolute; inset: 0;
+  background:
+    radial-gradient(ellipse at 50% 35%, transparent 0%, rgba(0,0,0,0.88) 85%),
+    repeating-linear-gradient(0deg,
+      rgba(255,255,255,0.025) 0 1px,
+      transparent 1px 3px);
+  pointer-events: none;
 }
-@keyframes enemyIdle {
-  0%, 100% { transform: translateY(0) rotate(-3deg); }
-  50%      { transform: translateY(-4px) rotate(3deg); }
+.combat-grain {
+  position: absolute; inset: 0; pointer-events: none;
+  opacity: 0.32; mix-blend-mode: overlay;
+  background-image: radial-gradient(rgba(255,255,255,0.08) 1px, transparent 1px);
+  background-size: 3px 3px;
+  animation: grainShift 0.22s steps(2) infinite;
+  z-index: 1;
 }
-.enemy-art.hit { animation: hitFlash 0.45s ease; }
-@keyframes hitFlash {
-  0%   { transform: translateX(0); filter: drop-shadow(0 0 12px rgba(122, 31, 34, 0.6)); }
-  20%  { transform: translateX(-8px) rotate(-6deg); filter: drop-shadow(0 0 18px #fff) brightness(1.7); }
-  40%  { transform: translateX(8px) rotate(6deg); }
-  60%  { transform: translateX(-4px); }
-  100% { transform: translateX(0); filter: drop-shadow(0 0 12px rgba(122, 31, 34, 0.6)); }
+@keyframes grainShift {
+  0%   { transform: translate(0,0); }
+  50%  { transform: translate(-1px, 1px); }
+  100% { transform: translate(1px, -1px); }
 }
-.hero-art {
-  font-size: 44px;
-  display: inline-block;
-  animation: heroBreathe 3s ease-in-out infinite;
+
+.combat-slug {
+  position: relative; z-index: 2;
+  padding: 12px 16px 10px;
+  display: flex; justify-content: space-between; align-items: center;
+  gap: 12px;
+  border-bottom: 1px solid rgba(230,227,216,0.14);
+  background: linear-gradient(180deg, rgba(0,0,0,0.85), transparent);
+  font-family: ui-monospace, "SF Mono", Menlo, monospace;
+  font-size: 10px; letter-spacing: 2px;
+  color: #8b8a82; text-transform: uppercase;
 }
-@keyframes heroBreathe {
-  0%, 100% { transform: scale(1); }
-  50%      { transform: scale(1.04); }
+.combat-slug .combat-state { color: #d98f8f; }
+
+.combat-enemy {
+  position: relative; z-index: 2;
+  padding: 24px 16px 0;
+  flex: 1; min-height: 0;
+  display: flex; flex-direction: column; justify-content: flex-end;
+}
+.combat-tag {
+  font-family: ui-monospace, "SF Mono", Menlo, monospace;
+  font-size: 11px; letter-spacing: 3px;
+  color: #525249; text-transform: uppercase;
 }
 .enemy-name {
-  font-weight: 700;
-  margin-top: 6px;
-  letter-spacing: 1px;
-  color: #e8cfcf;
+  font-family: "Georgia", "Times New Roman", serif;
+  font-size: 28px; letter-spacing: 1px;
+  color: #e6e3d8; margin: 2px 0 6px;
+  font-weight: 400;
+  text-shadow: 0 2px 0 rgba(0,0,0,0.85);
 }
-.hp-bar {
-  width: 80%;
-  max-width: 240px;
-  margin: 8px auto 0;
-  height: 10px;
-  background: #2a0a0a;
-  border: 1px solid var(--border);
-  border-radius: 5px;
-  overflow: hidden;
+.enemy-desc {
+  font-family: ui-monospace, "SF Mono", Menlo, monospace;
+  font-size: 10px; letter-spacing: 1.5px;
+  color: #8b8a82; text-transform: uppercase;
+  min-height: 1em;
 }
-.hp-fill {
-  height: 100%;
-  background: linear-gradient(90deg, var(--danger), #e06b6e);
-  width: 100%;
-  transition: width 0.3s ease;
+.hp-strip {
+  margin-top: 10px;
+  display: grid;
+  grid-template-columns: repeat(14, 1fr);
+  gap: 2px;
+  height: 6px;
 }
+.hp-strip span {
+  background: #6b1b13;
+  border-top: 1px solid #a8412a;
+}
+.hp-strip span.empty {
+  background: #1b0808;
+  border-top-color: rgba(255,255,255,0.03);
+}
+
+/* Floating damage number over the enemy */
+.dmg-float {
+  position: absolute;
+  left: 50%;
+  top: 36%;
+  transform: translate(-50%, 0);
+  font-family: "Georgia", serif;
+  font-size: 54px; font-weight: 700; letter-spacing: -1px;
+  color: #a8412a;
+  text-shadow: 0 0 14px rgba(168,65,42,0.7), 0 3px 0 rgba(0,0,0,0.7);
+  pointer-events: none;
+  z-index: 3;
+  animation: dmgFloat 0.9s ease-out forwards;
+}
+.dmg-float.heal { color: #7aa07a; text-shadow: 0 0 14px rgba(122,160,122,0.6), 0 3px 0 rgba(0,0,0,0.7); }
+.dmg-float.crit { color: #c99b3a; font-size: 62px; }
+@keyframes dmgFloat {
+  0%   { transform: translate(-50%, 10%)  scale(0.85); opacity: 0; }
+  25%  { transform: translate(-50%, -20%) scale(1.12); opacity: 1; }
+  100% { transform: translate(-50%, -110%) scale(1);   opacity: 0; }
+}
+
+/* Ally readout — flat tactical caps */
+.combat-allies {
+  position: relative; z-index: 2;
+  padding: 8px 16px;
+  display: flex; gap: 18px; flex-wrap: wrap;
+  font-family: ui-monospace, "SF Mono", Menlo, monospace;
+  font-size: 10px; letter-spacing: 2px;
+  color: #525249; text-transform: uppercase;
+  border-top: 1px solid rgba(230,227,216,0.14);
+  min-height: 14px;
+}
+.ally-chip { display: inline-block; color: #8b8a82; }
+.ally-chip.ready { color: #c99b3a; }
+
+/* Log — tactical comms, timestamped */
 .combat-log {
-  flex: 1;
-  overflow-y: auto;
+  position: relative; z-index: 2;
   padding: 10px 16px;
-  font-size: 13px;
-  line-height: 1.5;
-  color: var(--text-dim);
+  font-family: ui-monospace, "SF Mono", Menlo, monospace;
+  font-size: 12px; line-height: 1.55;
+  color: #8b8a82;
+  max-height: 160px;
+  min-height: 80px;
+  overflow-y: auto;
+  border-top: 1px solid rgba(230,227,216,0.14);
+  background: linear-gradient(180deg, rgba(0,0,0,0.55), rgba(0,0,0,0.85));
 }
 .combat-log .line {
-  padding: 3px 0;
-  border-bottom: 1px dashed #2a1a1a;
+  padding: 1px 0;
+  display: flex; gap: 8px;
+  border-bottom: none;
 }
-.combat-log .line.hero { color: var(--accent-2); }
-.combat-log .line.enemy { color: #e08a8a; }
-.combat-log .line.crit { color: var(--warn); font-weight: 700; }
-.combat-log .line.info { color: var(--text-muted); font-style: italic; }
-.combat-log .line.ally { color: #9cb87a; }
+.combat-log .line::before {
+  content: attr(data-ts);
+  color: #525249; width: 56px; flex: 0 0 auto;
+}
+.combat-log .line.hero  { color: #e6e3d8; }
+.combat-log .line.enemy { color: #e28080; }
+.combat-log .line.crit  { color: #c99b3a; font-weight: 700; }
+.combat-log .line.info  { color: #525249; font-style: italic; }
+.combat-log .line.ally  { color: #9cb87a; }
 
-/* Ally readout — flat tactical text, no pills */
-.combat-allies {
-  display: flex;
-  justify-content: center;
-  gap: 18px;
-  margin-top: 10px;
-  flex-wrap: wrap;
-  font-family: ui-monospace, "SF Mono", Menlo, monospace;
-  font-size: 10px;
-  letter-spacing: 2px;
-  text-transform: uppercase;
-  color: #6a7060;
+/* Action grid — flat, hard-edged */
+.combat-actions {
+  position: relative; z-index: 2;
+  display: grid; grid-template-columns: repeat(4, 1fr);
+  border-top: 1px solid rgba(230,227,216,0.35);
+  background: #040406;
 }
-.ally-chip { display: inline-block; }
-.ally-chip.ready { color: var(--warn); }
+.combat-btn {
+  background: transparent;
+  color: #e6e3d8;
+  border: none;
+  border-right: 1px solid rgba(230,227,216,0.14);
+  padding: 16px 6px;
+  font-family: ui-monospace, "SF Mono", Menlo, monospace;
+  font-size: 11px; letter-spacing: 3px; text-transform: uppercase;
+  cursor: pointer;
+}
+.combat-btn:last-child { border-right: none; }
+.combat-btn:hover  { background: rgba(230,227,216,0.05); color: #c99b3a; }
+.combat-btn:active { background: rgba(201,155,58,0.14); }
+.combat-btn[disabled] { opacity: 0.4; cursor: not-allowed; }
+.combat-btn .k {
+  display: block;
+  font-size: 9px; color: #525249; letter-spacing: 2px;
+  margin-bottom: 3px;
+}
+.combat-btn.flee { color: #d98f8f; }
+.combat-btn.flee:hover { color: #ff9090; }
+
+/* Hero stats strip at the bottom */
+.combat-hero {
+  position: relative; z-index: 2;
+  display: flex; justify-content: space-between;
+  padding: 10px 16px;
+  border-top: 1px solid rgba(230,227,216,0.14);
+  background: #040406;
+  font-family: ui-monospace, "SF Mono", Menlo, monospace;
+  font-size: 11px; letter-spacing: 2px;
+  color: #8b8a82; text-transform: uppercase;
+}
+.combat-hero b { color: #e6e3d8; font-weight: 700; letter-spacing: 1px; }
+
+/* Hidden emoji portrait (kept in DOM for hitFlash hook) */
+#combat-screen #enemy-art.hidden { display: none; }
 
 /* Screen-shake on a solid hit to the player */
 @keyframes combatShake {
@@ -737,39 +844,17 @@ html, body {
   80% { transform: translate(2px, 0); }
 }
 #combat-screen.shake { animation: combatShake 0.28s linear; }
-
-.combat-hero {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  padding: 10px 16px;
-  background: #0a0303;
-  border-top: 1px solid var(--border);
+#combat-screen.hit-red::after {
+  content: "";
+  position: absolute; inset: 0;
+  background: radial-gradient(ellipse at center, transparent 45%, rgba(168,65,42,0.35) 100%);
+  pointer-events: none; z-index: 4;
+  animation: hitRedFade 0.55s ease-out forwards;
 }
-.hero-stats {
-  font-size: 13px;
-  line-height: 1.5;
+@keyframes hitRedFade {
+  0%   { opacity: 1; }
+  100% { opacity: 0; }
 }
-.combat-actions {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 8px;
-  padding: 10px 12px 14px;
-  background: #0a0303;
-}
-.combat-btn {
-  padding: 14px 10px;
-  background: var(--panel);
-  border: 1px solid var(--border);
-  color: var(--text);
-  border-radius: 8px;
-  font-size: 14px;
-  font-weight: 600;
-  cursor: pointer;
-  font-family: inherit;
-}
-.combat-btn:active { background: var(--panel-2); }
-.combat-btn[disabled] { opacity: 0.4; cursor: not-allowed; }
 
 /* Modal */
 .modal {
