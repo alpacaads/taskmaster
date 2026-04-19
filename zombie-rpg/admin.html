@@ -116,8 +116,10 @@
     .card-actions button.danger { color: var(--danger); }
     .card-actions input[type="file"] { display: none; }
 
-    .card.replaced { border-color: var(--accent); }
-    .card.replaced .badge { background: var(--accent); color: #0b0f0a; }
+    .card.replaced { border-color: var(--warn); }
+    .card.replaced .badge { background: var(--warn); color: #0b0f0a; }
+    .card.replaced.committed { border-color: var(--accent); }
+    .card.replaced.committed .badge { background: var(--accent); color: #0b0f0a; }
 
     footer {
       padding: 16px 18px 36px; color: var(--text-muted); font-size: 12px;
@@ -245,8 +247,8 @@
   </footer>
 
   <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
-  <script src="js/overrides.js?v=37"></script>
-  <script src="js/scenes.js?v=37"></script>
+  <script src="js/overrides.js?v=38"></script>
+  <script src="js/scenes.js?v=38"></script>
   <script>
     (async function () {
       const PROMPTS = (window.Scenes && window.Scenes.PROMPTS) || {};
@@ -420,6 +422,41 @@
         }
       });
 
+      // ---------- Committed tracking ----------
+      // Persist which scene overrides have already been pushed to the
+      // repo so we can show a distinct badge and (later) decide when
+      // to auto-evict a stale override.
+      const COMMITTED_KEY = "dl_committed_overrides";
+      function readCommittedMap() {
+        try { return JSON.parse(localStorage.getItem(COMMITTED_KEY) || "{}") || {}; }
+        catch (e) { return {}; }
+      }
+      function writeCommittedMap(m) {
+        try { localStorage.setItem(COMMITTED_KEY, JSON.stringify(m)); } catch (e) {}
+      }
+      function markCommitted(id) {
+        const m = readCommittedMap();
+        m[id] = Date.now();
+        writeCommittedMap(m);
+      }
+      function isCommitted(id) {
+        return !!readCommittedMap()[id];
+      }
+      function forgetCommitted(id) {
+        const m = readCommittedMap();
+        delete m[id];
+        writeCommittedMap(m);
+      }
+
+      async function refreshAllCards() {
+        // Re-render every card so badges/thumbs reflect the latest state.
+        await Overrides.loadAll();
+        const existing = Array.from(grid.children);
+        existing.forEach(c => c.remove());
+        const allIds = Object.keys(PROMPTS).sort();
+        allIds.forEach(id => grid.appendChild(buildCard(id)));
+      }
+
       // ---------- Commit helpers ----------
       async function commitOne(id) {
         const blob = await Overrides.get(id);
@@ -429,11 +466,14 @@
             [{ path: GH.pathPrefix + id + ".png", blob }],
             "Update scene image: " + id
           );
-          // Remove the local override so the admin card flips back to "live"
-          // and re-fetches the committed file from the server.
-          await Overrides.remove(id);
-          await Overrides.loadAll();
-          toast("Committed " + id + " (" + commit.sha.slice(0, 7) + "). Pages rebuilding in ~30s…", "ok");
+          // Keep the local override in place. It IS the committed image,
+          // and the game reads overrides before hitting the server — so
+          // your upload stays visible immediately, instead of waiting
+          // for the ~30-60s GitHub Pages rebuild. Tap Revert if you
+          // want to pull the server copy instead.
+          markCommitted(id);
+          await refreshAllCards();
+          toast("Committed " + id + " (" + commit.sha.slice(0, 7) + ").", "ok");
           return commit;
         } catch (e) {
           toast("Commit failed: " + e.message, "err");
@@ -458,15 +498,10 @@
             ? "Update scene image: " + ids[0]
             : "Update scene images: " + ids.join(", ");
           const commit = await GH.commitFiles(files, msg);
-          // Clear the overrides we just committed so cards flip to "live".
-          for (const { id } of items) await Overrides.remove(id);
-          await Overrides.loadAll();
-          // Re-render every card so live thumbs re-fetch from the server.
-          const existing = Array.from(grid.children);
-          existing.forEach(c => c.remove());
-          const allIds = Object.keys(PROMPTS).sort();
-          allIds.forEach(id => grid.appendChild(buildCard(id)));
-          toast("Committed " + items.length + " file(s) (" + commit.sha.slice(0, 7) + "). Pages rebuilding in ~30s…", "ok");
+          // Keep overrides; mark each as committed so the badge flips.
+          for (const { id } of items) markCommitted(id);
+          await refreshAllCards();
+          toast("Committed " + items.length + " file(s) (" + commit.sha.slice(0, 7) + ").", "ok");
         } catch (e) {
           toast("Commit failed: " + e.message, "err");
         } finally {
@@ -537,7 +572,9 @@
           if (url) {
             img.src = url;
             card.classList.add("replaced");
-            badge.textContent = "OVERRIDE";
+            const committed = isCommitted(id);
+            card.classList.toggle("committed", committed);
+            badge.textContent = committed ? "COMMITTED" : "OVERRIDE";
             revertBtn.hidden = false; revertBtn.disabled = false;
             // Keep the button clickable so we can surface *why* it's
             // greyed out (no token yet) instead of silently doing nothing.
@@ -548,12 +585,13 @@
             sizeEl.textContent = blob ? "(" + fmtSize(blob.size) + ")" : "";
           } else {
             img.src = "images/" + id + ".png?t=" + Date.now();
-            card.classList.remove("replaced");
+            card.classList.remove("replaced", "committed");
             badge.textContent = "live";
             revertBtn.hidden = true; revertBtn.disabled = true;
             commitBtn.disabled = true;
             commitBtn.classList.remove("needs-token");
             sizeEl.textContent = "";
+            forgetCommitted(id);
           }
         }
 
