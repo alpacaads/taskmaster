@@ -223,7 +223,6 @@ window.Game = (function () {
     document.getElementById("stat-stam").textContent = state.stam;
     document.getElementById("stat-stammax").textContent = state.stamMax;
     document.getElementById("stat-ammo").textContent = state.ammo;
-    document.getElementById("stat-food").textContent = state.food;
     const hpPct   = Math.max(0, state.hp)   / Math.max(1, state.hpMax)   * 100;
     const stamPct = Math.max(0, state.stam) / Math.max(1, state.stamMax) * 100;
     const hpFill = document.getElementById("stat-hp-fill");
