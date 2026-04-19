@@ -36,7 +36,11 @@ window.Story = {
     text: "Mrs. Cho's apartment smells of incense and decay. She's slumped in her armchair, eyes closed. Peaceful, almost.\n\nYou spot a pantry of canned food and a medical bag on the counter.",
     choices: [
       { label: "Grab everything you can carry",
-        effect: s => { s.food += 2; s.hp = Math.min(s.hpMax, s.hp + 2); Game.toast("+2 🥫 food, +2 ❤️"); },
+        effect: s => {
+          s.hp = Math.min(s.hpMax, s.hp + 2);
+          Game.giveRandomItem(); Game.giveRandomItem();
+          Game.toast("+2 ❤️");
+        },
         next: "neighbour_wake" },
       { label: "Take only the medicine. Leave her in peace.",
         effect: s => { s.hp = Math.min(s.hpMax, s.hp + 3); s.flags.honourable = true; Game.toast("+3 ❤️"); },
@@ -157,7 +161,7 @@ window.Story = {
     choices: [
       { label: "Investigate the knocking", next: "grocery_inside" },
       { label: "Grab what's closest and leave",
-        effect: s => { s.food += 1; Game.toast("+1 🥫"); },
+        effect: s => { Game.giveRandomItem(); },
         next: "grocery_quick_exit" },
     ]
   },
@@ -169,10 +173,14 @@ window.Story = {
     text: "Aisle four: canned beans, a bottle of aspirin, and — in the manager's office — a drawer with a handgun and three rounds.\n\nYou hear the knocking again. It's coming from the walk-in freezer.",
     choices: [
       { label: "Take supplies and leave",
-        effect: s => { s.food += 2; s.ammo += 3; s.hp = Math.min(s.hpMax, s.hp + 1); Game.toast("+2 🥫, +3 🔫, +1 ❤️"); },
+        effect: s => {
+          s.ammo += 3; s.hp = Math.min(s.hpMax, s.hp + 1);
+          Game.giveRandomItem(); Game.giveRandomItem();
+          Game.toast("+3 🔫, +1 ❤️");
+        },
         next: "road_out" },
-      { label: "Open the freezer", tag: "MINI-BOSS", tagClass: "danger",
-        effect: s => { s.food += 2; s.ammo += 3; s.hp = Math.min(s.hpMax, s.hp + 1); Game.toast("+2 🥫, +3 🔫, +1 ❤️"); },
+      { label: "Open the freezer", tag: "RISKY", tagClass: "warn",
+        effect: s => { s.ammo += 3; s.hp = Math.min(s.hpMax, s.hp + 1); Game.toast("+3 🔫, +1 ❤️"); },
         combat: { enemy: "freezer_abom", risky: true, onWin: "freezer", onLose: "death" } },
     ]
   },
@@ -235,7 +243,7 @@ window.Story = {
     text: "A shotgun racks behind you. \"Drop the bag. Slow.\"\n\nTwo men step out from the pines. Not infected — worse. Bandits.",
     choices: [
       { label: "Drop the bag. Live to fight another day.",
-        effect: s => { s.food = Math.max(0, s.food - 2); s.ammo = Math.max(0, s.ammo - 2); Game.toast("-2 🥫, -2 🔫"); },
+        effect: s => { s.ammo = Math.max(0, s.ammo - 2); Game.toast("-2 🔫"); },
         next: "after_ambush_mercy" },
       { label: "Fight — you need these supplies", tag: "COMBAT", tagClass: "danger",
         combat: { enemy: "bandit", risky: true, onWin: "after_ambush_fight", onLose: "death" } },
@@ -273,7 +281,11 @@ window.Story = {
     text: "It was ugly. It was quick. You take their shotgun, their jerky, and their silence.",
     choices: [
       { label: "Loot and move on",
-        effect: s => { s.ammo += 4; s.food += 2; s.flags.killedBandits = true; Game.toast("+4 🔫, +2 🥫"); },
+        effect: s => {
+          s.ammo += 4; s.flags.killedBandits = true;
+          Game.giveRandomItem();
+          Game.toast("+4 🔫");
+        },
         next: "greenbelt_gate" },
     ]
   },
@@ -286,8 +298,8 @@ window.Story = {
     text: "A chain-link fence topped with razor wire. A woman in tactical gear studies you through the scope of a rifle.\n\n\"State your business. And show me your arms — both sides.\"",
     choices: [
       { label: "Show your arms. No bites.", next: "greenbelt_in" },
-      { label: "Offer supplies as a gift", require: s => s.food >= 1,
-        effect: s => { s.food -= 1; s.flags.goodwill = true; Game.toast("-1 🥫"); },
+      { label: "Offer supplies as a gift", require: s => s.ammo >= 2,
+        effect: s => { s.ammo -= 2; s.flags.goodwill = true; Game.toast("-2 🔫"); },
         next: "greenbelt_in" },
     ]
   },
@@ -370,7 +382,7 @@ window.Story = {
     text: "You spend the morning peeling potatoes and listening to camp gossip. Three meals out of one rabbit. Magic.\n\nVega slaps your shoulder on her way past. \"You'll do.\"",
     choices: [
       { label: "Wash up and report in",
-        effect: s => { s.food += 2; Game.toast("+2 🥫"); },
+        effect: s => { Game.giveRandomItem(); Game.giveRandomItem(); },
         next: "chore_done" },
     ]
   },
@@ -640,9 +652,9 @@ window.Story = {
           s.flags.exposedTraitor = true;
           // Vega opens the armory; camp reinforces the fence overnight.
           s.ammo += 2;
-          s.food += 1;
+          Game.giveRandomItem();
           if (s.bonds) s.bonds.ren = (s.bonds.ren || 0) + 1;
-          Game.toast("+2 🔫  +1 🥫  · Ren's trust +1");
+          Game.toast("+2 🔫  · Ren's trust +1");
         },
         next: "bonfire_invite" },
     ]

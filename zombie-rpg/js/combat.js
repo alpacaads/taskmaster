@@ -30,36 +30,40 @@ window.Combat = (function () {
   //   n        : count for ammo/food
   //   pool     : array of {name, bonus, slot:"melee"|"ranged", ammo?}
   //   name+effect : one-off item with an optional state effect
+  // Loot tables — `kind: "item"` pulls a random consumable from the
+  // global ITEM_POOL (defined in game.js). Entries roll independently.
   const LOOT = {
     walker:  [
       { chance: 0.35, kind: "ammo", n: 1 },
-      { chance: 0.15, kind: "food", n: 1 },
+      { chance: 0.3,  kind: "item" },
     ],
     walker_cho: [
-      // Guaranteed a random gift from Mrs. Cho's apartment.
+      // Guaranteed weapon from her pack.
       { chance: 1.0, kind: "weapon", pool: [
         { name: "Kitchen Knife",     bonus: 1, slot: "melee" },
         { name: "Brass Cane",        bonus: 1, slot: "melee" },
         { name: "Mrs. Cho's .22",    bonus: 1, slot: "ranged", ammo: 3 },
       ] },
-      { chance: 0.6, kind: "item", name: "🩹 Pill Bottle",
-        effect: s => { s.hp = Math.min(s.hpMax, s.hp + 2); Game.toast("+2 ❤️"); } },
+      // Plus 2 guaranteed + 1 likely random items from a wide pool so
+      // each playthrough differs.
+      { chance: 1.0, kind: "item" },
+      { chance: 1.0, kind: "item" },
+      { chance: 0.55, kind: "item" },
     ],
     walker_pair: [
       { chance: 0.55, kind: "ammo", n: 1 },
-      { chance: 0.25, kind: "food", n: 1 },
+      { chance: 0.4,  kind: "item" },
       { chance: 0.15, kind: "weapon", pool: [
         { name: "Jagged Shard",      bonus: 1, slot: "melee" },
       ] },
     ],
     runner: [
       { chance: 0.55, kind: "ammo", n: 1 },
-      { chance: 0.2,  kind: "food", n: 1 },
+      { chance: 0.3,  kind: "item" },
     ],
     bloater: [
-      { chance: 0.5, kind: "item", name: "🧪 Antiseptic",
-        effect: s => { s.hp = Math.min(s.hpMax, s.hp + 3); Game.toast("+3 ❤️"); } },
-      { chance: 0.35, kind: "ammo", n: 2 },
+      { chance: 0.65, kind: "item" },
+      { chance: 0.4,  kind: "ammo", n: 2 },
     ],
     bandit: [
       { chance: 1.0, kind: "ammo", n: 2 },
@@ -67,7 +71,7 @@ window.Combat = (function () {
         { name: "Sawed-off Shotgun", bonus: 2, slot: "ranged", ammo: 4 },
         { name: "Hunting Rifle",     bonus: 2, slot: "ranged", ammo: 3 },
       ] },
-      { chance: 0.25, kind: "food", n: 1 },
+      { chance: 0.45, kind: "item" },
     ],
     traitor: [
       { chance: 1.0, kind: "weapon", pool: [
@@ -75,20 +79,19 @@ window.Combat = (function () {
         { name: "Bowie Knife",       bonus: 2, slot: "melee" },
       ] },
       { chance: 1.0, kind: "ammo", n: 4 },
-      { chance: 1.0, kind: "item", name: "🗝 Calder's Keyring",
-        effect: s => { s.flags.bossLoot = true; Game.toast("Found Calder's keyring"); } },
+      { chance: 1.0, kind: "item" },
+      { chance: 1.0, kind: "item" },
     ],
     freezer_abom: [
-      // Mini-boss: guaranteed weapon + frozen food + ammo.
       { chance: 1.0, kind: "weapon", pool: [
         { name: "Butcher's Cleaver",        bonus: 2, slot: "melee" },
         { name: "Store Manager's Revolver", bonus: 2, slot: "ranged", ammo: 4 },
       ] },
-      { chance: 1.0, kind: "food", n: 2 },
+      { chance: 1.0, kind: "item" },
+      { chance: 1.0, kind: "item" },
       { chance: 0.6, kind: "ammo", n: 2 },
     ],
-    horde:       [],
-    walker_cho2: [],
+    horde: [],
   };
 
   function applyLoot(enemyId) {
@@ -99,18 +102,12 @@ window.Combat = (function () {
       if (d.kind === "ammo") {
         s.ammo += d.n;
         Game.toast(`+${d.n} 🔫`);
-      } else if (d.kind === "food") {
-        s.food += d.n;
-        Game.toast(`+${d.n} 🥫`);
       } else if (d.kind === "weapon") {
         const pick = d.pool[Math.floor(Math.random() * d.pool.length)];
-        equipWeapon(pick);          // toasts "Equipped X" itself
+        equipWeapon(pick);              // toasts its own 'Equipped X'
         if (pick.ammo) s.ammo += pick.ammo;
       } else if (d.kind === "item") {
-        if (d.effect) d.effect(s);
-        s.inventory = s.inventory || [];
-        s.inventory.push({ id: d.name, name: d.name });
-        Game.toast("Found: " + d.name);
+        if (Game.giveRandomItem) Game.giveRandomItem();
       }
     });
   }
@@ -451,15 +448,22 @@ window.Combat = (function () {
     const s = Game.state;
     const opts = [];
     if (s.ammo > 0) opts.push("ammo");
-    if (s.food > 0) opts.push("food");
-    if (s.bestMelee) opts.push("melee");
-    if (s.bestRanged) opts.push("ranged");
+    if (s.inventory && s.inventory.some(i => i.qty > 0 && (i.heal || i.stam || i.stamRefill))) opts.push("item");
     if (opts.length === 0) return;
     const pick = opts[Math.floor(Math.random() * opts.length)];
-    if (pick === "ammo") { s.ammo = Math.max(0, s.ammo - 1); Game.toast("Dropped: 1 🔫"); }
-    else if (pick === "food") { s.food = Math.max(0, s.food - 1); Game.toast("Dropped: 1 🥫"); }
-    else if (pick === "melee" && s.bestMelee) { Game.toast("Dropped: " + s.bestMelee.name); s.bestMelee = null; }
-    else if (pick === "ranged" && s.bestRanged) { Game.toast("Dropped: " + s.bestRanged.name); s.bestRanged = null; }
+    if (pick === "ammo") {
+      s.ammo = Math.max(0, s.ammo - 1);
+      Game.toast("Dropped: 1 🔫");
+    } else if (pick === "item") {
+      const consumables = s.inventory.filter(i => i.qty > 0 && (i.heal || i.stam || i.stamRefill));
+      const loser = consumables[Math.floor(Math.random() * consumables.length)];
+      loser.qty -= 1;
+      if (loser.qty <= 0) {
+        const idx = s.inventory.indexOf(loser);
+        s.inventory.splice(idx, 1);
+      }
+      Game.toast("Dropped: " + loser.name);
+    }
   }
 
   function hitFlash() {

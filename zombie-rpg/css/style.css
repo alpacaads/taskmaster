@@ -1177,13 +1177,31 @@ html, body {
   border-radius: 6px;
   padding: 10px 12px;
   display: flex;
+  align-items: center;
   justify-content: space-between;
+  gap: 10px;
   border: 1px solid var(--border);
 }
+.inv-item .inv-main { flex: 1; min-width: 0; }
+.inv-item .inv-name { color: var(--text); font-weight: 600; }
+.inv-item .inv-desc { color: var(--text-muted); font-size: 12px; margin-top: 2px; }
 .inv-item .qty {
   color: var(--accent-2);
   font-weight: 700;
 }
+.inv-item .inv-use {
+  background: var(--accent);
+  color: #0b0f0a;
+  border: 1px solid var(--accent);
+  border-radius: 5px;
+  padding: 6px 12px;
+  font-weight: 700;
+  font-size: 12px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+.inv-item .inv-use:hover { background: var(--accent-2); }
 .inv-empty {
   color: var(--text-muted);
   font-style: italic;

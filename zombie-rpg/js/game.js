@@ -8,7 +8,6 @@ window.Game = (function () {
     hp: 10, hpMax: 10,
     stam: 5, stamMax: 5,
     ammo: 3,
-    food: 2,
     companion: null,
     companion2: null,
     node: "intro",
@@ -20,11 +19,76 @@ window.Game = (function () {
     // combat.js on top of the base damage range.
     bestMelee:  { name: "Pocket Knife", bonus: 0, slot: "melee" },
     bestRanged: { name: "Handgun",       bonus: 0, slot: "ranged" },
-    // Every looted item lives here so the inventory screen can list them.
+    // Looted consumables and keepsakes. Each entry has {id, name, desc,
+    // qty, heal?, stam?, stamRefill?}. Consumables (any heal/stam field)
+    // render a 'Use' button in the inventory modal.
     inventory: [
-      { id: "bandages", name: "🩹 Bandages", desc: "For the small cuts.", qty: 2 },
+      { id: "bandages", name: "🩹 Bandages", desc: "Patch yourself up.", qty: 2, heal: 3 },
     ],
   });
+
+  // ------- Consumables / loot item pool (widened) -------
+  // Referenced from combat.js when a loot entry rolls `kind: "item"`.
+  // Keep to ~8-10 entries so drops feel varied across a playthrough.
+  window.ITEM_POOL = [
+    { id: "bandages",    name: "🩹 Bandages",       desc: "Clean gauze. Stops bleeding.", heal: 3 },
+    { id: "pills",       name: "💊 Pill Bottle",    desc: "Dulls the pain.",              heal: 2 },
+    { id: "antiseptic",  name: "🧪 Antiseptic",     desc: "Cleans wounds properly.",      heal: 4 },
+    { id: "painkillers", name: "💉 Painkillers",    desc: "Push through the worst.",      heal: 1, stam: 1 },
+    { id: "adrenaline",  name: "⚡ Adrenaline Shot", desc: "Refills stamina to full.",     stamRefill: true },
+    { id: "canned_fruit",name: "🍑 Canned Fruit",   desc: "Sweet. Unexpected.",           heal: 1 },
+    { id: "granola",     name: "🥣 Granola Bar",    desc: "Stale. Still calories.",       heal: 1 },
+    { id: "water",       name: "💧 Water Bottle",   desc: "Clean, for once.",             heal: 1, stam: 1 },
+    { id: "jerky",       name: "🥓 Jerky Strip",    desc: "Salt and survival.",           heal: 1 },
+    { id: "energy_bar",  name: "🍫 Energy Bar",     desc: "Chocolatey grit.",             stam: 2 },
+  ];
+
+  // Add one item to inventory, stacking quantity if already present.
+  // Called from combat loot and from story effects that hand you things.
+  function giveItem(id) {
+    const def = window.ITEM_POOL.find(d => d.id === id);
+    if (!def) return;
+    state.inventory = state.inventory || [];
+    const existing = state.inventory.find(i => i.id === def.id);
+    if (existing) existing.qty = (existing.qty || 1) + 1;
+    else state.inventory.push({ ...def, qty: 1 });
+  }
+
+  // Roll a random item from the full pool and give it.
+  function giveRandomItem() {
+    const pool = window.ITEM_POOL;
+    const pick = pool[Math.floor(Math.random() * pool.length)];
+    giveItem(pick.id);
+    toast("Found: " + pick.name);
+    return pick;
+  }
+
+  // Consume one from the inventory, apply its effect, decrement qty.
+  function useItem(id) {
+    if (!state.inventory) return;
+    const idx = state.inventory.findIndex(i => i.id === id);
+    if (idx < 0) return;
+    const it = state.inventory[idx];
+    let applied = false;
+    if (it.heal && state.hp < state.hpMax) {
+      state.hp = Math.min(state.hpMax, state.hp + it.heal);
+      applied = true;
+    }
+    if (it.stamRefill && state.stam < state.stamMax) {
+      state.stam = state.stamMax;
+      applied = true;
+    } else if (it.stam && state.stam < state.stamMax) {
+      state.stam = Math.min(state.stamMax, state.stam + it.stam);
+      applied = true;
+    }
+    if (!applied) { toast("Nothing to fix right now."); return; }
+    Sound.play("heal");
+    it.qty = (it.qty || 1) - 1;
+    if (it.qty <= 0) state.inventory.splice(idx, 1);
+    updateHud();
+    openInventory();   // re-render with the new state
+    toast("Used: " + it.name);
+  }
 
   let state = DEFAULT_STATE();
 
@@ -245,44 +309,58 @@ window.Game = (function () {
   function openInventory() {
     const list = document.getElementById("inv-list");
     list.innerHTML = "";
-    const items = [
-      { name: "❤️ Health", qty: `${state.hp}/${state.hpMax}` },
-      { name: "⚡ Stamina", qty: `${state.stam}/${state.stamMax}` },
-      { name: "🔫 Ammunition", qty: state.ammo },
-      { name: "🥫 Food rations", qty: state.food },
+    // Top-of-list read-only stats.
+    const rows = [
+      { readonly: true, name: "❤️ Health",     qty: `${state.hp}/${state.hpMax}` },
+      { readonly: true, name: "⚡ Stamina",    qty: `${state.stam}/${state.stamMax}` },
+      { readonly: true, name: "🔫 Ammunition", qty: state.ammo },
     ];
     if (state.bestMelee) {
       const b = state.bestMelee.bonus;
-      items.push({
+      rows.push({ readonly: true,
         name: "🔪 " + state.bestMelee.name,
         desc: b > 0 ? `Equipped · +${b} melee damage` : "Equipped · melee",
       });
     }
     if (state.bestRanged) {
       const b = state.bestRanged.bonus;
-      items.push({
+      rows.push({ readonly: true,
         name: "🔫 " + state.bestRanged.name,
         desc: b > 0 ? `Equipped · +${b} ranged damage` : "Equipped · ranged",
       });
     }
-    // Drop the duplicate listings of equipped weapons from .inventory.
+    // Looted items — dedupe against equipped weapons.
     const equippedNames = new Set();
     if (state.bestMelee)  equippedNames.add(state.bestMelee.name);
     if (state.bestRanged) equippedNames.add(state.bestRanged.name);
     (state.inventory || []).forEach(it => {
       const plainName = (it.name || "").replace(/^[^\s]+\s+/, "");
       if (equippedNames.has(plainName)) return;
-      items.push(it);
+      rows.push(it);
     });
-    items.forEach(it => {
+    rows.forEach(it => {
       const row = document.createElement("div");
       row.className = "inv-item";
-      row.innerHTML = `<span>${escapeHtml(it.name)}</span><span class="qty">${escapeHtml(String(it.qty ?? 1))}</span>`;
+      const consumable = !it.readonly && (it.heal || it.stam || it.stamRefill);
+      const label = consumable
+        ? `<button class="inv-use" data-id="${escapeHtml(it.id)}">Use</button>`
+        : `<span class="qty">${escapeHtml(String(it.qty ?? 1))}</span>`;
+      const desc = it.desc ? `<div class="inv-desc">${escapeHtml(it.desc)}</div>` : "";
+      row.innerHTML =
+        `<div class="inv-main">
+           <span class="inv-name">${escapeHtml(it.name)}${it.qty > 1 ? ` · ${it.qty}` : ""}</span>
+           ${desc}
+         </div>
+         ${label}`;
       list.appendChild(row);
     });
-    if (items.length === 0) {
+    if (rows.length === 0) {
       list.innerHTML = `<div class="inv-empty">Empty.</div>`;
     }
+    // Wire up the Use buttons.
+    list.querySelectorAll(".inv-use").forEach(btn => {
+      btn.addEventListener("click", () => useItem(btn.dataset.id));
+    });
     show("inventory-modal");
   }
   function closeInventory() { hide("inventory-modal"); }
@@ -476,6 +554,7 @@ window.Game = (function () {
     startNew, continueGame, save, quitToTitle, goto,
     openInventory, closeInventory, showCredits, hideCredits,
     toggleMute, toast, fallbackToSVG, giveWeapon,
+    giveItem, giveRandomItem, useItem,
     get state() { return state; },
   };
 })();
