@@ -733,11 +733,14 @@ window.Scenes = (function () {
   // GitHub Pages serves them directly with correct MIME types and no
   // sandbox CSP, so relative paths work reliably.
   const IMG_BASE = "images/";
-  // No per-load cache-bust — it was forcing a fresh download of every
-  // PNG on every page visit. Browser cache (GitHub Pages Cache-Control:
-  // max-age=600) is good enough; new images become visible within 10
-  // minutes, and the user committing a new image sees it immediately
-  // via their local override until they hit Revert.
+  // Smart cache-bust: only appended after an admin commit so normal
+  // gameplay keeps using the browser's HTTP cache (fast), but the
+  // committer sees the new file immediately instead of waiting for
+  // GitHub Pages' Cache-Control: max-age=600 to expire.
+  function imgCacheBust() {
+    try { return localStorage.getItem("dl_game_cache_bust") || ""; }
+    catch (e) { return ""; }
+  }
   const PROMPTS = {
     intro:               "ruined city skyline at night, military helicopter flying away into the distance, abandoned skyscrapers, smoke rising, broken cars on the street, lone hooded survivor watching from a rooftop, faint moonlight",
     apt_hallway:         "dark narrow apartment building hallway at night, single flickering ceiling bulb, dried blood streak on the floor leading away, peeling wallpaper, ajar door with chain dangling, claustrophobic horror atmosphere",
@@ -819,7 +822,9 @@ window.Scenes = (function () {
     // window.__OVERRIDES[sceneId] holds an objectURL for that blob.
     // Lets you preview a new image in-game before committing it.
     const override = (window.__OVERRIDES && window.__OVERRIDES[sceneId]) || null;
-    const localUrl = override || `${IMG_BASE}${sceneId}.png`;
+    const bust = imgCacheBust();
+    const localUrl = override
+      || `${IMG_BASE}${sceneId}.png${bust ? "?v=" + bust : ""}`;
     const onLoad  = "this.closest('.scene-stage').classList.add('loaded');";
     const onError =
       "var s=this.closest('.scene-stage');" +
@@ -839,11 +844,13 @@ window.Scenes = (function () {
   // Preload a batch of scene images in the background. Called by game.js
   // with the node's choices so the next screens are already cached.
   function preloadScenes(ids) {
+    const bust = imgCacheBust();
+    const suffix = bust ? "?v=" + bust : "";
     (ids || []).forEach(id => {
       if (!id) return;
       const img = new Image();
       img.decoding = "async";
-      img.src = IMG_BASE + id + ".png";
+      img.src = IMG_BASE + id + ".png" + suffix;
     });
   }
 

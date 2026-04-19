@@ -247,8 +247,8 @@
   </footer>
 
   <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
-  <script src="js/overrides.js?v=38"></script>
-  <script src="js/scenes.js?v=38"></script>
+  <script src="js/overrides.js?v=39"></script>
+  <script src="js/scenes.js?v=39"></script>
   <script>
     (async function () {
       const PROMPTS = (window.Scenes && window.Scenes.PROMPTS) || {};
@@ -438,6 +438,14 @@
         const m = readCommittedMap();
         m[id] = Date.now();
         writeCommittedMap(m);
+        bumpGameCacheBust();
+      }
+      // Force the game to re-fetch every scene image after a commit.
+      // scenes.js reads this value and appends it as ?v=... when set,
+      // so GitHub Pages' 10-minute HTTP cache doesn't hide the new PNG.
+      function bumpGameCacheBust() {
+        try { localStorage.setItem("dl_game_cache_bust", String(Date.now())); }
+        catch (e) {}
       }
       function isCommitted(id) {
         return !!readCommittedMap()[id];
@@ -513,11 +521,13 @@
       commitAllBtn.addEventListener("click", commitAll);
 
       document.getElementById("refresh-thumbs").addEventListener("click", () => {
+        // Bump the cache-bust so the *game* re-fetches every image too.
+        bumpGameCacheBust();
         const existing = Array.from(grid.children);
         existing.forEach(c => c.remove());
         const allIds = Object.keys(PROMPTS).sort();
         allIds.forEach(id => grid.appendChild(buildCard(id)));
-        toast("Refreshed " + allIds.length + " thumbnails.", "ok");
+        toast("Refreshed " + allIds.length + " thumbnails. Game will re-fetch on next load.", "ok");
       });
 
       // Load override blobs → objectURL map for instant thumb rendering.
