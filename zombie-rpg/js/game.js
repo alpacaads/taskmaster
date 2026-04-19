@@ -15,13 +15,13 @@ window.Game = (function () {
     flags: {},
     bonds: { maya: 0, ren: 0 },
     romance: null,
-    // Best-equipped weapons — loot bumps their damage bonus. Nulls mean
-    // the base crowbar/handgun stats from combat.js apply.
-    bestMelee: null,
-    bestRanged: null,
+    // Equipped weapons — starter kit gets +0 bonus; every loot drop is
+    // an upgrade. Bonuses stack into the per-swing / per-shot dice in
+    // combat.js on top of the base damage range.
+    bestMelee:  { name: "Crowbar", bonus: 0, slot: "melee" },
+    bestRanged: { name: "Handgun", bonus: 0, slot: "ranged" },
     // Every looted item lives here so the inventory screen can list them.
     inventory: [
-      { id: "crowbar", name: "🔧 Crowbar", desc: "Dependable. Heavy." },
       { id: "bandages", name: "🩹 Bandages", desc: "For the small cuts.", qty: 2 },
     ],
   });
@@ -249,12 +249,18 @@ window.Game = (function () {
       { name: "🥫 Food rations", qty: state.food },
     ];
     if (state.bestMelee) {
-      items.push({ name: "🔪 " + state.bestMelee.name,
-        desc: `Equipped · +${state.bestMelee.bonus} melee damage` });
+      const b = state.bestMelee.bonus;
+      items.push({
+        name: "🔪 " + state.bestMelee.name,
+        desc: b > 0 ? `Equipped · +${b} melee damage` : "Equipped · melee",
+      });
     }
     if (state.bestRanged) {
-      items.push({ name: "🔫 " + state.bestRanged.name,
-        desc: `Equipped · +${state.bestRanged.bonus} ranged damage` });
+      const b = state.bestRanged.bonus;
+      items.push({
+        name: "🔫 " + state.bestRanged.name,
+        desc: b > 0 ? `Equipped · +${b} ranged damage` : "Equipped · ranged",
+      });
     }
     // Drop the duplicate listings of equipped weapons from .inventory.
     const equippedNames = new Set();
