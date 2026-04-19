@@ -82,6 +82,13 @@ window.Combat = (function () {
     const chEl = document.getElementById("combat-chapter");
     if (chEl) chEl.textContent = "CONTACT";
 
+    // Render the animated silhouette for this enemy.
+    const silEl = document.getElementById("enemy-silhouette");
+    if (silEl && window.Silhouettes) {
+      silEl.className = "enemy-silhouette idle";
+      silEl.innerHTML = Silhouettes.forEnemy(config.enemy);
+    }
+
     const logEl = document.getElementById("combat-log");
     logEl.innerHTML = "";
 
@@ -211,7 +218,8 @@ window.Combat = (function () {
     if (state.enemy.hp <= 0) {
       log(`${state.enemy.name} falls.`, "crit");
       Sound.play("victory");
-      setTimeout(() => end("win"), 900);
+      silhouetteState("die");
+      setTimeout(() => end("win"), 950);
       return;
     }
 
@@ -223,6 +231,22 @@ window.Combat = (function () {
     art.classList.remove("hit");
     void art.offsetWidth;
     art.classList.add("hit");
+    silhouetteState("hit");
+  }
+
+  // Trigger a CSS animation on the silhouette by swapping state classes.
+  function silhouetteState(name) {
+    const el = document.getElementById("enemy-silhouette");
+    if (!el) return;
+    // Keep .idle as the resting animation; overlay a transient state.
+    el.classList.remove("lunge", "hit", "die");
+    void el.offsetWidth;
+    el.classList.add(name);
+    if (name !== "die") {
+      const t = name === "lunge" ? 500 : 320;
+      clearTimeout(el._silT);
+      el._silT = setTimeout(() => el.classList.remove(name), t);
+    }
   }
 
   // ---------- enemy turn ----------
@@ -230,6 +254,10 @@ window.Combat = (function () {
     if (!state) return;
     const s = Game.state;
     const e = state.enemy;
+
+    // The figure lunges just before the hit lands.
+    silhouetteState("lunge");
+
     let dmg = rand(e.atk[0], e.atk[1]);
     // Rare savage hit — ignores 1 of brace.
     const savage = Math.random() < 0.12;
@@ -299,7 +327,8 @@ window.Combat = (function () {
         if (state.enemy.hp <= 0) {
           log(`${state.enemy.name} falls.`, "crit");
           Sound.play("victory");
-          setTimeout(() => end("win"), 900);
+          silhouetteState("die");
+          setTimeout(() => end("win"), 950);
           return;
         }
       }

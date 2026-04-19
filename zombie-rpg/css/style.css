@@ -690,9 +690,73 @@ html, body {
 
 .combat-enemy {
   position: relative; z-index: 2;
-  padding: 24px 16px 0;
+  padding: 14px 16px 0;
   flex: 1; min-height: 0;
   display: flex; flex-direction: column; justify-content: flex-end;
+}
+
+/* Animated silhouette centered over the backdrop, text sits under. */
+.enemy-silhouette {
+  position: absolute;
+  left: 50%;
+  bottom: 110px;           /* above the text column */
+  transform: translateX(-50%);
+  width: min(78%, 320px);
+  max-height: calc(100% - 150px);
+  pointer-events: none;
+  z-index: 2;
+  filter:
+    drop-shadow(0 18px 18px rgba(0,0,0,0.85))
+    drop-shadow(0 0 22px rgba(0,0,0,0.55));
+}
+.enemy-silhouette-svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+/* States */
+.enemy-silhouette .sil-body {
+  transform-box: fill-box;
+  transform-origin: 50% 100%;
+  animation: silIdle 3.4s ease-in-out infinite;
+}
+@keyframes silIdle {
+  0%, 100% { transform: translateY(0)    rotate(-1.5deg); }
+  50%      { transform: translateY(-3px) rotate( 1.5deg); }
+}
+.enemy-silhouette.lunge .sil-body {
+  animation: silLunge 0.5s ease-out;
+}
+@keyframes silLunge {
+  0%   { transform: translateY(0)    rotate(0)   scale(1); }
+  30%  { transform: translateY(-8px) rotate(-6deg) scale(1.06); }
+  55%  { transform: translateY(6px)  rotate( 4deg) scale(1.1); }
+  100% { transform: translateY(0)    rotate(0)   scale(1); }
+}
+.enemy-silhouette.hit .sil-body {
+  animation: silHit 0.28s linear;
+}
+@keyframes silHit {
+  0%,100% { transform: translateX(0); filter: none; }
+  20% { transform: translateX(-6px); filter: brightness(2.6) sepia(1) hue-rotate(-20deg); }
+  40% { transform: translateX( 5px); filter: brightness(1.8); }
+  70% { transform: translateX(-3px); }
+}
+.enemy-silhouette.die .sil-body {
+  animation: silDie 0.9s ease-in forwards;
+}
+.enemy-silhouette.die .sil-shadow {
+  animation: silShadowFade 0.9s ease-in forwards;
+}
+@keyframes silDie {
+  0%   { transform: rotate(0)    translateY(0);   opacity: 1; }
+  60%  { transform: rotate(14deg) translateY(18px); opacity: 0.85; }
+  100% { transform: rotate(26deg) translateY(38px); opacity: 0; }
+}
+@keyframes silShadowFade {
+  to { opacity: 0; transform: scale(1.3); }
 }
 .combat-tag {
   font-family: ui-monospace, "SF Mono", Menlo, monospace;
