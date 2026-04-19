@@ -637,7 +637,9 @@ html, body {
 #combat-screen {
   background: #050507;
   padding: 0;
-  position: relative;
+  /* .screen gives us position: absolute; inset: 0; don't override it or
+     the flex column collapses to content height and actions float mid-
+     screen instead of docking at the bottom. */
   display: flex;
   flex-direction: column;
   overflow: hidden;
