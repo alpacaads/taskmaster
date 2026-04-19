@@ -409,7 +409,15 @@ window.Story = {
     },
     choices: [
       { label: "Hold the wall.", tag: "COMBAT", tagClass: "danger",
-        combat: { enemy: "horde", onWin: "post_horde_win", onLose: "post_horde_lose" } },
+        combat: function (s) {
+          return {
+            enemy: "horde",
+            // Camp isn't ready when you didn't warn them about the breach.
+            risky: !s.flags.exposedTraitor,
+            onWin: "post_horde_win",
+            onLose: "post_horde_lose",
+          };
+        } },
       { label: "Get the survivors out the back.", next: "post_horde_flee" },
     ]
   },
@@ -620,10 +628,22 @@ window.Story = {
     text: "It's over. He's smaller now. Calder again, almost.\n\nYou stand in the dark with the weight of it — and the choice still yours.",
     choices: [
       { label: "Bury him quietly. The camp will not know.", tag: "HARD", tagClass: "danger",
-        effect: s => { s.flags.killedTraitor = true; Game.toast("The camp will not know."); },
+        effect: s => {
+          s.flags.killedTraitor = true;
+          // Maya notices. She would've told Vega.
+          if (s.flags.maya && s.bonds) s.bonds.maya = Math.max(0, (s.bonds.maya || 0) - 1);
+          Game.toast("The camp will not know.");
+        },
         next: "bonfire_invite" },
       { label: "Tell Vega. They deserve the truth.",
-        effect: s => { s.flags.exposedTraitor = true; Game.toast("The camp prepares."); },
+        effect: s => {
+          s.flags.exposedTraitor = true;
+          // Vega opens the armory; camp reinforces the fence overnight.
+          s.ammo += 2;
+          s.food += 1;
+          if (s.bonds) s.bonds.ren = (s.bonds.ren || 0) + 1;
+          Game.toast("+2 🔫  +1 🥫  · Ren's trust +1");
+        },
         next: "bonfire_invite" },
     ]
   },

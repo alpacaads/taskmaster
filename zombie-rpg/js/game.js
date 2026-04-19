@@ -165,7 +165,9 @@ window.Game = (function () {
     // Pick a sound based on what the choice did
     if (c.combat) {
       Sound.play("select");
-      Combat.start(c.combat);
+      // Support state-aware combat configs (fn(state) -> {enemy,...}).
+      const cfg = typeof c.combat === "function" ? c.combat(state) : c.combat;
+      Combat.start(cfg);
       return;
     }
     // Out-of-combat upkeep — run BEFORE measuring hp delta so the +1
