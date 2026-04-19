@@ -38,11 +38,11 @@ window.Combat = (function () {
       { chance: 0.3,  kind: "item" },
     ],
     walker_cho: [
-      // Guaranteed weapon from her pack.
+      // Guaranteed gun from Mrs. Cho's nightstand.
       { chance: 1.0, kind: "weapon", pool: [
-        { name: "Kitchen Knife",     bonus: 1, slot: "melee" },
-        { name: "Brass Cane",        bonus: 1, slot: "melee" },
-        { name: "Mrs. Cho's .22",    bonus: 1, slot: "ranged", ammo: 3 },
+        { name: "Mrs. Cho's .22 Revolver",   bonus: 1, slot: "ranged", ammo: 3 },
+        { name: "Her Husband's Service Pistol", bonus: 1, slot: "ranged", ammo: 4 },
+        { name: "Pearl-grip Snub Nose",      bonus: 1, slot: "ranged", ammo: 2 },
       ] },
       // Plus 2 guaranteed + 1 likely random items from a wide pool so
       // each playthrough differs.
