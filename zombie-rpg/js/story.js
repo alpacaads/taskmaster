@@ -171,9 +171,9 @@ window.Story = {
       { label: "Take supplies and leave",
         effect: s => { s.food += 2; s.ammo += 3; s.hp = Math.min(s.hpMax, s.hp + 1); Game.toast("+2 🥫, +3 🔫, +1 ❤️"); },
         next: "road_out" },
-      { label: "Open the freezer", tag: "RISKY", tagClass: "warn",
+      { label: "Open the freezer", tag: "MINI-BOSS", tagClass: "danger",
         effect: s => { s.food += 2; s.ammo += 3; s.hp = Math.min(s.hpMax, s.hp + 1); Game.toast("+2 🥫, +3 🔫, +1 ❤️"); },
-        combat: { enemy: "walker_pair", risky: true, onWin: "freezer", onLose: "death" } },
+        combat: { enemy: "freezer_abom", risky: true, onWin: "freezer", onLose: "death" } },
     ]
   },
 
@@ -192,7 +192,7 @@ window.Story = {
     art: "🚪❄️👧",
     sceneClass: "indoor",
     chapter: "Day 1 — Freezer",
-    text: "They were sealed in with her. Walkers — ripping at the door the second the latch gives.\n\nYou put them down. Breath fogging in the cold.\n\nBehind the tipped shelving, a girl — maybe ten — a kitchen knife shaking in her hand.\n\n\"Don't. Don't touch me.\"",
+    text: "The thing finally stops moving. You don't want to look at what it used to be.\n\nBreath fogging in the cold. Blood steaming on the floor.\n\nBehind a wall of tipped shelving, small and perfectly still — a girl, maybe ten, a kitchen knife shaking in her hand.\n\n\"Don't. Don't touch me.\"",
     choices: [
       { label: "\"It's okay. I'm not going to hurt you.\"",
         effect: s => { s.companion2 = "Nora"; s.flags.savedNora = true; Game.toast("Nora joined you"); },

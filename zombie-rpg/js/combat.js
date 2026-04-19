@@ -16,6 +16,9 @@ window.Combat = (function () {
     bloater:      { name: "Bloater",     art: "🧟💀",  hp: 9,  atk: [3, 5], speed: 1, desc: "A swollen, leaking thing." },
     bandit:       { name: "Bandit",      art: "🧔🔫",  hp: 6,  atk: [3, 4], speed: 2, desc: "Smart. Armed. Desperate.", human: true },
     horde:        { name: "The Horde",   art: "🧟🧟🧟", hp: 16, atk: [3, 5], speed: 1, desc: "A tide of the dead." },
+    // Mini-boss: the thing that was sealed inside the meat locker.
+    // Mass of ruptured bodies fused together — slow, heavy, high HP.
+    freezer_abom: { name: "Meatlocker Abomination", art: "🧟💀", hp: 11, atk: [3, 5], speed: 1, desc: "Grown together in the cold. It shouldn't still be moving.", savageRate: 0.2, boss: true },
     // The traitor has turned — boss: high HP, hard-hitting, savage often.
     traitor:      { name: "Calder (Turned)", art: "🧟‍♂️", hp: 14, atk: [4, 6], speed: 2, desc: "Not Calder any more. Something wearing his face.", savageRate: 0.28, boss: true },
   };
@@ -74,6 +77,15 @@ window.Combat = (function () {
       { chance: 1.0, kind: "ammo", n: 4 },
       { chance: 1.0, kind: "item", name: "🗝 Calder's Keyring",
         effect: s => { s.flags.bossLoot = true; Game.toast("Found Calder's keyring"); } },
+    ],
+    freezer_abom: [
+      // Mini-boss: guaranteed weapon + frozen food + ammo.
+      { chance: 1.0, kind: "weapon", pool: [
+        { name: "Butcher's Cleaver",        bonus: 2, slot: "melee" },
+        { name: "Store Manager's Revolver", bonus: 2, slot: "ranged", ammo: 4 },
+      ] },
+      { chance: 1.0, kind: "food", n: 2 },
+      { chance: 0.6, kind: "ammo", n: 2 },
     ],
     horde:       [],
     walker_cho2: [],
