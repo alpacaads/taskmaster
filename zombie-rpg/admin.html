@@ -245,8 +245,8 @@
   </footer>
 
   <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
-  <script src="js/overrides.js?v=36"></script>
-  <script src="js/scenes.js?v=36"></script>
+  <script src="js/overrides.js?v=37"></script>
+  <script src="js/scenes.js?v=37"></script>
   <script>
     (async function () {
       const PROMPTS = (window.Scenes && window.Scenes.PROMPTS) || {};
@@ -305,34 +305,54 @@
         },
         async commitFiles(items, message) {
           // items = [{ path, blob }]
-          const ref = await this.api("/repos/" + this.owner + "/" + this.repo +
-            "/git/ref/heads/" + encodeURIComponent(this.branch));
-          const headSha = ref.object.sha;
-          const headCommit = await this.api("/repos/" + this.owner + "/" + this.repo +
-            "/git/commits/" + headSha);
-          const treeEntries = [];
+          // Upload each file once as a blob object (expensive), then
+          // retry the tree→commit→update-ref sequence a few times if
+          // the ref moved underneath us (GitHub 422 not fast-forward).
+          const blobShas = [];
           for (const item of items) {
             const b64 = await blobToBase64(item.blob);
             const blob = await this.api("/repos/" + this.owner + "/" + this.repo + "/git/blobs", {
               method: "POST",
               body: JSON.stringify({ content: b64, encoding: "base64" }),
             });
-            treeEntries.push({ path: item.path, mode: "100644", type: "blob", sha: blob.sha });
+            blobShas.push({ path: item.path, sha: blob.sha });
           }
-          const tree = await this.api("/repos/" + this.owner + "/" + this.repo + "/git/trees", {
-            method: "POST",
-            body: JSON.stringify({ base_tree: headCommit.tree.sha, tree: treeEntries }),
-          });
-          const commit = await this.api("/repos/" + this.owner + "/" + this.repo + "/git/commits", {
-            method: "POST",
-            body: JSON.stringify({ message, tree: tree.sha, parents: [headSha] }),
-          });
-          await this.api("/repos/" + this.owner + "/" + this.repo +
-            "/git/refs/heads/" + encodeURIComponent(this.branch), {
-            method: "PATCH",
-            body: JSON.stringify({ sha: commit.sha }),
-          });
-          return commit;
+
+          const maxAttempts = 4;
+          let lastErr;
+          for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+            try {
+              const ref = await this.api("/repos/" + this.owner + "/" + this.repo +
+                "/git/ref/heads/" + encodeURIComponent(this.branch));
+              const headSha = ref.object.sha;
+              const headCommit = await this.api("/repos/" + this.owner + "/" + this.repo +
+                "/git/commits/" + headSha);
+              const tree = await this.api("/repos/" + this.owner + "/" + this.repo + "/git/trees", {
+                method: "POST",
+                body: JSON.stringify({
+                  base_tree: headCommit.tree.sha,
+                  tree: blobShas.map(b => ({ path: b.path, mode: "100644", type: "blob", sha: b.sha })),
+                }),
+              });
+              const commit = await this.api("/repos/" + this.owner + "/" + this.repo + "/git/commits", {
+                method: "POST",
+                body: JSON.stringify({ message, tree: tree.sha, parents: [headSha] }),
+              });
+              await this.api("/repos/" + this.owner + "/" + this.repo +
+                "/git/refs/heads/" + encodeURIComponent(this.branch), {
+                method: "PATCH",
+                body: JSON.stringify({ sha: commit.sha }),
+              });
+              return commit;
+            } catch (e) {
+              lastErr = e;
+              const isNotFF = /422/.test(e.message) || /not a fast forward/i.test(e.message);
+              if (!isNotFF || attempt === maxAttempts) throw e;
+              // Someone else pushed; wait a tick and rebase on the new HEAD.
+              await new Promise(r => setTimeout(r, 400 * attempt));
+            }
+          }
+          throw lastErr;
         },
       };
 
