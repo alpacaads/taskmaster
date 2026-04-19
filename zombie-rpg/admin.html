@@ -134,6 +134,7 @@
     <h1>🧟 SCENE ADMIN</h1>
     <span class="sub" id="count">…</span>
     <input type="search" id="search" placeholder="Filter scenes…" />
+    <button id="download-all" title="Download all overrides as a single ZIP">⬇ Download all ZIP</button>
     <button id="clear-all" title="Remove all preview overrides">Clear all overrides</button>
     <a class="back" href="index.html">← Back to game</a>
   </header>
@@ -145,12 +146,14 @@
     <ol>
       <li>Click <b>Upload</b> on any scene to pick a new image.</li>
       <li>The card updates and the new image is previewed in the game (stored locally in IndexedDB).</li>
-      <li>Click <b>Download</b> to save the file as <code>&lt;id&gt;.png</code>.</li>
-      <li>Drop the file into <code>zombie-rpg/images/</code> and commit to make it permanent.</li>
+      <li>When you're happy, click <b>⬇ Download all ZIP</b> in the header to get every override in one file
+          (<code>images/&lt;id&gt;.png</code> inside the zip), or use per-scene <b>Download</b>.</li>
+      <li>Unzip into <code>zombie-rpg/images/</code> and commit to make it permanent.</li>
     </ol>
     <p>Overrides live only in your browser — they never modify committed files.</p>
   </footer>
 
+  <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
   <script src="js/overrides.js?v=29"></script>
   <script src="js/scenes.js?v=29"></script>
   <script>
@@ -161,6 +164,7 @@
       const countEl = document.getElementById("count");
       const searchEl = document.getElementById("search");
       const clearAllBtn = document.getElementById("clear-all");
+      const downloadAllBtn = document.getElementById("download-all");
 
       // Load override blobs → objectURL map for instant thumb rendering.
       await Overrides.loadAll();
@@ -289,6 +293,38 @@
           if (match) shown++;
         });
         countEl.textContent = shown + " / " + ids.length + " scenes";
+      });
+
+      downloadAllBtn.addEventListener("click", async () => {
+        if (typeof JSZip === "undefined") {
+          alert("ZIP library failed to load (check network).");
+          return;
+        }
+        const items = await Overrides.list();
+        if (items.length === 0) { alert("No overrides to download."); return; }
+        downloadAllBtn.disabled = true;
+        const orig = downloadAllBtn.textContent;
+        downloadAllBtn.textContent = "Zipping… 0/" + items.length;
+        try {
+          const zip = new JSZip();
+          const folder = zip.folder("images");
+          items.forEach(({ id, blob }, i) => {
+            folder.file(id + ".png", blob);
+            downloadAllBtn.textContent = "Zipping… " + (i + 1) + "/" + items.length;
+          });
+          const out = await zip.generateAsync({ type: "blob" });
+          const a = document.createElement("a");
+          a.href = URL.createObjectURL(out);
+          a.download = "dead-light-scene-overrides.zip";
+          document.body.appendChild(a); a.click();
+          setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+          a.remove();
+        } catch (err) {
+          alert("ZIP failed: " + (err && err.message ? err.message : err));
+        } finally {
+          downloadAllBtn.disabled = false;
+          downloadAllBtn.textContent = orig;
+        }
       });
 
       clearAllBtn.addEventListener("click", async () => {
