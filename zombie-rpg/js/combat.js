@@ -174,6 +174,7 @@ window.Combat = (function () {
     else if (action === "shoot") {
       s.ammo -= 1;
       Sound.play("gunshot");
+      gunFlash();
       const hit = Math.random() < (state.enemy.speed === 2 ? 0.75 : 0.9);
       if (!hit) {
         log("The shot misses. The sound draws more attention.", "info");
@@ -301,6 +302,43 @@ window.Combat = (function () {
     setTimeout(() => el.remove(), 900);
   }
 
+  // ---------- Zombie-hit: blood on the camera ----------
+  // Three or four drippy streaks appear at random spots near the top
+  // of the screen, each grows downward then fades. Reads like blood
+  // splashed on the player's face/visor rather than a neat splatter.
+  function spawnEnemyBlood() {
+    const host = document.getElementById("combat-screen");
+    if (!host) return;
+    const el = document.createElement("div");
+    el.className = "enemy-blood";
+    const n = 3 + Math.floor(Math.random() * 3);  // 3-5 drips
+    let drips = "";
+    for (let i = 0; i < n; i++) {
+      const x   = 8 + Math.random() * 84;                  // 8-92%
+      const y   = Math.random() * 32;                      // 0-32%
+      const len = 40 + Math.random() * 70;                 // 40-110px
+      const rot = -12 + Math.random() * 24;                // slight tilt
+      const dly = Math.random() * 0.14;                    // staggered start
+      drips += `<div class="drip" style="left:${x}%;top:${y}%;--len:${len}px;--rot:${rot}deg;animation-delay:${dly}s"></div>`;
+    }
+    el.innerHTML = drips;
+    host.appendChild(el);
+    setTimeout(() => el.remove(), 1500);
+  }
+
+  // ---------- Gun muzzle flash (bottom-edge vignette) ----------
+  // Fires on every trigger pull — hit or miss — so the act of shooting
+  // is always felt. Mirrors the red hit-red vignette, but warm and from
+  // the bottom where the gun would be held.
+  function gunFlash() {
+    const el = document.getElementById("combat-screen");
+    if (!el) return;
+    el.classList.remove("muzzle-flash");
+    void el.offsetWidth;
+    el.classList.add("muzzle-flash");
+    setTimeout(() => el.classList.remove("muzzle-flash"), 260);
+  }
+
   // ---------- enemy turn ----------
   function enemyTurn() {
     if (!state) return;
@@ -330,7 +368,7 @@ window.Combat = (function () {
         : `${e.name} strikes — ${dmg} damage.`;
       log(line, savage ? "crit" : "enemy");
       Sound.play(savage ? "crit" : "damage");
-      spawnMark("enemyHit");
+      spawnEnemyBlood();
       screenShake();
     }
 
@@ -371,6 +409,7 @@ window.Combat = (function () {
         state.enemy.hp -= dmg;
         log(`Maya fires from cover — ${dmg} damage.`, "ally");
         Sound.play("gunshot");
+        gunFlash();
         spawnMark("hit");
         floatDamage(dmg);
         hitFlash();
