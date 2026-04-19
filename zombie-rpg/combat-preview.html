@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+  <title>Dead Light — Combat Preview</title>
+  <style>
+    /* ---------- aesthetic target ----------
+       - Not a video-game UI. A field-radio / tactical survival HUD.
+       - Black room, lantern lighting. Palette stays in bone / rust / ash.
+       - ALL CAPS, ui-monospace labels. Thin single rules. Hard corners.
+       - No emoji icons, no pulsing chips, no rounded pills.
+       - Scene art stays as the backdrop, darkened, with grain and vignette.
+       - Damage surfaces diegetically: a red slab number that floats up and
+         dies, a short screen-shake, a blood smear on the enemy portrait.
+    */
+    :root {
+      --ink: #e6e3d8;       /* bone */
+      --ink-dim: #8b8a82;   /* ash */
+      --ink-mute: #525249;
+      --rust: #a8412a;      /* old blood */
+      --rust-2: #6b1b13;
+      --warn: #c99b3a;      /* sodium lamp */
+      --calm: #7aa07a;      /* field green */
+      --bg: #07070a;
+      --panel: rgba(8, 10, 12, 0.72);
+      --rule: rgba(230, 227, 216, 0.14);
+      --rule-strong: rgba(230, 227, 216, 0.35);
+    }
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0; padding: 0; height: 100%;
+      background: #000; color: var(--ink); overflow: hidden;
+      font-family: ui-monospace, "SF Mono", "Menlo", "Consolas", monospace;
+      -webkit-font-smoothing: antialiased;
+    }
+    #phone {
+      position: fixed; inset: 0;
+      max-width: 520px; margin: 0 auto;
+      background: var(--bg);
+      display: flex; flex-direction: column;
+      overflow: hidden;
+      position: relative;
+    }
+
+    /* --- scene backdrop: darkened JPEG with grain + vignette --- */
+    .backdrop {
+      position: absolute; inset: 0;
+      background: url("images/ambush.jpg") center/cover no-repeat;
+      filter: grayscale(0.35) contrast(1.05) brightness(0.55);
+    }
+    .backdrop::after {
+      content: "";
+      position: absolute; inset: 0;
+      background:
+        radial-gradient(ellipse at 50% 40%, transparent 0%, rgba(0,0,0,0.85) 85%),
+        repeating-linear-gradient(0deg,
+          rgba(255,255,255,0.025) 0 1px,
+          transparent 1px 3px);
+      pointer-events: none;
+    }
+    .grain {
+      position: absolute; inset: 0; pointer-events: none;
+      opacity: 0.35; mix-blend-mode: overlay;
+      background-image:
+        radial-gradient(rgba(255,255,255,0.08) 1px, transparent 1px);
+      background-size: 3px 3px;
+      animation: grainShift 0.22s steps(2) infinite;
+    }
+    @keyframes grainShift {
+      0%   { transform: translate(0,0); }
+      50%  { transform: translate(-1px,1px); }
+      100% { transform: translate(1px,-1px); }
+    }
+
+    /* --- header strip: mission context --- */
+    .hud-top {
+      position: relative; z-index: 2;
+      padding: 12px 16px 10px;
+      display: flex; justify-content: space-between; align-items: center;
+      gap: 12px;
+      border-bottom: 1px solid var(--rule);
+      background: linear-gradient(180deg, rgba(0,0,0,0.85), transparent);
+    }
+    .slug {
+      font-size: 10px; letter-spacing: 2px;
+      color: var(--ink-dim); text-transform: uppercase;
+    }
+    .slug .sep { color: var(--ink-mute); margin: 0 6px; }
+
+    /* --- enemy block: portrait + intent line --- */
+    .enemy-wrap {
+      position: relative; z-index: 2;
+      flex: 1; display: flex; flex-direction: column;
+      align-items: stretch; justify-content: flex-end;
+      padding: 16px 16px 0;
+    }
+    .enemy-tag {
+      font-size: 11px; letter-spacing: 3px;
+      color: var(--ink-mute); text-transform: uppercase;
+    }
+    .enemy-name {
+      font-family: "Georgia", "Times New Roman", serif;
+      font-size: 28px; letter-spacing: 1px;
+      color: var(--ink); margin: 2px 0 6px;
+      text-shadow: 0 2px 0 rgba(0,0,0,0.8);
+    }
+    .enemy-meta {
+      font-size: 10px; letter-spacing: 1.5px;
+      color: var(--ink-dim); text-transform: uppercase;
+    }
+    .enemy-meta em { color: var(--rust); font-style: normal; font-weight: 700; }
+
+    /* segmented HP bar */
+    .hp-strip {
+      margin-top: 10px;
+      display: grid;
+      grid-template-columns: repeat(14, 1fr);
+      gap: 2px;
+      height: 6px;
+    }
+    .hp-strip span {
+      background: var(--rust-2);
+      border-top: 1px solid var(--rust);
+    }
+    .hp-strip span.empty {
+      background: #1b0808;
+      border-top-color: rgba(255,255,255,0.03);
+    }
+
+    /* intent line - not a chip, a tactical readout */
+    .intent {
+      margin-top: 14px;
+      padding: 6px 0;
+      border-top: 1px solid var(--rule);
+      border-bottom: 1px solid var(--rule);
+      display: flex; justify-content: space-between; align-items: baseline;
+      gap: 12px;
+    }
+    .intent .label {
+      font-size: 10px; letter-spacing: 2.5px;
+      color: var(--warn); text-transform: uppercase;
+    }
+    .intent .value {
+      font-family: "Georgia", serif;
+      font-size: 16px; letter-spacing: 0.5px;
+      color: var(--ink);
+    }
+    .intent .kind-heavy  .value { color: #e36a4e; }
+    .intent .kind-ranged .value { color: #b9c2ff; }
+    .intent .kind-swarm  .value { color: #ff9076; }
+    .intent .kind-light  .value { color: #cfd3c8; }
+
+    /* floating damage number */
+    .dmg-float {
+      position: absolute;
+      top: 30%; left: 50%;
+      transform: translate(-50%,-50%);
+      font-family: "Georgia", serif;
+      font-size: 54px; font-weight: 700; letter-spacing: -1px;
+      color: var(--rust);
+      text-shadow: 0 0 12px rgba(168,65,42,0.7), 0 3px 0 rgba(0,0,0,0.6);
+      pointer-events: none;
+      animation: dmgFloat 0.9s ease-out forwards;
+    }
+    @keyframes dmgFloat {
+      0%   { transform: translate(-50%,-50%) scale(0.8); opacity: 0; }
+      25%  { transform: translate(-50%,-90%) scale(1.1); opacity: 1; }
+      100% { transform: translate(-50%,-160%) scale(1);  opacity: 0; }
+    }
+
+    /* --- log strip: tactical comms, monospace --- */
+    .log {
+      position: relative; z-index: 2;
+      padding: 10px 16px;
+      font-size: 12px; line-height: 1.55;
+      color: var(--ink-dim);
+      max-height: 130px; overflow-y: auto;
+      border-top: 1px solid var(--rule);
+      background: linear-gradient(180deg, rgba(0,0,0,0.6), rgba(0,0,0,0.85));
+    }
+    .log .entry { display: flex; gap: 8px; padding: 1px 0; }
+    .log .ts { color: var(--ink-mute); width: 44px; flex: 0 0 auto; }
+    .log .text { flex: 1; }
+    .log .hero { color: var(--ink); }
+    .log .ally { color: var(--calm); }
+    .log .enemy { color: #e28080; }
+    .log .crit  { color: var(--warn); font-weight: 700; }
+
+    /* --- ally strip (no pills, no dots, just a tactical readout) --- */
+    .allies {
+      position: relative; z-index: 2;
+      padding: 8px 16px;
+      font-size: 10px; letter-spacing: 2px;
+      color: var(--ink-mute); text-transform: uppercase;
+      border-top: 1px solid var(--rule);
+      display: flex; gap: 18px; flex-wrap: wrap;
+    }
+    .ally { display: inline-flex; gap: 8px; align-items: baseline; }
+    .ally .who { color: var(--calm); font-weight: 700; letter-spacing: 3px; }
+    .ally .st  { color: var(--ink-dim); }
+    .ally.ready .st { color: var(--warn); }
+
+    /* --- action bar: flat, hard edges, one rule between buttons --- */
+    .actions {
+      position: relative; z-index: 2;
+      display: grid; grid-template-columns: repeat(4, 1fr);
+      border-top: 1px solid var(--rule-strong);
+      background: #050507;
+    }
+    .actions button {
+      background: transparent; color: var(--ink);
+      border: none;
+      border-right: 1px solid var(--rule);
+      padding: 16px 6px;
+      font-family: inherit;
+      font-size: 11px; letter-spacing: 3px; text-transform: uppercase;
+      cursor: pointer;
+    }
+    .actions button:last-child { border-right: none; }
+    .actions button:hover { background: rgba(230,227,216,0.04); color: var(--warn); }
+    .actions button .k { display:block; font-size: 9px; color: var(--ink-mute); letter-spacing:2px; }
+    .actions button.flee { color: #d98f8f; }
+
+    /* --- hero stats: minimal bottom strip --- */
+    .hero-stats {
+      position: relative; z-index: 2;
+      display: flex; justify-content: space-between;
+      padding: 10px 16px;
+      border-top: 1px solid var(--rule);
+      font-size: 11px; letter-spacing: 2px;
+      color: var(--ink-dim); text-transform: uppercase;
+    }
+    .hero-stats b { color: var(--ink); font-weight: 700; letter-spacing: 1px; }
+
+    /* hit shake */
+    @keyframes shake {
+      0%,100% { transform: translate(0,0); }
+      25% { transform: translate(-3px,1px); }
+      50% { transform: translate(2px,-2px); }
+      75% { transform: translate(-2px,2px); }
+    }
+    .shake { animation: shake 0.25s linear; }
+
+    /* control row for the preview itself */
+    .demo-ctl {
+      position: fixed; top: 8px; left: 50%; transform: translateX(-50%);
+      z-index: 100; display: flex; gap: 8px;
+    }
+    .demo-ctl button {
+      background: var(--panel); color: var(--ink);
+      border: 1px solid var(--rule-strong);
+      padding: 6px 10px; font-size: 11px; letter-spacing: 2px;
+      text-transform: uppercase; cursor: pointer;
+      font-family: inherit;
+    }
+    .demo-ctl button:hover { color: var(--warn); border-color: var(--warn); }
+  </style>
+</head>
+<body>
+  <div class="demo-ctl">
+    <button id="btn-hit">Simulate hit</button>
+    <button id="btn-heavy">Intent: heavy</button>
+    <button id="btn-ranged">Intent: ranged</button>
+    <button id="btn-swarm">Intent: swarm</button>
+  </div>
+
+  <div id="phone">
+    <div class="backdrop" id="backdrop"></div>
+    <div class="grain"></div>
+
+    <div class="hud-top">
+      <div class="slug">Day 02 <span class="sep">//</span> The Pines <span class="sep">//</span> 18:44</div>
+      <div class="slug" style="color:#d98f8f">CONTACT</div>
+    </div>
+
+    <div class="enemy-wrap" id="enemy-wrap">
+      <div class="enemy-tag">Hostile</div>
+      <div class="enemy-name">Two Bandits</div>
+      <div class="enemy-meta">
+        Armed. Desperate. <em>OPEN GROUND</em>.
+      </div>
+      <div class="hp-strip" id="hp-strip"></div>
+
+      <div class="intent" id="intent">
+        <span class="label">Intent</span>
+        <span class="value">Drawing a bead.</span>
+      </div>
+    </div>
+
+    <div class="allies">
+      <div class="ally ready"><span class="who">Maya</span><span class="st">Rifle ready — next turn</span></div>
+      <div class="ally"><span class="who">Ren</span><span class="st">Triage • 3 turns</span></div>
+    </div>
+
+    <div class="log" id="log">
+      <div class="entry"><span class="ts">[+00:03]</span><span class="text hero">You swing — 3 damage.</span></div>
+      <div class="entry"><span class="ts">[+00:05]</span><span class="text ally">Maya fires from cover — 3 damage.</span></div>
+      <div class="entry"><span class="ts">[+00:07]</span><span class="text enemy">Bandit fires — 2 damage.</span></div>
+      <div class="entry"><span class="ts">[+00:09]</span><span class="text crit">Critical — 5 damage.</span></div>
+    </div>
+
+    <div class="actions">
+      <button><span class="k">Q</span>Strike</button>
+      <button><span class="k">W</span>Fire</button>
+      <button><span class="k">E</span>Brace</button>
+      <button class="flee"><span class="k">R</span>Flee</button>
+    </div>
+
+    <div class="hero-stats">
+      <div>HP <b>7</b>/10</div>
+      <div>STAM <b>3</b>/5</div>
+      <div>AMMO <b>4</b></div>
+      <div>FOOD <b>2</b></div>
+    </div>
+  </div>
+
+  <script>
+    // Render 14 ticks of HP, 10 full
+    (function () {
+      const strip = document.getElementById("hp-strip");
+      const total = 14, full = 10;
+      for (let i = 0; i < total; i++) {
+        const s = document.createElement("span");
+        if (i >= full) s.className = "empty";
+        strip.appendChild(s);
+      }
+    })();
+
+    const intents = {
+      heavy:  { kind: "kind-heavy",  value: "Winding up — a heavy hit." },
+      light:  { kind: "kind-light",  value: "Jaws snap — a quick swipe." },
+      ranged: { kind: "kind-ranged", value: "Drawing a bead." },
+      swarm:  { kind: "kind-swarm",  value: "The wave is cresting." },
+    };
+    function setIntent(k) {
+      const el = document.getElementById("intent");
+      el.className = "intent " + intents[k].kind;
+      el.querySelector(".value").textContent = intents[k].value;
+    }
+    document.getElementById("btn-heavy").onclick  = () => setIntent("heavy");
+    document.getElementById("btn-ranged").onclick = () => setIntent("ranged");
+    document.getElementById("btn-swarm").onclick  = () => setIntent("swarm");
+
+    function simulateHit() {
+      const n = Math.floor(Math.random() * 4) + 2;
+      const f = document.createElement("div");
+      f.className = "dmg-float";
+      f.textContent = "-" + n;
+      document.getElementById("enemy-wrap").appendChild(f);
+      setTimeout(() => f.remove(), 900);
+      const phone = document.getElementById("phone");
+      phone.classList.remove("shake"); void phone.offsetWidth;
+      phone.classList.add("shake");
+    }
+    document.getElementById("btn-hit").onclick = simulateHit;
+  </script>
+</body>
+</html>
