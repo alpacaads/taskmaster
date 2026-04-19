@@ -245,12 +245,43 @@ window.Game = (function () {
     ending_final_fallen:"ending_grave",
     ending_final_escape:"ending_road",
   };
+  // Legacy SVG-era scene IDs (used in story.js node.scene values) that have
+  // no committed PNG of their own. Map them to the closest scene with a
+  // baked image so the game shows a real picture instead of the missing
+  // placeholder.
+  const STORY_SCENE_REMAP = {
+    greenbelt_morning:  "camp_morning",
+    medbay:             "chore_medbay",
+    perimeter:          "chore_perimeter",
+    camp_kitchen:       "chore_kitchen",
+    briefing_tent:      "chore_done",
+    horde_charge:       "horde_warning",
+    ending_dawn:        "ending_final_hero",
+    ending_grave:       "ending_final_fallen",
+    ending_road:        "ending_final_escape",
+    highway_dawn:       "road_out",
+    highway_with_child: "road_out_child",
+    hospital_ext:       "hospital_arrive",
+    pharmacy_fight:     "pharmacy_combat",
+    greenbelt_camp:     "greenbelt_in",
+    gate_ajar_night:    "investigate_traitor",
+    bonfire_night:      "bonfire_invite",
+    intimate_bedroom:   "romance_maya",
+    forest_ambush:      "ambush",
+    sacrifice:          "sacrifice_intro",
+    horde_wall:         "post_horde_win",
+  };
   function resolveScene(nodeId, node) {
-    if (node.scene) return node.scene;
-    // Prefer the node ID when we have a baked AI image for it (PROMPTS key).
-    if (window.Scenes && Scenes.PROMPTS && Scenes.PROMPTS[nodeId]) return nodeId;
-    if (window.Scenes && Scenes.SCENES[nodeId]) return nodeId;
-    return SCENE_ALIASES[nodeId] || null;
+    let id = node.scene;
+    if (!id) {
+      if (window.Scenes && Scenes.PROMPTS && Scenes.PROMPTS[nodeId]) id = nodeId;
+      else if (window.Scenes && Scenes.SCENES[nodeId]) id = nodeId;
+      else id = SCENE_ALIASES[nodeId] || null;
+    }
+    // If the resolved id has no baked image, swap it for the legacy remap.
+    const hasImage = window.Scenes && Scenes.PROMPTS && id && Scenes.PROMPTS[id];
+    if (id && !hasImage && STORY_SCENE_REMAP[id]) id = STORY_SCENE_REMAP[id];
+    return id;
   }
 
   // Map a grapheme (single visible glyph) to an animation class.
