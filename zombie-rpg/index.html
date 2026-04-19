@@ -10,7 +10,7 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <title>Dead Light — A Zombie RPG</title>
-  <link rel="stylesheet" href="css/style.css?v=46" />
+  <link rel="stylesheet" href="css/style.css?v=47" />
 </head>
 <body>
 
@@ -94,17 +94,17 @@
 
       <div class="combat-log" id="combat-log"></div>
 
+      <div class="combat-hero">
+        <div>HP <b id="c-hp">10</b>/<span id="c-hpmax">10</span></div>
+        <div>STAM <b id="c-stam">5</b>/5</div>
+        <div>AMMO <b id="c-ammo">3</b></div>
+      </div>
+
       <div class="combat-actions">
         <button class="combat-btn" onclick="Combat.act('melee')"><span class="k">01</span>Strike</button>
         <button class="combat-btn" onclick="Combat.act('shoot')"><span class="k">02</span>Fire</button>
         <button class="combat-btn" onclick="Combat.act('brace')"><span class="k">03</span>Brace</button>
         <button class="combat-btn flee" onclick="Combat.act('flee')"><span class="k">04</span>Flee</button>
-      </div>
-
-      <div class="combat-hero">
-        <div>HP <b id="c-hp">10</b>/<span id="c-hpmax">10</span></div>
-        <div>STAM <b id="c-stam">5</b>/5</div>
-        <div>AMMO <b id="c-ammo">3</b></div>
       </div>
     </div>
 
@@ -139,11 +139,11 @@
 
   </div>
 
-  <script src="js/sound.js?v=46"></script>
-  <script src="js/overrides.js?v=46"></script>
-  <script src="js/scenes.js?v=46"></script>
-  <script src="js/story.js?v=46"></script>
-  <script src="js/combat.js?v=46"></script>
-  <script src="js/game.js?v=46"></script>
+  <script src="js/sound.js?v=47"></script>
+  <script src="js/overrides.js?v=47"></script>
+  <script src="js/scenes.js?v=47"></script>
+  <script src="js/story.js?v=47"></script>
+  <script src="js/combat.js?v=47"></script>
+  <script src="js/game.js?v=47"></script>
 </body>
 </html>
