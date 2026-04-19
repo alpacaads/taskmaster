@@ -112,7 +112,7 @@ window.Story = {
         next: "grocery_exterior" },
       { label: "Defend yourself", tag: "COMBAT", tagClass: "danger",
         require: s => s.flags.spotted,
-        combat: { enemy: "runner", onWin: "grocery_exterior", onLose: "death" } },
+        combat: { enemy: "runner", risky: true, onWin: "grocery_exterior", onLose: "death" } },
     ]
   },
 
@@ -178,7 +178,7 @@ window.Story = {
     text: "You jog out the back. Something shuffles from the alley. Its mouth is black.",
     choices: [
       { label: "Keep running", tag: "COMBAT", tagClass: "danger",
-        combat: { enemy: "runner", onWin: "road_out", onLose: "death" } },
+        combat: { enemy: "runner", risky: true, onWin: "road_out", onLose: "death" } },
     ]
   },
 
@@ -232,7 +232,7 @@ window.Story = {
         effect: s => { s.food = Math.max(0, s.food - 2); s.ammo = Math.max(0, s.ammo - 2); Game.toast("-2 🥫, -2 🔫"); },
         next: "after_ambush_mercy" },
       { label: "Fight — you need these supplies", tag: "COMBAT", tagClass: "danger",
-        combat: { enemy: "bandit", onWin: "after_ambush_fight", onLose: "death" } },
+        combat: { enemy: "bandit", risky: true, onWin: "after_ambush_fight", onLose: "death" } },
       { label: "\"Take me. Let the kid go.\"", tag: "SACRIFICE", tagClass: "warn",
         require: s => s.companion2 === "Nora",
         next: "sacrifice_intro" },
@@ -600,12 +600,23 @@ window.Story = {
     sceneClass: "night",
     chapter: "Day 4 — South Fence",
     speaker: "???",
-    text: "He freezes when he sees you. A trader from two tents over — Calder. Sleeve pushed up. The bite mark on his forearm is fresh and black.\n\n\"Please. They said if I let them in, they'd let me live. I have a daughter.\"\n\nHis daughter died in March. Everyone knows it.",
+    text: "He freezes when he sees you. A trader from two tents over — Calder. Sleeve pushed up. The bite mark on his forearm is fresh and black.\n\n\"Please. They said if I let them in, they'd let me live. I have a d—\"\n\nHis throat spasms. His eyes fog. The bite has already won.",
     choices: [
-      { label: "End it. Quick. Quiet.", tag: "HARD", tagClass: "danger",
+      { label: "He lunges. Put him down.", tag: "BOSS", tagClass: "danger",
+        combat: { enemy: "traitor", risky: true, onWin: "traitor_aftermath", onLose: "death" } },
+    ]
+  },
+
+  traitor_aftermath: {
+    scene: "confront_traitor",
+    sceneClass: "night",
+    chapter: "Day 4 — South Fence",
+    text: "It's over. He's smaller now. Calder again, almost.\n\nYou stand in the dark with the weight of it — and the choice still yours.",
+    choices: [
+      { label: "Bury him quietly. The camp will not know.", tag: "HARD", tagClass: "danger",
         effect: s => { s.flags.killedTraitor = true; Game.toast("The camp will not know."); },
         next: "bonfire_invite" },
-      { label: "Drag him to Vega. Let the camp decide.",
+      { label: "Tell Vega. They deserve the truth.",
         effect: s => { s.flags.exposedTraitor = true; Game.toast("The camp prepares."); },
         next: "bonfire_invite" },
     ]

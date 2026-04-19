@@ -16,7 +16,110 @@ window.Combat = (function () {
     bloater:      { name: "Bloater",     art: "🧟💀",  hp: 9,  atk: [3, 5], speed: 1, desc: "A swollen, leaking thing." },
     bandit:       { name: "Bandit",      art: "🧔🔫",  hp: 6,  atk: [3, 4], speed: 2, desc: "Smart. Armed. Desperate.", human: true },
     horde:        { name: "The Horde",   art: "🧟🧟🧟", hp: 16, atk: [3, 5], speed: 1, desc: "A tide of the dead." },
+    // The traitor has turned — boss: high HP, hard-hitting, savage often.
+    traitor:      { name: "Calder (Turned)", art: "🧟‍♂️", hp: 14, atk: [4, 6], speed: 2, desc: "Not Calder any more. Something wearing his face.", savageRate: 0.28, boss: true },
   };
+
+  // ---------- Loot tables ----------
+  // Each entry rolls independently on a successful kill.
+  //   chance   : 0..1 probability
+  //   kind     : "ammo" | "food" | "weapon" | "item"
+  //   n        : count for ammo/food
+  //   pool     : array of {name, bonus, slot:"melee"|"ranged", ammo?}
+  //   name+effect : one-off item with an optional state effect
+  const LOOT = {
+    walker:  [
+      { chance: 0.35, kind: "ammo", n: 1 },
+      { chance: 0.15, kind: "food", n: 1 },
+    ],
+    walker_cho: [
+      // Guaranteed a random gift from Mrs. Cho's apartment.
+      { chance: 1.0, kind: "weapon", pool: [
+        { name: "Kitchen Knife",     bonus: 1, slot: "melee" },
+        { name: "Brass Cane",        bonus: 1, slot: "melee" },
+        { name: "Mrs. Cho's .22",    bonus: 1, slot: "ranged", ammo: 3 },
+      ] },
+      { chance: 0.6, kind: "item", name: "🩹 Pill Bottle",
+        effect: s => { s.hp = Math.min(s.hpMax, s.hp + 2); Game.toast("+2 ❤️"); } },
+    ],
+    walker_pair: [
+      { chance: 0.55, kind: "ammo", n: 1 },
+      { chance: 0.25, kind: "food", n: 1 },
+      { chance: 0.15, kind: "weapon", pool: [
+        { name: "Jagged Shard",      bonus: 1, slot: "melee" },
+      ] },
+    ],
+    runner: [
+      { chance: 0.55, kind: "ammo", n: 1 },
+      { chance: 0.2,  kind: "food", n: 1 },
+    ],
+    bloater: [
+      { chance: 0.5, kind: "item", name: "🧪 Antiseptic",
+        effect: s => { s.hp = Math.min(s.hpMax, s.hp + 3); Game.toast("+3 ❤️"); } },
+      { chance: 0.35, kind: "ammo", n: 2 },
+    ],
+    bandit: [
+      { chance: 1.0, kind: "ammo", n: 2 },
+      { chance: 0.35, kind: "weapon", pool: [
+        { name: "Sawed-off Shotgun", bonus: 2, slot: "ranged", ammo: 4 },
+        { name: "Hunting Rifle",     bonus: 2, slot: "ranged", ammo: 3 },
+      ] },
+      { chance: 0.25, kind: "food", n: 1 },
+    ],
+    traitor: [
+      { chance: 1.0, kind: "weapon", pool: [
+        { name: "Machete",           bonus: 2, slot: "melee" },
+        { name: "Bowie Knife",       bonus: 2, slot: "melee" },
+      ] },
+      { chance: 1.0, kind: "ammo", n: 4 },
+      { chance: 1.0, kind: "item", name: "🗝 Calder's Keyring",
+        effect: s => { s.flags.bossLoot = true; Game.toast("Found Calder's keyring"); } },
+    ],
+    horde:       [],
+    walker_cho2: [],
+  };
+
+  function applyLoot(enemyId) {
+    const drops = LOOT[enemyId] || [];
+    const s = Game.state;
+    drops.forEach(d => {
+      if (Math.random() > d.chance) return;
+      if (d.kind === "ammo") {
+        s.ammo += d.n;
+        Game.toast(`+${d.n} 🔫`);
+      } else if (d.kind === "food") {
+        s.food += d.n;
+        Game.toast(`+${d.n} 🥫`);
+      } else if (d.kind === "weapon") {
+        const pick = d.pool[Math.floor(Math.random() * d.pool.length)];
+        equipWeapon(pick);
+        if (pick.ammo) s.ammo += pick.ammo;
+        Game.toast("Found: " + pick.name);
+      } else if (d.kind === "item") {
+        if (d.effect) d.effect(s);
+        s.inventory = s.inventory || [];
+        s.inventory.push({ id: d.name, name: d.name });
+        Game.toast("Found: " + d.name);
+      }
+    });
+  }
+
+  function equipWeapon(w) {
+    const s = Game.state;
+    s.inventory = s.inventory || [];
+    s.inventory.push({ id: w.name, name: (w.slot === "ranged" ? "🔫 " : "🔪 ") + w.name,
+      desc: `+${w.bonus} ${w.slot} damage` });
+    if (w.slot === "melee") {
+      if (!s.bestMelee || w.bonus > s.bestMelee.bonus) s.bestMelee = w;
+    } else if (w.slot === "ranged") {
+      if (!s.bestRanged || w.bonus > s.bestRanged.bonus) s.bestRanged = w;
+    }
+  }
+
+  // ---------- Flags & helpers tied to Game.state ----------
+  function noraBonus()      { return Game.state.companion2 === "Nora" ? 1 : 0; }
+  function lovedMaya()      { return !!(Game.state.flags && Game.state.flags.lovedMaya); }
+  function lovedRen()       { return !!(Game.state.flags && Game.state.flags.lovedRen);  }
 
   let state = null;
 
@@ -53,14 +156,23 @@ window.Combat = (function () {
     const def = ENEMIES[config.enemy];
     if (!def) { console.error("Unknown enemy", config.enemy); return; }
 
+    // Risky encounters (story choices tagged RISKY or explicit risk:true)
+    // scale the enemy up — +1 to both HP and each damage bound.
+    const risky = !!config.risky;
+    const hp = def.hp + (risky ? Math.max(1, Math.round(def.hp * 0.25)) : 0);
+    const atk = risky ? [def.atk[0] + 1, def.atk[1] + 1] : def.atk;
+
     state = {
-      enemy: { ...def, maxHp: def.hp, hp: def.hp },
+      enemy: { ...def, hp, maxHp: hp, atk },
       onWin: config.onWin,
       onLose: config.onLose,
+      enemyId: config.enemy,
+      risky,
       turn: 0,
       bracing: false,
-      mayaCd: 1,
-      renCd:  2,
+      // Romance lets the companion act one step sooner.
+      mayaCd: lovedMaya() ? 0 : 1,
+      renCd:  lovedRen()  ? 1 : 2,
       startMs: Date.now(),
     };
 
@@ -158,12 +270,15 @@ window.Combat = (function () {
 
     if (action === "melee") {
       s.stam -= 1;
-      const dmg = rand(1, 3);
+      const base = rand(1, 3);
+      const weaponBonus = s.bestMelee ? s.bestMelee.bonus : 0;
       const crit = Math.random() < 0.12;
+      const dmg = base + weaponBonus + noraBonus();
       const total = crit ? dmg + 2 : dmg;
       state.enemy.hp -= total;
+      const weaponName = s.bestMelee ? s.bestMelee.name.toLowerCase() : "crowbar";
       log(crit
-        ? `You drive the crowbar through its skull. CRITICAL ${total}.`
+        ? `You drive the ${weaponName} through its skull. CRITICAL ${total}.`
         : `You swing — ${total} damage.`,
         crit ? "crit" : "hero");
       Sound.play(crit ? "crit" : "melee");
@@ -180,9 +295,12 @@ window.Combat = (function () {
         log("The shot misses. The sound draws more attention.", "info");
         spawnMark("miss");
       } else {
-        const dmg = state.enemy.human ? rand(3, 5) : rand(2, 4);
+        const base = state.enemy.human ? rand(3, 5) : rand(2, 4);
+        const weaponBonus = s.bestRanged ? s.bestRanged.bonus : 0;
+        const dmg = base + weaponBonus + noraBonus();
         state.enemy.hp -= dmg;
-        log(`You fire — ${dmg} damage.`, "hero");
+        const weaponName = s.bestRanged ? s.bestRanged.name : "handgun";
+        log(`You fire the ${weaponName.toLowerCase()} — ${dmg} damage.`, "hero");
         floatDamage(dmg);
         hitFlash();
         spawnMark("hit");
@@ -196,16 +314,46 @@ window.Combat = (function () {
     }
     else if (action === "flee") {
       Sound.play("flee");
-      if (state.enemy.speed >= 2 || state.enemy.pack) {
-        log("No ground to give. It's on you.", "info");
+      // Bosses and fast / pack enemies can't be escaped.
+      if (state.enemy.speed >= 2 || state.enemy.pack || state.enemy.boss) {
+        const bite = rand(1, 2);
+        s.hp -= bite;
+        log(`No ground to give. It catches you — ${bite} damage.`, "enemy");
+        Sound.play("damage");
+        spawnEnemyBlood();
+        screenShake();
+        floatDamage(bite);
+        if (s.hp <= 0) {
+          refreshHud();
+          log("You collapse.", "crit");
+          Sound.play("death");
+          setTimeout(() => end("lose"), 900);
+          return;
+        }
       } else {
         const fled = Math.random() < 0.55;
         if (fled) {
           log("You break away into the dark. Safe.", "info");
+          // You dropped something while sprinting.
+          if (Math.random() < 0.35) dropSomething();
           setTimeout(() => end("flee"), 700);
           return;
         }
-        log("You stumble. It closes the distance.", "info");
+        // Failed flee — it turns your back into an opening.
+        const bite = rand(1, 3);
+        s.hp -= bite;
+        log(`You stumble — it closes and tears into you. ${bite} damage.`, "enemy");
+        Sound.play("damage");
+        spawnEnemyBlood();
+        screenShake();
+        floatDamage(bite);
+        if (s.hp <= 0) {
+          refreshHud();
+          log("You collapse.", "crit");
+          Sound.play("death");
+          setTimeout(() => end("lose"), 900);
+          return;
+        }
       }
     }
 
@@ -215,11 +363,28 @@ window.Combat = (function () {
     if (state.enemy.hp <= 0) {
       log(`${state.enemy.name} falls.`, "crit");
       Sound.play("victory");
+      applyLoot(state.enemyId);
       setTimeout(() => end("win"), 950);
       return;
     }
 
     setTimeout(enemyTurn, 600);
+  }
+
+  // Drop a random thing from the player's pack while fleeing.
+  function dropSomething() {
+    const s = Game.state;
+    const opts = [];
+    if (s.ammo > 0) opts.push("ammo");
+    if (s.food > 0) opts.push("food");
+    if (s.bestMelee) opts.push("melee");
+    if (s.bestRanged) opts.push("ranged");
+    if (opts.length === 0) return;
+    const pick = opts[Math.floor(Math.random() * opts.length)];
+    if (pick === "ammo") { s.ammo = Math.max(0, s.ammo - 1); Game.toast("Dropped: 1 🔫"); }
+    else if (pick === "food") { s.food = Math.max(0, s.food - 1); Game.toast("Dropped: 1 🥫"); }
+    else if (pick === "melee" && s.bestMelee) { Game.toast("Dropped: " + s.bestMelee.name); s.bestMelee = null; }
+    else if (pick === "ranged" && s.bestRanged) { Game.toast("Dropped: " + s.bestRanged.name); s.bestRanged = null; }
   }
 
   function hitFlash() {
@@ -405,7 +570,9 @@ window.Combat = (function () {
     if (mayaPresent()) {
       state.mayaCd = (state.mayaCd || 0) - 1;
       if (state.mayaCd <= 0) {
-        const dmg = state.enemy.human ? rand(3, 4) : rand(2, 3);
+        // Lovers fight harder. +1 damage and a tighter cooldown.
+        const bump = lovedMaya() ? 1 : 0;
+        const dmg = (state.enemy.human ? rand(3, 4) : rand(2, 3)) + bump;
         state.enemy.hp -= dmg;
         log(`Maya fires from cover — ${dmg} damage.`, "ally");
         Sound.play("gunshot");
@@ -414,11 +581,12 @@ window.Combat = (function () {
         floatDamage(dmg);
         hitFlash();
         updateEnemyHp();
-        state.mayaCd = 3;
+        state.mayaCd = lovedMaya() ? 2 : 3;
         if (state.enemy.hp <= 0) {
           log(`${state.enemy.name} falls.`, "crit");
           Sound.play("victory");
-              setTimeout(() => end("win"), 950);
+          applyLoot(state.enemyId);
+          setTimeout(() => end("win"), 950);
           return;
         }
       }
@@ -426,13 +594,16 @@ window.Combat = (function () {
 
     if (renPresent()) {
       state.renCd = (state.renCd || 0) - 1;
+      // Lovers heal harder. +1 HP (2 total) and a tighter cooldown.
+      const heal = lovedRen() ? 2 : 1;
+      const cd   = lovedRen() ? 3 : 4;
       if (state.renCd <= 0 && s.hp < s.hpMax) {
-        s.hp = Math.min(s.hpMax, s.hp + 1);
-        log("Ren patches a cut — +1 HP.", "ally");
+        s.hp = Math.min(s.hpMax, s.hp + heal);
+        log(`Ren patches a cut — +${heal} HP.`, "ally");
         Sound.play("heal");
-        floatDamage(1, "heal");
+        floatDamage(heal, "heal");
         refreshHud();
-        state.renCd = 4;
+        state.renCd = cd;
       } else if (state.renCd <= 0) {
         state.renCd = 1;
       }

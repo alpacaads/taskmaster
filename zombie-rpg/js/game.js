@@ -15,6 +15,11 @@ window.Game = (function () {
     flags: {},
     bonds: { maya: 0, ren: 0 },
     romance: null,
+    // Best-equipped weapons — loot bumps their damage bonus. Nulls mean
+    // the base crowbar/handgun stats from combat.js apply.
+    bestMelee: null,
+    bestRanged: null,
+    // Every looted item lives here so the inventory screen can list them.
     inventory: [
       { id: "crowbar", name: "🔧 Crowbar", desc: "Dependable. Heavy." },
       { id: "bandages", name: "🩹 Bandages", desc: "For the small cuts.", qty: 2 },
@@ -201,8 +206,16 @@ window.Game = (function () {
       { name: "⚡ Stamina", qty: `${state.stam}/${state.stamMax}` },
       { name: "🔫 Ammunition", qty: state.ammo },
       { name: "🥫 Food rations", qty: state.food },
-      ...(state.inventory || []),
     ];
+    if (state.bestMelee) {
+      items.push({ name: "🔪 " + state.bestMelee.name,
+        desc: `+${state.bestMelee.bonus} melee damage` });
+    }
+    if (state.bestRanged) {
+      items.push({ name: "🔫 " + state.bestRanged.name,
+        desc: `+${state.bestRanged.bonus} ranged damage` });
+    }
+    items.push(...(state.inventory || []));
     items.forEach(it => {
       const row = document.createElement("div");
       row.className = "inv-item";
