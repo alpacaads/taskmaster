@@ -169,7 +169,7 @@ window.Combat = (function () {
       Sound.play(crit ? "crit" : "melee");
       floatDamage(total, crit ? "crit" : null);
       hitFlash();
-      spawnMark(crit ? "crit" : "hit");
+      spawnMark(crit ? "slashCrit" : "slash");
     }
     else if (action === "shoot") {
       s.ammo -= 1;
@@ -228,41 +228,75 @@ window.Combat = (function () {
     art.classList.add("hit");
   }
 
-  // ---------- Blood splatter ----------
-  // A single small red splash that pops somewhere near the centre on
-  // any hit event. Random position + rotation so no two look identical.
-  // Nothing for miss / block — those just show in the log.
+  // ---------- Hit marks ----------
+  // - slash / slashCrit : curved tapered streak for melee
+  // - hit / crit        : blood splatter for gun hits
+  // - enemyHit          : your blood, darker
+  // - miss / block      : nothing (log only)
+  const SPLAT_SVG = `
+    <svg viewBox="0 0 64 64">
+      <g fill="currentColor">
+        <path d="M32 22 Q22 20 20 30 Q18 40 28 44 Q38 46 42 38 Q44 28 36 22 Z"/>
+        <circle cx="8"  cy="12" r="1.6"/>
+        <circle cx="16" cy="7"  r="1.1"/>
+        <circle cx="12" cy="22" r="2.1"/>
+        <circle cx="52" cy="10" r="1.3"/>
+        <circle cx="56" cy="22" r="1.9"/>
+        <circle cx="54" cy="44" r="2.1"/>
+        <circle cx="46" cy="56" r="1.3"/>
+        <circle cx="34" cy="58" r="1"/>
+        <circle cx="20" cy="56" r="1.6"/>
+        <circle cx="6"  cy="50" r="1.8"/>
+        <ellipse cx="7"  cy="34" rx="4"   ry="1"   transform="rotate(-18 7 34)"/>
+        <ellipse cx="56" cy="30" rx="4.5" ry="1.2" transform="rotate(26 56 30)"/>
+      </g>
+    </svg>`;
+  // Single curved tapered streak. Thin red fringe, bright core, tapered
+  // ends. Two side droplets so the cut bleeds a little.
+  const SLASH_SVG = `
+    <svg viewBox="0 0 120 48">
+      <defs>
+        <linearGradient id="sl-core" x1="0" y1="0.5" x2="1" y2="0.5">
+          <stop offset="0"   stop-color="rgba(255,255,255,0)"/>
+          <stop offset="0.25" stop-color="rgba(255,240,230,0.95)"/>
+          <stop offset="0.75" stop-color="rgba(255,240,230,0.95)"/>
+          <stop offset="1"   stop-color="rgba(255,255,255,0)"/>
+        </linearGradient>
+        <linearGradient id="sl-edge" x1="0" y1="0.5" x2="1" y2="0.5">
+          <stop offset="0"   stop-color="rgba(138,12,16,0)"/>
+          <stop offset="0.2" stop-color="rgba(138,12,16,0.7)"/>
+          <stop offset="0.5" stop-color="rgba(160,12,16,0.9)"/>
+          <stop offset="0.8" stop-color="rgba(138,12,16,0.7)"/>
+          <stop offset="1"   stop-color="rgba(138,12,16,0)"/>
+        </linearGradient>
+      </defs>
+      <path d="M6 32 Q36 10 62 18 Q90 25 114 14"
+            stroke="url(#sl-edge)" stroke-width="9" fill="none" stroke-linecap="round"/>
+      <path d="M6 32 Q36 10 62 18 Q90 25 114 14"
+            stroke="url(#sl-core)" stroke-width="3" fill="none" stroke-linecap="round"/>
+      <circle cx="28" cy="36" r="1.8" fill="#8a0c10"/>
+      <circle cx="52" cy="30" r="1.4" fill="#8a0c10"/>
+      <circle cx="96" cy="28" r="1.6" fill="#8a0c10"/>
+    </svg>`;
+
   function spawnMark(kind) {
     if (kind === "miss" || kind === "block") return;
     const host = document.getElementById("combat-screen");
     if (!host) return;
     const el = document.createElement("div");
-    el.className = "splat " + (kind || "hit");
+    el.className = "splat " + kind;
+    const isSlash = kind === "slash" || kind === "slashCrit";
     // Random jitter around a central band so repeated hits don't stack.
-    const xJitter = 42 + Math.random() * 16;   // 42-58%
-    const yJitter = 32 + Math.random() * 16;   // 32-48%
-    const rot = Math.floor(Math.random() * 360);
+    const xJitter = 42 + Math.random() * 16;
+    const yJitter = 32 + Math.random() * 16;
+    // Slashes tilt just a bit; splatters spin freely.
+    const rot = isSlash
+      ? (-25 + Math.random() * 50)
+      : Math.floor(Math.random() * 360);
     el.style.left = xJitter + "%";
     el.style.top  = yJitter + "%";
     el.style.setProperty("--rot", rot + "deg");
-    el.innerHTML = `
-      <svg viewBox="0 0 64 64">
-        <g fill="currentColor">
-          <path d="M32 22 Q22 20 20 30 Q18 40 28 44 Q38 46 42 38 Q44 28 36 22 Z"/>
-          <circle cx="8"  cy="12" r="1.6"/>
-          <circle cx="16" cy="7"  r="1.1"/>
-          <circle cx="12" cy="22" r="2.1"/>
-          <circle cx="52" cy="10" r="1.3"/>
-          <circle cx="56" cy="22" r="1.9"/>
-          <circle cx="54" cy="44" r="2.1"/>
-          <circle cx="46" cy="56" r="1.3"/>
-          <circle cx="34" cy="58" r="1"/>
-          <circle cx="20" cy="56" r="1.6"/>
-          <circle cx="6"  cy="50" r="1.8"/>
-          <ellipse cx="7"  cy="34" rx="4"   ry="1"   transform="rotate(-18 7 34)"/>
-          <ellipse cx="56" cy="30" rx="4.5" ry="1.2" transform="rotate(26 56 30)"/>
-        </g>
-      </svg>`;
+    el.innerHTML = isSlash ? SLASH_SVG : SPLAT_SVG;
     host.appendChild(el);
     setTimeout(() => el.remove(), 900);
   }

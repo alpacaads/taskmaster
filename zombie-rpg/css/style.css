@@ -987,9 +987,9 @@ html, body {
   100% { opacity: 0; }
 }
 
-/* ---------- Blood splatter ----------
-   Small red splash that lands on the screen on a hit. Random rotation
-   via --rot so no two look the same. */
+/* ---------- Hit marks ----------
+   Small red splatter for gun hits, tapered slash streak for melee.
+   Both pop at a random spot near mid-screen and fade. */
 .splat {
   position: absolute;
   width: 72px; height: 72px;
@@ -1004,11 +1004,25 @@ html, body {
 .splat svg { width: 100%; height: 100%; }
 .splat.crit     { width: 96px; height: 96px; color: #a31012; }
 .splat.enemyHit { color: #6b0e10; }   /* darker, your own blood */
+
+/* Slash variants: wider than tall, draw-in stroke feel via quick scaleX */
+.splat.slash, .splat.slashCrit {
+  width: 150px; height: 60px;
+  filter: drop-shadow(0 0 6px rgba(160,12,16,0.5));
+  animation: slashPop 0.5s ease-out forwards;
+}
+.splat.slashCrit { width: 200px; height: 80px; }
 @keyframes splatPop {
   0%   { opacity: 0; transform: translate(-50%, -50%) rotate(var(--rot, 0deg)) scale(0.35); }
   20%  { opacity: 1; transform: translate(-50%, -50%) rotate(var(--rot, 0deg)) scale(1);    }
   80%  { opacity: 0.9;                                                                      }
   100% { opacity: 0; transform: translate(-50%, -50%) rotate(var(--rot, 0deg)) scale(1);    }
+}
+@keyframes slashPop {
+  0%   { opacity: 0; transform: translate(-50%, -50%) rotate(var(--rot, 0deg)) scale(0.4, 1); }
+  25%  { opacity: 1; transform: translate(-50%, -50%) rotate(var(--rot, 0deg)) scale(1, 1);   }
+  75%  { opacity: 0.95;                                                                       }
+  100% { opacity: 0; transform: translate(-50%, -50%) rotate(var(--rot, 0deg)) scale(1.05, 1); }
 }
 
 /* Modal */
