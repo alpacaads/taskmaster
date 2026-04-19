@@ -192,7 +192,29 @@ window.Game = (function () {
     }
   }
 
+  // Recompute hp/stam ceilings from the base values plus active party
+  // buffs. Called at the top of every HUD refresh so the bars always
+  // reflect the current party. Ren adds +20%% to both caps while she's
+  // either your mission partner or a romantic partner.
+  const BASE_HP_MAX   = 10;
+  const BASE_STAM_MAX = 5;
+  function applyPartyBuffs() {
+    let hpMax = BASE_HP_MAX;
+    let stamMax = BASE_STAM_MAX;
+    const f = state.flags || {};
+    if (f.missionPartner === "ren" || f.lovedRen) {
+      hpMax   = Math.round(hpMax   * 1.2);
+      stamMax = Math.round(stamMax * 1.2);
+    }
+    state.hpMax   = hpMax;
+    state.stamMax = stamMax;
+    // Clamp current values if a buff dropped off and current > new max.
+    state.hp   = Math.min(state.hp,   state.hpMax);
+    state.stam = Math.min(state.stam, state.stamMax);
+  }
+
   function updateHud() {
+    applyPartyBuffs();
     document.getElementById("hud-name").textContent = state.companion
       ? `${state.name} + ${state.companion}${state.companion2 ? " + " + state.companion2 : ""}`
       : state.name;
