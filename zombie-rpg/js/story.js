@@ -173,7 +173,7 @@ window.Story = {
         next: "road_out" },
       { label: "Open the freezer", tag: "RISKY", tagClass: "warn",
         effect: s => { s.food += 2; s.ammo += 3; s.hp = Math.min(s.hpMax, s.hp + 1); Game.toast("+2 🥫, +3 🔫, +1 ❤️"); },
-        next: "freezer" },
+        combat: { enemy: "walker_pair", risky: true, onWin: "freezer", onLose: "death" } },
     ]
   },
 
@@ -192,7 +192,7 @@ window.Story = {
     art: "🚪❄️👧",
     sceneClass: "indoor",
     chapter: "Day 1 — Freezer",
-    text: "Inside, a girl — maybe ten — pressed into the corner, a kitchen knife shaking in her hand.\n\n\"Don't. Don't touch me.\"",
+    text: "They were sealed in with her. Walkers — ripping at the door the second the latch gives.\n\nYou put them down. Breath fogging in the cold.\n\nBehind the tipped shelving, a girl — maybe ten — a kitchen knife shaking in her hand.\n\n\"Don't. Don't touch me.\"",
     choices: [
       { label: "\"It's okay. I'm not going to hurt you.\"",
         effect: s => { s.companion2 = "Nora"; s.flags.savedNora = true; Game.toast("Nora joined you"); },
