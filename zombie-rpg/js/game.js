@@ -283,16 +283,24 @@ window.Game = (function () {
     horde_wall:         "post_horde_win",
   };
   function resolveScene(nodeId, node) {
-    let id = node.scene;
-    if (!id) {
-      if (window.Scenes && Scenes.PROMPTS && Scenes.PROMPTS[nodeId]) id = nodeId;
-      else if (window.Scenes && Scenes.SCENES[nodeId]) id = nodeId;
-      else id = SCENE_ALIASES[nodeId] || null;
-    }
-    // If the resolved id has no baked image, swap it for the legacy remap.
-    const hasImage = window.Scenes && Scenes.PROMPTS && id && Scenes.PROMPTS[id];
-    if (id && !hasImage && STORY_SCENE_REMAP[id]) id = STORY_SCENE_REMAP[id];
-    return id;
+    const P = (window.Scenes && Scenes.PROMPTS) || {};
+    const S = (window.Scenes && Scenes.SCENES)  || {};
+    // Priority, most specific first:
+    // 1. The node ID itself has a baked image -> use it (this is the
+    //    narrative-specific choice and should win over legacy node.scene
+    //    values left over from the SVG-composition era).
+    if (P[nodeId]) return nodeId;
+    // 2. node.scene is set and has a baked image -> use it.
+    if (node.scene && P[node.scene]) return node.scene;
+    // 3. Legacy SVG scene name -> remap to the closest baked image.
+    if (node.scene && STORY_SCENE_REMAP[node.scene]) return STORY_SCENE_REMAP[node.scene];
+    // 4. nodeId aliased to a known scene (legacy aliases table).
+    if (SCENE_ALIASES[nodeId] && P[SCENE_ALIASES[nodeId]]) return SCENE_ALIASES[nodeId];
+    // 5. Raw SCENES primitives, for completeness.
+    if (node.scene && S[node.scene]) return node.scene;
+    if (S[nodeId]) return nodeId;
+    if (SCENE_ALIASES[nodeId]) return SCENE_ALIASES[nodeId];
+    return node.scene || nodeId;
   }
 
   // Map a grapheme (single visible glyph) to an animation class.
