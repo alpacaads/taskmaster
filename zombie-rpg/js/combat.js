@@ -228,28 +228,43 @@ window.Combat = (function () {
     art.classList.add("hit");
   }
 
-  // ---------- Hit marks ----------
-  // A single small glyph near the enemy that flashes on each event.
-  // Mirrors how floatDamage appears — same footprint, different mark.
-  //   hit   : white chevrons (     >  <     )
-  //   crit  : gold chevrons, slightly bigger
-  //   miss  : three dots  (• • •)
-  //   block : white ring (brace absorbed)
+  // ---------- Blood splatter ----------
+  // A single small red splash that pops somewhere near the centre on
+  // any hit event. Random position + rotation so no two look identical.
+  // Nothing for miss / block — those just show in the log.
   function spawnMark(kind) {
-    const host = document.getElementById("combat-enemy");
+    if (kind === "miss" || kind === "block") return;
+    const host = document.getElementById("combat-screen");
     if (!host) return;
     const el = document.createElement("div");
-    el.className = "hit-mark " + kind;
-    const glyph = {
-      hit:   `<svg viewBox="0 0 36 36"><path d="M10 6 L4 18 L10 30 M26 6 L32 18 L26 30" stroke="currentColor" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
-      crit:  `<svg viewBox="0 0 36 36"><path d="M10 6 L4 18 L10 30 M26 6 L32 18 L26 30" stroke="currentColor" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
-      miss:  `<svg viewBox="0 0 36 36"><circle cx="10" cy="18" r="2" fill="currentColor"/><circle cx="18" cy="18" r="2" fill="currentColor"/><circle cx="26" cy="18" r="2" fill="currentColor"/></svg>`,
-      block: `<svg viewBox="0 0 36 36"><circle cx="18" cy="18" r="13" stroke="currentColor" stroke-width="2" fill="none"/></svg>`,
-      enemyHit: `<svg viewBox="0 0 36 36"><path d="M6 10 L30 26 M30 10 L6 26" stroke="currentColor" stroke-width="2.5" fill="none" stroke-linecap="round"/></svg>`,
-    }[kind] || "";
-    el.innerHTML = glyph;
+    el.className = "splat " + (kind || "hit");
+    // Random jitter around a central band so repeated hits don't stack.
+    const xJitter = 42 + Math.random() * 16;   // 42-58%
+    const yJitter = 32 + Math.random() * 16;   // 32-48%
+    const rot = Math.floor(Math.random() * 360);
+    el.style.left = xJitter + "%";
+    el.style.top  = yJitter + "%";
+    el.style.setProperty("--rot", rot + "deg");
+    el.innerHTML = `
+      <svg viewBox="0 0 64 64">
+        <g fill="currentColor">
+          <path d="M32 22 Q22 20 20 30 Q18 40 28 44 Q38 46 42 38 Q44 28 36 22 Z"/>
+          <circle cx="8"  cy="12" r="1.6"/>
+          <circle cx="16" cy="7"  r="1.1"/>
+          <circle cx="12" cy="22" r="2.1"/>
+          <circle cx="52" cy="10" r="1.3"/>
+          <circle cx="56" cy="22" r="1.9"/>
+          <circle cx="54" cy="44" r="2.1"/>
+          <circle cx="46" cy="56" r="1.3"/>
+          <circle cx="34" cy="58" r="1"/>
+          <circle cx="20" cy="56" r="1.6"/>
+          <circle cx="6"  cy="50" r="1.8"/>
+          <ellipse cx="7"  cy="34" rx="4"   ry="1"   transform="rotate(-18 7 34)"/>
+          <ellipse cx="56" cy="30" rx="4.5" ry="1.2" transform="rotate(26 56 30)"/>
+        </g>
+      </svg>`;
     host.appendChild(el);
-    setTimeout(() => el.remove(), 450);
+    setTimeout(() => el.remove(), 900);
   }
 
   // ---------- enemy turn ----------

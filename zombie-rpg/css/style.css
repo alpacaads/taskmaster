@@ -987,32 +987,28 @@ html, body {
   100% { opacity: 0; }
 }
 
-/* ---------- Hit marks ----------
-   Small glyph that appears with the damage counter — same vibe as the
-   floating -N number. No big overlays, no full-screen flashes. */
-.hit-mark {
+/* ---------- Blood splatter ----------
+   Small red splash that lands on the screen on a hit. Random rotation
+   via --rot so no two look the same. */
+.splat {
   position: absolute;
-  left: 50%;
-  top: 42%;
-  width: 36px; height: 36px;
-  transform: translate(-50%, -50%);
+  width: 72px; height: 72px;
+  transform: translate(-50%, -50%) rotate(var(--rot, 0deg)) scale(0.5);
   pointer-events: none;
   z-index: 4;
-  color: #e6e3d8;
+  color: #8a0c10;
   opacity: 0;
-  filter: drop-shadow(0 0 4px rgba(0,0,0,0.85));
-  animation: hitMarkPop 0.42s ease-out forwards;
+  filter: drop-shadow(0 0 4px rgba(0,0,0,0.7));
+  animation: splatPop 0.85s ease-out forwards;
 }
-.hit-mark svg { width: 100%; height: 100%; }
-.hit-mark.crit     { color: #c99b3a; width: 44px; height: 44px; }
-.hit-mark.miss     { color: #8b8a82; }
-.hit-mark.block    { color: #7fb4ff; }
-.hit-mark.enemyHit { color: #d98f8f; }
-@keyframes hitMarkPop {
-  0%   { opacity: 0; transform: translate(-50%, -50%) scale(0.5); }
-  30%  { opacity: 1; transform: translate(-50%, -50%) scale(1.15); }
-  70%  { opacity: 1; transform: translate(-50%, -50%) scale(1); }
-  100% { opacity: 0; transform: translate(-50%, -50%) scale(1); }
+.splat svg { width: 100%; height: 100%; }
+.splat.crit     { width: 96px; height: 96px; color: #a31012; }
+.splat.enemyHit { color: #6b0e10; }   /* darker, your own blood */
+@keyframes splatPop {
+  0%   { opacity: 0; transform: translate(-50%, -50%) rotate(var(--rot, 0deg)) scale(0.35); }
+  20%  { opacity: 1; transform: translate(-50%, -50%) rotate(var(--rot, 0deg)) scale(1);    }
+  80%  { opacity: 0.9;                                                                      }
+  100% { opacity: 0; transform: translate(-50%, -50%) rotate(var(--rot, 0deg)) scale(1);    }
 }
 
 /* Modal */
