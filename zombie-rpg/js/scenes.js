@@ -810,7 +810,12 @@ window.Scenes = (function () {
   function renderImageScene(sceneId) {
     const seed = hashSeed(sceneId);
     const prompt = (PROMPTS[sceneId] || "post-apocalyptic atmospheric scene") + STYLE_SUFFIX;
-    const localUrl = `${IMG_BASE}${sceneId}.png`;
+    // Admin override: if the user uploaded a replacement via admin.html,
+    // use that data URL instead of the committed file. Lets you preview
+    // a new image in-game before committing it to the repo.
+    let override = null;
+    try { override = localStorage.getItem("dl_img_override:" + sceneId); } catch (e) {}
+    const localUrl = override || `${IMG_BASE}${sceneId}.png`;
     const fluxUrl  = imageURL(prompt, { seed, model: "flux" });
     const turboUrl = imageURL(prompt, { seed, model: "turbo" });
     // Fallback chain is local -> flux -> turbo -> retry turbo with new seed.
