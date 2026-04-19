@@ -256,6 +256,22 @@ html, body {
 }
 .scene-image-stage.loaded .scene-image-loading { display: none; }
 @keyframes loadingFadeIn { to { opacity: 1; } }
+.scene-image-error {
+  position: absolute;
+  inset: 0;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 12px;
+  color: var(--danger);
+  font-size: 12px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  background: #0a0d08;
+}
+.scene-image-stage.error .scene-image-error { display: flex; }
+.scene-image-stage.error .scene-image-loading { display: none; }
 .scene-image-stage.error .scene-image-loading::after {
   content: " (couldn't load)";
   color: var(--danger);

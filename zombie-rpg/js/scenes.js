@@ -733,7 +733,7 @@ window.Scenes = (function () {
   // GitHub Pages serves them directly with correct MIME types and no
   // sandbox CSP, so relative paths work reliably.
   const IMG_BASE = "images/";
-  const IMG_CACHE_KEY = "30";
+  const IMG_CACHE_KEY = "31";
   const PROMPTS = {
     intro:               "ruined city skyline at night, military helicopter flying away into the distance, abandoned skyscrapers, smoke rising, broken cars on the street, lone hooded survivor watching from a rooftop, faint moonlight",
     apt_hallway:         "dark narrow apartment building hallway at night, single flickering ceiling bulb, dried blood streak on the floor leading away, peeling wallpaper, ajar door with chain dangling, claustrophobic horror atmosphere",
@@ -805,32 +805,27 @@ window.Scenes = (function () {
     return Math.abs(h) % 999983;
   }
 
-  // Build the image scene element with an inline retry/fallback handler.
-  // 1) try local images/<scene>.png  2) try flux  3) try turbo  4) SVG fallback
+  // Build the image scene element. All 50 scenes have committed PNGs in
+  // images/, so we no longer fall back to Pollinations AI on error —
+  // that fallback used to fire for stale cached 404s and cause the game
+  // to show a freshly AI-generated image instead of the committed one.
+  // On error now, show a simple placeholder; the image is missing.
   function renderImageScene(sceneId) {
-    const seed = hashSeed(sceneId);
-    const prompt = (PROMPTS[sceneId] || "post-apocalyptic atmospheric scene") + STYLE_SUFFIX;
     // Admin override: if the user uploaded a replacement via admin.html,
     // window.__OVERRIDES[sceneId] holds an objectURL for that blob.
     // Lets you preview a new image in-game before committing it.
     const override = (window.__OVERRIDES && window.__OVERRIDES[sceneId]) || null;
-    // Version param busts stale HTTP caches after a new image is committed
-    // (otherwise a cached 404 from before the commit can trip the
-    // Pollinations fallback and the game keeps showing an AI image).
+    // Version param busts stale HTTP caches after a new image is committed.
     const localUrl = override || `${IMG_BASE}${sceneId}.png?v=${IMG_CACHE_KEY}`;
-    const fluxUrl  = imageURL(prompt, { seed, model: "flux" });
-    const turboUrl = imageURL(prompt, { seed, model: "turbo" });
-    // Fallback chain is local -> flux -> turbo -> retry turbo with new seed.
-    // No SVG/emoji fallback by design.
     const onLoad  = "this.closest('.scene-stage').classList.add('loaded');";
     const onError =
-      "var i=this; var t=i.dataset.try;" +
-      "if(t==='1'){i.dataset.try='2';i.src='" + fluxUrl + "';}" +
-      "else if(t==='2'){i.dataset.try='3';i.src='" + turboUrl + "';}" +
-      "else if(t==='3'){i.dataset.try='4'; setTimeout(function(){ i.src='" + turboUrl + "&r='+Math.random(); }, 2000);}";
+      "var s=this.closest('.scene-stage');" +
+      "s.classList.add('loaded','error');" +
+      "this.style.display='none';";
     return `<div class="scene-stage scene-image-stage">` +
-      `<div class="scene-image-loading">generating scene…</div>` +
-      `<img class="scene-image" alt="" data-try="1" src="${localUrl}" ` +
+      `<div class="scene-image-loading">loading…</div>` +
+      `<div class="scene-image-error">image missing: ${sceneId}.png</div>` +
+      `<img class="scene-image" alt="" src="${localUrl}" ` +
       `onload="${onLoad}" onerror="${onError.replace(/"/g, '&quot;')}"/>` +
       `</div>`;
   }
