@@ -733,11 +733,11 @@ window.Scenes = (function () {
   // GitHub Pages serves them directly with correct MIME types and no
   // sandbox CSP, so relative paths work reliably.
   const IMG_BASE = "images/";
-  // Per-page-load cache buster. Any deploy that changes a PNG needs
-  // this to be fresh, otherwise Safari can keep serving a stale 404
-  // from before the commit. Date.now() on every module load guarantees
-  // a fresh URL each time the user opens the app.
-  const IMG_CACHE_KEY = String(Date.now());
+  // No per-load cache-bust — it was forcing a fresh download of every
+  // PNG on every page visit. Browser cache (GitHub Pages Cache-Control:
+  // max-age=600) is good enough; new images become visible within 10
+  // minutes, and the user committing a new image sees it immediately
+  // via their local override until they hit Revert.
   const PROMPTS = {
     intro:               "ruined city skyline at night, military helicopter flying away into the distance, abandoned skyscrapers, smoke rising, broken cars on the street, lone hooded survivor watching from a rooftop, faint moonlight",
     apt_hallway:         "dark narrow apartment building hallway at night, single flickering ceiling bulb, dried blood streak on the floor leading away, peeling wallpaper, ajar door with chain dangling, claustrophobic horror atmosphere",
@@ -819,8 +819,7 @@ window.Scenes = (function () {
     // window.__OVERRIDES[sceneId] holds an objectURL for that blob.
     // Lets you preview a new image in-game before committing it.
     const override = (window.__OVERRIDES && window.__OVERRIDES[sceneId]) || null;
-    // Version param busts stale HTTP caches after a new image is committed.
-    const localUrl = override || `${IMG_BASE}${sceneId}.png?v=${IMG_CACHE_KEY}`;
+    const localUrl = override || `${IMG_BASE}${sceneId}.png`;
     const onLoad  = "this.closest('.scene-stage').classList.add('loaded');";
     const onError =
       "var s=this.closest('.scene-stage');" +
@@ -832,8 +831,20 @@ window.Scenes = (function () {
       `<div class="scene-image-loading">loading…</div>` +
       `<div class="scene-image-error">image missing: ${sceneId}.png</div>` +
       `<img class="scene-image" alt="" src="${localUrl}" ` +
+      `loading="eager" decoding="async" fetchpriority="high" ` +
       `onload="${onLoad}" onerror="${onError.replace(/"/g, '&quot;')}"/>` +
       `</div>`;
+  }
+
+  // Preload a batch of scene images in the background. Called by game.js
+  // with the node's choices so the next screens are already cached.
+  function preloadScenes(ids) {
+    (ids || []).forEach(id => {
+      if (!id) return;
+      const img = new Image();
+      img.decoding = "async";
+      img.src = IMG_BASE + id + ".png";
+    });
   }
 
   // Public helper: render only the SVG (no AI image) for a scene id.
@@ -952,6 +963,6 @@ window.Scenes = (function () {
     return { cancel: () => { cancelled = true; } };
   }
 
-  return { render, renderSVG, preloadAll, SCENES, PROMPTS };
+  return { render, renderSVG, preloadAll, preloadScenes, SCENES, PROMPTS };
 })();
 

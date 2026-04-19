@@ -134,6 +134,17 @@ window.Game = (function () {
       choicesEl.appendChild(btn);
     });
 
+    // Preload images for the scenes the player might click into next,
+    // so clicking a choice feels instant.
+    if (window.Scenes && Scenes.preloadScenes && window.Story) {
+      const nextIds = (node.choices || [])
+        .map(c => c.next)
+        .filter(n => n && window.Story[n])
+        .map(nextId => resolveScene(nextId, window.Story[nextId]))
+        .filter(Boolean);
+      Scenes.preloadScenes(nextIds);
+    }
+
     updateHud();
 
     // Auto-save on new node
