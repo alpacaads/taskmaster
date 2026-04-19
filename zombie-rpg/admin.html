@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+  <title>Dead Light — Scene Admin</title>
+  <style>
+    :root {
+      --bg: #0b0f0a;
+      --panel: #1a2114;
+      --panel-2: #222b1a;
+      --border: #2a3520;
+      --accent: #8ab544;
+      --accent-2: #c5e07a;
+      --danger: #c7464a;
+      --warn: #d9a441;
+      --text: #e8ead9;
+      --text-dim: #8f9583;
+      --text-muted: #6a7060;
+    }
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0; padding: 0;
+      background: var(--bg); color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      min-height: 100%;
+    }
+    header {
+      position: sticky; top: 0; z-index: 10;
+      background: linear-gradient(180deg, #0b0f0a 0%, rgba(11,15,10,0.92) 100%);
+      border-bottom: 1px solid var(--border);
+      padding: 14px 18px;
+      display: flex; flex-wrap: wrap; align-items: center; gap: 12px;
+    }
+    header h1 {
+      margin: 0; font-size: 18px; letter-spacing: 1px;
+      color: var(--accent-2); flex: 0 0 auto;
+    }
+    header .sub { color: var(--text-dim); font-size: 13px; margin-right: auto; }
+    header input[type="search"] {
+      background: var(--panel); color: var(--text);
+      border: 1px solid var(--border); border-radius: 6px;
+      padding: 7px 10px; font-size: 14px; min-width: 200px;
+    }
+    header button {
+      background: var(--panel-2); color: var(--text);
+      border: 1px solid var(--border); border-radius: 6px;
+      padding: 7px 12px; font-size: 13px; cursor: pointer;
+    }
+    header button:hover { background: #2c3920; }
+    header a.back {
+      color: var(--accent); text-decoration: none; font-size: 13px;
+      border: 1px solid var(--border); padding: 7px 12px; border-radius: 6px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+      gap: 16px;
+      padding: 18px;
+    }
+    .card {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      overflow: hidden;
+      display: flex; flex-direction: column;
+    }
+    .card-art {
+      position: relative;
+      aspect-ratio: 3 / 2;
+      background: #000;
+      display: flex; align-items: center; justify-content: center;
+      overflow: hidden;
+    }
+    .card-art img {
+      width: 100%; height: 100%; object-fit: contain; background: #000;
+    }
+    .card-art .missing {
+      color: var(--text-muted); font-size: 13px; text-align: center; padding: 16px;
+    }
+    .card-art .badge {
+      position: absolute; top: 8px; right: 8px;
+      background: rgba(0,0,0,0.7); border: 1px solid var(--border);
+      color: var(--accent-2); font-size: 11px; padding: 3px 7px; border-radius: 4px;
+      letter-spacing: 0.5px;
+    }
+    .card-body { padding: 12px 14px; display: flex; flex-direction: column; gap: 8px; }
+    .card-id {
+      font-family: ui-monospace, "SF Mono", Menlo, monospace;
+      font-size: 13px; color: var(--accent-2); font-weight: 600;
+    }
+    .card-prompt {
+      font-size: 12px; color: var(--text-dim); line-height: 1.45;
+      max-height: 5.5em; overflow: auto;
+    }
+    .card-actions {
+      display: flex; flex-wrap: wrap; gap: 6px; padding-top: 4px;
+    }
+    .card-actions label.upload, .card-actions button {
+      background: var(--panel-2); color: var(--text);
+      border: 1px solid var(--border); border-radius: 6px;
+      padding: 6px 10px; font-size: 12px; cursor: pointer;
+      display: inline-flex; align-items: center; gap: 4px;
+    }
+    .card-actions label.upload:hover, .card-actions button:hover { background: #2c3920; }
+    .card-actions button.primary {
+      background: var(--accent); color: #0b0f0a; border-color: var(--accent);
+      font-weight: 600;
+    }
+    .card-actions button.primary:hover { background: var(--accent-2); }
+    .card-actions button.danger { color: var(--danger); }
+    .card-actions input[type="file"] { display: none; }
+
+    .card.replaced { border-color: var(--accent); }
+    .card.replaced .badge { background: var(--accent); color: #0b0f0a; }
+
+    footer {
+      padding: 16px 18px 36px; color: var(--text-muted); font-size: 12px;
+      border-top: 1px solid var(--border); margin-top: 12px;
+    }
+    footer code {
+      background: var(--panel); padding: 2px 5px; border-radius: 3px;
+      color: var(--accent-2);
+    }
+    .empty {
+      padding: 48px; text-align: center; color: var(--text-dim);
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>🧟 SCENE ADMIN</h1>
+    <span class="sub" id="count">…</span>
+    <input type="search" id="search" placeholder="Filter scenes…" />
+    <button id="clear-all" title="Remove all preview overrides">Clear all overrides</button>
+    <a class="back" href="index.html">← Back to game</a>
+  </header>
+
+  <div class="grid" id="grid"></div>
+
+  <footer>
+    <p><b>How to use:</b></p>
+    <ol>
+      <li>Click <b>Upload</b> on any scene to pick a new image.</li>
+      <li>The card updates instantly and the new image is previewed in the game (stored locally in your browser).</li>
+      <li>Click <b>Download</b> to save the file with the correct filename (e.g. <code>intro.png</code>).</li>
+      <li>Drop the downloaded file into <code>zombie-rpg/images/</code> and commit to make it permanent.</li>
+    </ol>
+    <p>Overrides are kept in <code>localStorage</code> only — they do not modify any committed files.</p>
+  </footer>
+
+  <script src="js/scenes.js?v=28"></script>
+  <script>
+    (function () {
+      const PROMPTS = (window.Scenes && window.Scenes.PROMPTS) || {};
+      const ids = Object.keys(PROMPTS);
+      const grid = document.getElementById("grid");
+      const countEl = document.getElementById("count");
+      const searchEl = document.getElementById("search");
+      const clearAllBtn = document.getElementById("clear-all");
+
+      const OVERRIDE_PREFIX = "dl_img_override:";
+
+      countEl.textContent = ids.length + " scenes";
+
+      function getOverride(id) {
+        try { return localStorage.getItem(OVERRIDE_PREFIX + id); } catch (e) { return null; }
+      }
+      function setOverride(id, dataUrl) {
+        try { localStorage.setItem(OVERRIDE_PREFIX + id, dataUrl); }
+        catch (e) { alert("Could not save override (likely localStorage quota). Try a smaller image."); }
+      }
+      function clearOverride(id) {
+        try { localStorage.removeItem(OVERRIDE_PREFIX + id); } catch (e) {}
+      }
+
+      function imageSrcFor(id) {
+        return getOverride(id) || ("images/" + id + ".png?v=admin" + Date.now());
+      }
+
+      function buildCard(id) {
+        const card = document.createElement("div");
+        card.className = "card";
+        card.dataset.id = id;
+        card.dataset.search = (id + " " + (PROMPTS[id] || "")).toLowerCase();
+
+        const hasOverride = !!getOverride(id);
+        if (hasOverride) card.classList.add("replaced");
+
+        card.innerHTML = `
+          <div class="card-art">
+            <img alt="${id}" />
+            <span class="badge">${hasOverride ? "OVERRIDE" : "live"}</span>
+          </div>
+          <div class="card-body">
+            <div class="card-id">${id}</div>
+            <div class="card-prompt">${(PROMPTS[id] || "").replace(/</g, "&lt;")}</div>
+            <div class="card-actions">
+              <label class="upload">📤 Upload<input type="file" accept="image/*" /></label>
+              <button class="download">💾 Download</button>
+              <button class="revert danger" ${hasOverride ? "" : "disabled hidden"}>↺ Revert</button>
+            </div>
+          </div>
+        `;
+
+        const img = card.querySelector("img");
+        const badge = card.querySelector(".badge");
+        const fileInput = card.querySelector('input[type="file"]');
+        const downloadBtn = card.querySelector(".download");
+        const revertBtn = card.querySelector(".revert");
+
+        function refresh() {
+          const ov = getOverride(id);
+          img.src = ov || ("images/" + id + ".png?t=" + Date.now());
+          if (ov) {
+            card.classList.add("replaced");
+            badge.textContent = "OVERRIDE";
+            revertBtn.hidden = false; revertBtn.disabled = false;
+          } else {
+            card.classList.remove("replaced");
+            badge.textContent = "live";
+            revertBtn.hidden = true; revertBtn.disabled = true;
+          }
+        }
+
+        img.addEventListener("error", () => {
+          img.replaceWith(Object.assign(document.createElement("div"), {
+            className: "missing",
+            textContent: "no image at images/" + id + ".png",
+          }));
+        });
+
+        fileInput.addEventListener("change", (e) => {
+          const file = e.target.files && e.target.files[0];
+          if (!file) return;
+          const reader = new FileReader();
+          reader.onload = () => {
+            setOverride(id, reader.result);
+            refresh();
+          };
+          reader.readAsDataURL(file);
+          fileInput.value = "";
+        });
+
+        downloadBtn.addEventListener("click", () => {
+          const ov = getOverride(id);
+          const url = ov || ("images/" + id + ".png");
+          // For overrides (data URL), download directly. For live images,
+          // fetch and download with the canonical filename.
+          if (ov) {
+            const a = document.createElement("a");
+            a.href = ov;
+            a.download = id + ".png";
+            document.body.appendChild(a); a.click(); a.remove();
+          } else {
+            fetch(url).then(r => r.blob()).then(blob => {
+              const a = document.createElement("a");
+              a.href = URL.createObjectURL(blob);
+              a.download = id + ".png";
+              document.body.appendChild(a); a.click();
+              setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+              a.remove();
+            }).catch(() => alert("No committed image to download for " + id));
+          }
+        });
+
+        revertBtn.addEventListener("click", () => {
+          if (!confirm("Remove preview override for " + id + "?")) return;
+          clearOverride(id);
+          refresh();
+        });
+
+        // initial
+        refresh();
+        return card;
+      }
+
+      ids.sort().forEach(id => grid.appendChild(buildCard(id)));
+
+      searchEl.addEventListener("input", () => {
+        const q = searchEl.value.trim().toLowerCase();
+        let shown = 0;
+        grid.querySelectorAll(".card").forEach(card => {
+          const match = !q || card.dataset.search.indexOf(q) !== -1;
+          card.style.display = match ? "" : "none";
+          if (match) shown++;
+        });
+        countEl.textContent = shown + " / " + ids.length + " scenes";
+      });
+
+      clearAllBtn.addEventListener("click", () => {
+        const overridden = ids.filter(getOverride);
+        if (overridden.length === 0) { alert("No overrides to clear."); return; }
+        if (!confirm("Remove " + overridden.length + " preview override(s)?")) return;
+        overridden.forEach(clearOverride);
+        grid.querySelectorAll(".card").forEach(card => {
+          // re-render that card
+          const id = card.dataset.id;
+          const fresh = buildCard(id);
+          card.replaceWith(fresh);
+        });
+      });
+    })();
+  </script>
+</body>
+</html>
