@@ -710,6 +710,60 @@ html, body {
 .combat-log .line.enemy { color: #e08a8a; }
 .combat-log .line.crit { color: var(--warn); font-weight: 700; }
 .combat-log .line.info { color: var(--text-muted); font-style: italic; }
+.combat-log .line.ally { color: #85c5e0; }
+
+/* Enemy attack telegraph */
+.enemy-telegraph {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 8px;
+  padding: 4px 10px;
+  border-radius: 6px;
+  background: rgba(217, 164, 65, 0.15);
+  border: 1px solid var(--warn);
+  color: var(--warn);
+  font-size: 12px;
+  letter-spacing: 0.5px;
+  animation: telegraphPulse 1.1s ease-in-out infinite;
+}
+.enemy-telegraph[hidden] { display: none; }
+.enemy-telegraph.kind-heavy  { border-color: #c7464a; color: #e88686; background: rgba(199,70,74,0.15); }
+.enemy-telegraph.kind-ranged { border-color: #a0a4ee; color: #b2b6ff; background: rgba(130,134,222,0.15); }
+.enemy-telegraph.kind-swarm  { border-color: #d94444; color: #ff8a7a; background: rgba(217,68,68,0.18); }
+.telegraph-icon { font-size: 14px; }
+@keyframes telegraphPulse {
+  0%, 100% { opacity: 0.75; }
+  50%      { opacity: 1; }
+}
+
+/* Ally sidebar (Maya / Ren in combat) */
+.combat-allies {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 10px;
+  flex-wrap: wrap;
+}
+.ally-chip {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 4px 10px; border-radius: 14px;
+  background: rgba(138,181,68,0.10);
+  border: 1px solid var(--border);
+  font-size: 11px; color: var(--text-dim);
+  letter-spacing: 0.4px;
+}
+.ally-chip .ally-dot {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 6px var(--accent);
+}
+.ally-chip.ready { color: var(--accent-2); border-color: var(--accent); }
+.ally-chip.ready .ally-dot { animation: allyReady 1.1s ease-in-out infinite; }
+@keyframes allyReady {
+  0%, 100% { transform: scale(1); }
+  50%      { transform: scale(1.5); }
+}
 
 .combat-hero {
   display: flex;
