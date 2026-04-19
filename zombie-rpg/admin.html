@@ -184,6 +184,10 @@
     .card-actions button.commit:disabled {
       opacity: 0.5; cursor: not-allowed;
     }
+    .card-actions button.commit.needs-token {
+      background: var(--panel-2); color: var(--warn); border-color: var(--warn);
+      opacity: 1;
+    }
     header button.primary {
       background: var(--accent); color: #0b0f0a; border-color: var(--accent);
       font-weight: 600;
@@ -240,8 +244,8 @@
   </footer>
 
   <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
-  <script src="js/overrides.js?v=33"></script>
-  <script src="js/scenes.js?v=33"></script>
+  <script src="js/overrides.js?v=34"></script>
+  <script src="js/scenes.js?v=34"></script>
   <script>
     (async function () {
       const PROMPTS = (window.Scenes && window.Scenes.PROMPTS) || {};
@@ -356,7 +360,10 @@
         commitAllBtn.disabled = !GH.token;
         document.querySelectorAll(".card .commit").forEach(b => {
           const has = b.closest(".card").classList.contains("replaced");
-          b.disabled = !GH.token || !has;
+          b.disabled = !has;
+          b.classList.toggle("needs-token", has && !GH.token);
+          b.title = !has ? "Upload an image first"
+            : (GH.token ? "Commit to repo" : "Add a GitHub token in Settings first");
         });
       }
 
@@ -491,7 +498,11 @@
             card.classList.add("replaced");
             badge.textContent = "OVERRIDE";
             revertBtn.hidden = false; revertBtn.disabled = false;
-            commitBtn.disabled = !GH.token;
+            // Keep the button clickable so we can surface *why* it's
+            // greyed out (no token yet) instead of silently doing nothing.
+            commitBtn.disabled = false;
+            commitBtn.title = GH.token ? "Commit to repo" : "Add a GitHub token in Settings first";
+            commitBtn.classList.toggle("needs-token", !GH.token);
             const blob = await Overrides.get(id);
             sizeEl.textContent = blob ? "(" + fmtSize(blob.size) + ")" : "";
           } else {
@@ -500,18 +511,23 @@
             badge.textContent = "live";
             revertBtn.hidden = true; revertBtn.disabled = true;
             commitBtn.disabled = true;
+            commitBtn.classList.remove("needs-token");
             sizeEl.textContent = "";
           }
         }
 
         commitBtn.addEventListener("click", async () => {
-          if (!GH.token) { toast("Add a GitHub token in Settings first.", "err"); return; }
+          if (!GH.token) {
+            toast("No GitHub token saved. Opening Settings…", "err");
+            settingsModal.hidden = false;
+            return;
+          }
           commitBtn.disabled = true;
           const prev = commitBtn.textContent;
           commitBtn.textContent = "Committing…";
-          try { await commitOne(id); }
+          try { await commitOne(id); await refresh(); }
           catch (e) {}
-          finally { commitBtn.textContent = prev; commitBtn.disabled = !GH.token; }
+          finally { commitBtn.textContent = prev; commitBtn.disabled = false; }
         });
 
         img.addEventListener("error", () => {
