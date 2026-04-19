@@ -91,6 +91,11 @@
       font-family: ui-monospace, "SF Mono", Menlo, monospace;
       font-size: 13px; color: var(--accent-2); font-weight: 600;
     }
+    .card-num {
+      font-family: ui-monospace, "SF Mono", Menlo, monospace;
+      font-size: 11px; color: var(--text-muted); font-weight: 700;
+      margin-right: 6px;
+    }
     .card-size {
       font-size: 11px; color: var(--text-muted); margin-left: 6px;
     }
@@ -247,12 +252,12 @@
   </footer>
 
   <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
-  <script src="js/overrides.js?v=42"></script>
-  <script src="js/scenes.js?v=42"></script>
+  <script src="js/overrides.js?v=43"></script>
+  <script src="js/scenes.js?v=43"></script>
   <script>
     (async function () {
       const PROMPTS = (window.Scenes && window.Scenes.PROMPTS) || {};
-      const ids = Object.keys(PROMPTS).sort();
+      const ids = Object.keys(PROMPTS);
       const grid = document.getElementById("grid");
       const countEl = document.getElementById("count");
       const searchEl = document.getElementById("search");
@@ -491,7 +496,7 @@
         await Overrides.loadAll();
         const existing = Array.from(grid.children);
         existing.forEach(c => c.remove());
-        const allIds = Object.keys(PROMPTS).sort();
+        const allIds = Object.keys(PROMPTS);
         allIds.forEach(id => grid.appendChild(buildCard(id)));
       }
 
@@ -555,7 +560,7 @@
         bumpGameCacheBust();
         const existing = Array.from(grid.children);
         existing.forEach(c => c.remove());
-        const allIds = Object.keys(PROMPTS).sort();
+        const allIds = Object.keys(PROMPTS);
         allIds.forEach(id => grid.appendChild(buildCard(id)));
         toast("Refreshed " + allIds.length + " thumbnails. Game will re-fetch on next load.", "ok");
       });
@@ -583,6 +588,8 @@
         card.className = "card";
         card.dataset.id = id;
         card.dataset.search = (id + " " + (PROMPTS[id] || "")).toLowerCase();
+        const idx = Object.keys(PROMPTS).indexOf(id);
+        const num = idx >= 0 ? String(idx + 1).padStart(2, "0") : "??";
 
         card.innerHTML = `
           <div class="card-art">
@@ -591,6 +598,7 @@
           </div>
           <div class="card-body">
             <div>
+              <span class="card-num">#${num}</span>
               <span class="card-id">${id}</span>
               <span class="card-size"></span>
             </div>
