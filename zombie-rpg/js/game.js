@@ -168,6 +168,10 @@ window.Game = (function () {
       Combat.start(c.combat);
       return;
     }
+    // Out-of-combat upkeep — run BEFORE measuring hp delta so the +1
+    // from Nora still lights up as a heal sound / animation.
+    applyUpkeep();
+    updateHud();
     if (state.hp > before.hp)        Sound.play("heal");
     else if (state.food > before.food || state.ammo > before.ammo) Sound.play("pickup");
     else if (state.hp < before.hp)   Sound.play("damage");
@@ -176,6 +180,15 @@ window.Game = (function () {
     if (c.next) {
       const nextId = typeof c.next === "function" ? c.next(state) : c.next;
       goto(nextId);
+    }
+  }
+
+  // Per-action passive effects outside of combat. Nora with you = +1 HP
+  // regen per action (capped at hpMax). Keeps the kid narratively
+  // useful even though she can't fight.
+  function applyUpkeep() {
+    if (state.companion2 === "Nora" && state.hp < state.hpMax) {
+      state.hp = Math.min(state.hpMax, state.hp + 1);
     }
   }
 
