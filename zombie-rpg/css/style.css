@@ -856,37 +856,99 @@ html, body {
 .combat-log .line.info  { color: #525249; font-style: italic; }
 .combat-log .line.ally  { color: #9cb87a; }
 
-/* Action grid — flat, hard-edged, anchored in the thumb zone */
+/* Action grid — framed game-style buttons, anchored in the thumb zone */
 .combat-actions {
   position: relative; z-index: 2;
   display: grid; grid-template-columns: repeat(4, 1fr);
-  border-top: 1px solid rgba(230,227,216,0.35);
-  background: #040406;
-  /* Respect iPhone safe area so buttons sit just above the home indicator. */
-  padding-bottom: env(safe-area-inset-bottom, 0);
+  gap: 8px;
+  padding: 10px 10px;
+  padding-bottom: calc(10px + env(safe-area-inset-bottom, 0));
+  border-top: 1px solid rgba(230,227,216,0.25);
+  background: linear-gradient(180deg, #070709 0%, #020204 100%);
 }
 .combat-btn {
-  background: transparent;
-  color: #e6e3d8;
-  border: none;
-  border-right: 1px solid rgba(230,227,216,0.14);
-  padding: 22px 6px;
-  min-height: 64px;
+  position: relative;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 4px;
+  min-height: 72px;
+  padding: 8px 4px;
+  color: #cfcfc2;
+  background:
+    linear-gradient(180deg, rgba(255,255,255,0.04) 0%, rgba(255,255,255,0) 40%),
+    linear-gradient(180deg, #1a1e1f 0%, #0a0d0e 100%);
+  border: 1px solid rgba(230,227,216,0.18);
+  border-top-color: rgba(230,227,216,0.3);
+  border-bottom-color: rgba(0,0,0,0.85);
+  border-radius: 4px;
   font-family: ui-monospace, "SF Mono", Menlo, monospace;
-  font-size: 13px; letter-spacing: 3px; text-transform: uppercase;
+  font-size: 10px; letter-spacing: 2.5px; text-transform: uppercase;
   cursor: pointer;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.06),
+    0 2px 0 rgba(0,0,0,0.75);
+  transition: color 0.12s ease, border-color 0.12s ease, transform 0.06s ease,
+              box-shadow 0.12s ease, background 0.12s ease;
 }
-.combat-btn:last-child { border-right: none; }
-.combat-btn:hover  { background: rgba(230,227,216,0.05); color: #c99b3a; }
-.combat-btn:active { background: rgba(201,155,58,0.14); }
-.combat-btn[disabled] { opacity: 0.4; cursor: not-allowed; }
-.combat-btn .k {
-  display: block;
-  font-size: 9px; color: #525249; letter-spacing: 2px;
-  margin-bottom: 4px;
+.combat-btn:hover {
+  color: #c99b3a;
+  border-color: rgba(201,155,58,0.55);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.08),
+    0 0 14px rgba(201,155,58,0.22),
+    0 2px 0 rgba(0,0,0,0.75);
 }
-.combat-btn.flee { color: #d98f8f; }
-.combat-btn.flee:hover { color: #ff9090; }
+.combat-btn:active {
+  transform: translateY(1px);
+  background:
+    linear-gradient(180deg, #0a0d0e 0%, #161a1a 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(0,0,0,0.5),
+    0 1px 0 rgba(0,0,0,0.75);
+}
+.combat-btn[disabled] {
+  opacity: 0.32;
+  cursor: not-allowed;
+  filter: grayscale(0.4);
+}
+.combat-btn[disabled]:hover {
+  color: #cfcfc2;
+  border-color: rgba(230,227,216,0.18);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.06),
+    0 2px 0 rgba(0,0,0,0.75);
+}
+.combat-btn .icon {
+  width: 26px; height: 26px;
+  color: #cfcfc2;
+  filter: drop-shadow(0 1px 0 rgba(0,0,0,0.8));
+  transition: color 0.12s ease, filter 0.12s ease, transform 0.12s ease;
+}
+.combat-btn:hover .icon {
+  color: #c99b3a;
+  filter: drop-shadow(0 0 6px rgba(201,155,58,0.55));
+}
+.combat-btn .label {
+  line-height: 1;
+  color: inherit;
+}
+
+/* Flee — red accent */
+.combat-btn.flee {
+  color: #d98f8f;
+}
+.combat-btn.flee .icon { color: #d98f8f; }
+.combat-btn.flee:hover {
+  color: #ff9090;
+  border-color: rgba(217,143,143,0.6);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.08),
+    0 0 14px rgba(217,143,143,0.3),
+    0 2px 0 rgba(0,0,0,0.75);
+}
+.combat-btn.flee:hover .icon {
+  color: #ff9090;
+  filter: drop-shadow(0 0 6px rgba(217,143,143,0.55));
+}
 
 /* Hero stats strip — sits just above the thumb-zone action grid */
 .combat-hero {
