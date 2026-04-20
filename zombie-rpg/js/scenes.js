@@ -807,6 +807,20 @@ window.Scenes = (function () {
     ending_final_loverlost:   "lone grieving survivor kneeling at a fresh grave in a pine forest at sunset, candle flickering in a jar, deep sorrow, golden warm light, painterly cinematic",
     ending_final_lovers_road: "two lovers walking hand in hand at the front of a small group of survivors on a misty highway at dawn, hopeful new beginning together, cinematic wide shot",
     death:               "dark blood-red haze, faint silhouette of a fallen body on the ground, faint cross marker in the distance, deep grief, oppressive horror finality, painterly cinematic",
+
+    // ---- Combat backdrops (per enemy) ----
+    // These aren't story scenes; they are dedicated portraits that
+    // replace the scene art as the combat backdrop when available.
+    // File names mirror the enemy id: images/combat_<id>.jpg
+    combat_walker:       "lone decaying zombie walker shambling forward in a dim corridor, cinematic horror portrait, deep shadows, low key lighting, gritty, photorealistic, 3:2 widescreen",
+    combat_walker_cho:   "elderly zombie woman in a tattered nightgown lunging forward out of a dim apartment doorway, milky white eyes, mouth open, horror portrait, cinematic, The Last of Us style",
+    combat_walker_pair:  "two zombies shambling toward the camera in a ransacked grocery store, tipped carts, flickering fluorescent light, cinematic horror portrait",
+    combat_runner:       "fresh zombie runner sprinting straight at the camera mid-lunge, snarling, dark city street, motion blur, cinematic horror portrait",
+    combat_bloater:      "massive bloated zombie with lumpy mutated body, hunched posture, advancing slowly in a dim ruined hospital corridor, cinematic horror portrait",
+    combat_bandit:       "armed human bandit raising a shotgun at the camera, pine forest at dusk, fog, gritty cinematic portrait",
+    combat_horde:        "massive zombie horde pouring toward the camera down an abandoned highway at blood-red dawn, hundreds of silhouettes, cinematic wide shot",
+    combat_freezer_abom: "grotesque zombie abomination covered in fungal tumor growths bursting from an industrial meat locker freezer, steaming breath, dim flickering fluorescent light, cinematic horror in the style of The Last of Us bloater",
+    combat_traitor:      "man mid-zombification, fresh black bite mark on forearm with sleeve pushed up, eyes fogging milky white, teeth bared, tense confrontation at a chainlink fence at night, moonlight, cinematic horror portrait",
   };
 
   // ---------- AI image scenes ----------

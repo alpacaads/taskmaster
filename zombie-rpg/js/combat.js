@@ -246,12 +246,35 @@ window.Combat = (function () {
     document.getElementById("game-screen").classList.add("hidden");
     combatScreen.classList.remove("hidden");
 
-    // Use the currently-rendered scene image as the combat backdrop.
+    // Start with the scene image as the fallback backdrop.
     const scnImg = document.querySelector("#scene-art .scene-image");
     combatScreen.style.setProperty(
       "--combat-backdrop",
       scnImg && scnImg.src ? `url("${scnImg.src}")` : "none"
     );
+
+    // If there's a combat-specific image for this enemy (uploaded in
+    // admin OR committed under images/combat_<id>.jpg), swap to it.
+    // Admin override beats everything; otherwise probe the committed
+    // file async and swap on load so a 404 just leaves the scene image.
+    const combatKey = "combat_" + config.enemy;
+    const override = window.__OVERRIDES && window.__OVERRIDES[combatKey];
+    if (override) {
+      combatScreen.style.setProperty("--combat-backdrop", `url("${override}")`);
+    } else {
+      const probe = new Image();
+      probe.onload = () => {
+        if (state && state.enemyId === config.enemy) {
+          combatScreen.style.setProperty(
+            "--combat-backdrop",
+            `url("${probe.src}")`
+          );
+        }
+      };
+      probe.src = window.sceneImageURL
+        ? window.sceneImageURL(combatKey)
+        : "images/" + combatKey + ".jpg";
+    }
 
     document.getElementById("enemy-art").textContent = state.enemy.art;
     document.getElementById("enemy-name").textContent = state.enemy.name;
