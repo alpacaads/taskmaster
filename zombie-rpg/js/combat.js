@@ -860,15 +860,20 @@ window.Combat = (function () {
   // ---------- end ----------
   function end(result) {
     const cfg = state;
-    state = null;
-    document.getElementById("combat-screen").classList.add("hidden");
-    document.getElementById("game-screen").classList.remove("hidden");
-
-    if (result === "win" || result === "flee") {
-      Game.goto(cfg.onWin);
-    } else {
-      Game.goto(cfg.onLose);
-    }
+    state = null; // lock out further player input immediately
+    // Hold on the combat screen for a beat so the final log line and
+    // any loot/buff/trust toasts are actually readable before we wipe
+    // to the next scene.
+    const linger = result === "win" ? 1800 : result === "flee" ? 1000 : 1300;
+    const combatEl = document.getElementById("combat-screen");
+    combatEl.classList.add("fading-out");
+    setTimeout(() => {
+      combatEl.classList.remove("fading-out");
+      combatEl.classList.add("hidden");
+      document.getElementById("game-screen").classList.remove("hidden");
+      if (result === "win" || result === "flee") Game.goto(cfg.onWin);
+      else Game.goto(cfg.onLose);
+    }, linger);
   }
 
   return { start, act };

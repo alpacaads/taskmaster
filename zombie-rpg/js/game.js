@@ -203,6 +203,16 @@ window.Game = (function () {
       choicesEl.appendChild(btn);
     });
 
+    // Fade in the new scene content so jumps don't feel instant.
+    // Re-triggering the CSS animation via a reflow is cheap and resets
+    // cleanly even when the same element gets updated back-to-back.
+    [art, document.getElementById("narrative"), choicesEl].forEach(el => {
+      if (!el) return;
+      el.classList.remove("scene-fade-in");
+      void el.offsetWidth;
+      el.classList.add("scene-fade-in");
+    });
+
     // Preload images for the scenes the player might click into next,
     // so clicking a choice feels instant.
     if (window.Scenes && Scenes.preloadScenes && window.Story) {

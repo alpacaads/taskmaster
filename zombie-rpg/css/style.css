@@ -53,6 +53,24 @@ html, body {
   to { opacity: 1; transform: translateY(0); }
 }
 
+/* Softer fade applied to scene art / narrative / choices each time
+   goto() swaps a new story node in. Slightly slower than the full
+   screen fade so the beat registers. */
+@keyframes sceneFadeIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.scene-fade-in { animation: sceneFadeIn 380ms ease-out; }
+
+/* Combat screen fades out before the hidden class kicks in, so the
+   transition from the final kill blow to the next story beat reads
+   as a lingering pause rather than a hard cut. */
+.fading-out { animation: sceneFadeOut 600ms ease forwards; }
+@keyframes sceneFadeOut {
+  from { opacity: 1; }
+  to   { opacity: 0; }
+}
+
 /* Title */
 #title-screen {
   background: radial-gradient(ellipse at top, #1a2414 0%, #0b0f0a 70%);
