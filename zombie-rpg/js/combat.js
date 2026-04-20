@@ -190,13 +190,23 @@ window.Combat = (function () {
   let state = null;
 
   // ---------- companion helpers ----------
+  // missionPartner, when set, is the authoritative "who's with you right
+  // now" flag — it overrides the long-lived companion relationship
+  // (e.g. Maya is still your companion, but you left her at camp and
+  // took Ren on the hospital run).
   function mayaPresent() {
     const s = Game.state;
-    return s.companion === "Maya" || (s.flags && s.flags.missionPartner === "maya");
+    if (s.flags && "missionPartner" in s.flags) {
+      return s.flags.missionPartner === "maya";
+    }
+    return s.companion === "Maya";
   }
   function renPresent() {
     const s = Game.state;
-    return s.flags && s.flags.missionPartner === "ren";
+    if (s.flags && "missionPartner" in s.flags) {
+      return s.flags.missionPartner === "ren";
+    }
+    return false;
   }
   // Vega only rides along for the traitor confrontation on the
   // "bring the cavalry" path. She's not a persistent companion.

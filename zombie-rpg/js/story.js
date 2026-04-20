@@ -601,9 +601,19 @@ window.Story = {
     text: "You hand the meds to Ren — who beams, just for a second — and then notice something at the south fence: a chain link, cleanly cut. Not zombies. Hands.",
     choices: [
       { label: "Investigate the cut fence", tag: "CLUE", tagClass: "warn",
-        effect: s => { s.flags.foundCut = true; },
+        effect: s => {
+          s.flags.foundCut = true;
+          // Sneaking out alone. Nobody's with you at the fence.
+          delete s.flags.missionPartner;
+          delete s.flags.solo_mission;
+        },
         next: "investigate_traitor" },
       { label: "Mention it to Vega in the morning. Get warm by the fire.",
+        effect: s => {
+          // Back at camp — the mission is over, companion rules apply again.
+          delete s.flags.missionPartner;
+          delete s.flags.solo_mission;
+        },
         next: "bonfire_invite" },
     ]
   },
