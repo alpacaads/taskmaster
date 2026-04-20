@@ -770,7 +770,9 @@ window.Story = {
   },
 
   confront_traitor: {
-    scene: "confront_traitor",
+    scene: function(s) {
+      return s.flags && s.flags.toldVega ? "confront_traitor_vega" : "confront_traitor";
+    },
     sceneClass: "night",
     chapter: "Day 4 — South Fence",
     speaker: "???",
@@ -795,7 +797,9 @@ window.Story = {
   },
 
   traitor_aftermath: {
-    scene: "confront_traitor",
+    scene: function(s) {
+      return s.flags && s.flags.toldVega ? "traitor_aftermath_vega" : "traitor_aftermath";
+    },
     sceneClass: "night",
     chapter: "Day 4 — South Fence",
     text: function(s) {

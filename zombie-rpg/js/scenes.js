@@ -738,7 +738,7 @@ window.Scenes = (function () {
   // fresh image URLs automatically, so a commit on one device (PC)
   // shows up on another (phone) as soon as Pages rebuilds, without
   // relying on localStorage which is per-device.
-  const BUILD = "104";
+  const BUILD = "105";
 
   // Smart cache-bust: per-scene timestamp from the admin takes priority
   // (committer sees their upload immediately), then a device-wide global
@@ -807,7 +807,9 @@ window.Scenes = (function () {
     mission_return:      "fortified survivor camp at dusk, returning survivors handing a medical bag to camp medic, joyful relief, in the background a freshly cut chainlink fence with bolt cutters lying in the grass, ominous detail, warm fading light",
     investigate_traitor: "moonlit gap in a chainlink fence at the edge of a survivor camp, fresh bolt cutters lying in the grass, fresh boot prints in mud leading inward, lone survivor crouched investigating with a flashlight, tense detective moment",
     confront_traitor:    "tense night confrontation at a perimeter fence, lone survivor confronting a panicked man with a fresh black bite mark on his forearm, sleeve pushed up, distant glow of a survivor camp behind them, moonlight, moral horror",
+    confront_traitor_vega: "tense night confrontation at a perimeter fence, a lone survivor and Captain Vega — a hardened woman in tactical fatigues with a rifle raised and a blinding flashlight mounted on the barrel — closing in on a panicked crouched man with a fresh black bite mark on his exposed forearm, distant glow of a survivor camp behind them, moonlight, dust suspended, moral horror, cinematic",
     traitor_aftermath:   "aftermath at a chainlink fence at night, a man's body slumped against the fence, lone survivor standing over him exhaling, distant campfires, moonlight, dust suspended, quiet moral weight",
+    traitor_aftermath_vega: "aftermath at a chainlink fence at night, a man's body slumped against the fence, a lone survivor and Captain Vega in tactical fatigues standing over him, Vega already turning toward the camp with her rifle lowered and jaw tight as if walking to ring a bell, distant campfires, moonlight, heavy moral weight, cinematic",
     bonfire_invite:      "intimate bonfire at night inside a survivor camp, two figures lingering near the fading flames, sparks rising into a starry sky, pine trees silhouetted, warm orange glow on faces, quiet romantic tension",
     romance_maya:        "intimate emotional moment in a dimly lit canvas tent at night, a man and a red-haired woman in an army jacket facing each other very close, her hand on his chest, candlelight glow, soft focus, suggestive but tasteful, deep emotional tone",
     romance_ren:         "intimate emotional moment in a small medbay at night, a single candle on a metal table, two figures sitting close on a cot, hands touching tenderly, soft warm candlelight, suggestive but tasteful, deep emotional tone, vulnerable",
