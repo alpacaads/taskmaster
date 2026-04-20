@@ -146,10 +146,31 @@ window.Story = {
     choices: [
       { label: "Fight them together", tag: "COMBAT", tagClass: "danger",
         require: s => s.companion === "Maya",
-        combat: { enemy: "walker_pair", onWin: "grocery_inside", onLose: "death" } },
+        combat: { enemy: "walker_pair", onWin: "grocery_front_win", onLose: "death" } },
       { label: "Fight them alone", tag: "COMBAT", tagClass: "danger",
         require: s => s.companion !== "Maya",
-        combat: { enemy: "walker_pair", onWin: "grocery_inside", onLose: "death" } },
+        combat: { enemy: "walker_pair", onWin: "grocery_front_win", onLose: "death" } },
+    ]
+  },
+
+  grocery_front_win: {
+    scene: "grocery_front",
+    sceneClass: "indoor",
+    chapter: "Day 1 — Grocery",
+    text: "The second walker slumps against a tipped cart. One of them was wearing a police load-bearing vest — scarred up but the plates are intact. You cut it free and shrug into it.\n\nIt won't save your life twice. Once is more than nothing.",
+    choices: [
+      { label: "Take the vest and head deeper in",
+        effect: s => {
+          s.inventory = s.inventory || [];
+          s.inventory.push({
+            id: "vest",
+            name: "🦺 Riot Vest",
+            desc: "Absorbs one hit in combat. Breaks after.",
+            armor: true,
+          });
+          Game.toast("Riot Vest equipped");
+        },
+        next: "grocery_inside" },
     ]
   },
 

@@ -767,14 +767,27 @@ window.Combat = (function () {
       Sound.play("brace");
       spawnMark("block");
     } else {
-      s.hp -= dmg;
-      const line = savage
-        ? `${e.name} catches you — ${dmg} damage.`
-        : `${e.name} strikes — ${dmg} damage.`;
-      log(line, savage ? "crit" : "enemy");
-      Sound.play(savage ? "crit" : "damage");
-      spawnEnemyBlood();
-      screenShake();
+      // Armored vest (or any armor:true inventory item) eats one hit
+      // and is destroyed. Big value, but gone after.
+      const inv = s.inventory || [];
+      const vestIdx = inv.findIndex(it => it && it.armor);
+      if (vestIdx >= 0) {
+        const vest = inv[vestIdx];
+        inv.splice(vestIdx, 1);
+        log(`${e.name} strikes — your ${vest.name.replace(/^[^\w]+\s*/, '')} takes it. Ruined.`, "ally");
+        Sound.play("brace");
+        spawnMark("block");
+        screenShake();
+      } else {
+        s.hp -= dmg;
+        const line = savage
+          ? `${e.name} catches you — ${dmg} damage.`
+          : `${e.name} strikes — ${dmg} damage.`;
+        log(line, savage ? "crit" : "enemy");
+        Sound.play(savage ? "crit" : "damage");
+        spawnEnemyBlood();
+        screenShake();
+      }
     }
 
     refreshHud();
