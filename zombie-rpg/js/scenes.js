@@ -738,7 +738,7 @@ window.Scenes = (function () {
   // fresh image URLs automatically, so a commit on one device (PC)
   // shows up on another (phone) as soon as Pages rebuilds, without
   // relying on localStorage which is per-device.
-  const BUILD = "106";
+  const BUILD = "107";
 
   // Smart cache-bust: per-scene timestamp from the admin takes priority
   // (committer sees their upload immediately), then a device-wide global
@@ -826,8 +826,14 @@ window.Scenes = (function () {
     ending_final_fallen:      "candlelit memorial at dusk in a pine forest, simple wooden grave marker with a name carved into it, mourners standing back, golden hour, deep sorrow, painterly",
     ending_final_escape:      "small band of survivors walking down a misty empty highway at dawn, lone leader with a flashlight in front, hopeful new beginning, cinematic wide shot",
     ending_final_lovers:      "two lovers embracing at dawn on a battered fortified wall above a ruined battlefield, blood-red sunrise behind them, weary but alive, deep emotional moment, cinematic",
+    ending_final_lovers_maya: "the survivor and Maya — a red-haired woman in an army jacket — embracing at dawn on a battered fortified wall above a ruined battlefield strewn with fallen zombies, her rifle slung across her back, blood-red sunrise behind them, weary but alive, cinematic, deep emotional moment",
+    ending_final_lovers_ren:  "the survivor and Ren — a dark-haired young medic in a grey scrub top under a worn olive jacket — embracing at dawn on a battered fortified wall above a ruined battlefield strewn with fallen zombies, her hand gently on his bandaged arm, blood-red sunrise behind them, weary but alive, cinematic, tender emotional moment",
     ending_final_loverlost:   "lone grieving survivor kneeling at a fresh grave in a pine forest at sunset, candle flickering in a jar, deep sorrow, golden warm light, painterly cinematic",
+    ending_final_loverlost_maya: "lone grieving survivor kneeling at a fresh grave in a pine forest at sunset, a faded olive army jacket folded carefully at the base of the wooden marker, a single rifle shell standing upright in the dirt, candle flickering in a jar, deep sorrow, golden warm light, painterly cinematic",
+    ending_final_loverlost_ren:  "lone grieving survivor kneeling at a fresh grave in a pine forest at sunset, a small silver stethoscope coiled at the base of the wooden marker, a sprig of wildflowers tied with a gauze strip, candle flickering in a jar, deep sorrow, golden warm light, painterly cinematic",
     ending_final_lovers_road: "two lovers walking hand in hand at the front of a small group of survivors on a misty highway at dawn, hopeful new beginning together, cinematic wide shot",
+    ending_final_lovers_road_maya: "the survivor and Maya — a red-haired woman in an army jacket with a rifle across her back — walking hand in hand at the front of a small group of survivors on a misty highway at dawn, she's scanning the treeline, he's watching her, hopeful new beginning together, cinematic wide shot",
+    ending_final_lovers_road_ren:  "the survivor and Ren — a dark-haired young medic in a grey scrub top and worn olive jacket with a medkit slung across her chest — walking hand in hand at the front of a small group of survivors on a misty highway at dawn, she's softly humming to the kid beside her, hopeful new beginning together, cinematic wide shot",
     death:               "dark blood-red haze, faint silhouette of a fallen body on the ground, faint cross marker in the distance, deep grief, oppressive horror finality, painterly cinematic",
 
     nora_asks:           "a small ten-year-old girl with messy copper-brown hair and a ragged little backpack, standing at the open wooden gate of a fortified survivor camp at sunrise, looking up pleadingly at a lone survivor tightening rucksack straps, pine forest and watchtower in the background, warm dawn light, tender quiet moment before a dangerous mission, cinematic",
