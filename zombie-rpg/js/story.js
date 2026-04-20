@@ -634,7 +634,15 @@ window.Story = {
     },
     choices: [
       { label: "He lunges. Put him down.", tag: "BOSS", tagClass: "danger",
-        combat: { enemy: "traitor", risky: true, onWin: "traitor_aftermath", onLose: "death" } },
+        combat: function (s) {
+          return {
+            enemy: "traitor",
+            // Vega's rifles cover you on the cavalry path — not risky.
+            risky: !s.flags.toldVega,
+            onWin: "traitor_aftermath",
+            onLose: "death",
+          };
+        } },
     ]
   },
 
