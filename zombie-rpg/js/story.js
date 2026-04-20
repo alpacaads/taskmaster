@@ -55,7 +55,23 @@ window.Story = {
     text: "The armchair creaks. Mrs. Cho's eyes open — milk-white, hungry.\n\nShe lunges.",
     choices: [
       { label: "Fight her", tag: "COMBAT", tagClass: "danger",
-        combat: { enemy: "walker_cho", onWin: "stairwell_first", onLose: "death" } },
+        combat: { enemy: "walker_cho", onWin: "cho_loot", onLose: "death" } },
+    ]
+  },
+
+  cho_loot: {
+    scene: "neighbour_apt",
+    sceneClass: "indoor",
+    chapter: "Day 1 — Apartment 3A",
+    text: "She's still. Truly still this time.\n\nIn the bottom dresser drawer, wrapped in an old cloth: her late husband's service pistol. A small box beside it — three rounds.\n\nYou're not a shooter. But you're not empty-handed anymore.",
+    choices: [
+      { label: "Take the pistol. Head for the stairs.",
+        effect: s => {
+          Game.giveWeapon({ name: "Service Pistol", bonus: 1, slot: "ranged" });
+          s.ammo = 3;
+          Game.toast("🔫 Service Pistol · 3 rounds");
+        },
+        next: "stairwell_first" },
     ]
   },
 

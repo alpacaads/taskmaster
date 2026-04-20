@@ -7,18 +7,19 @@ window.Game = (function () {
     name: "Ellis",
     hp: 10, hpMax: 10,
     stam: 5, stamMax: 5,
-    ammo: 3,
+    ammo: 0,
     companion: null,
     companion2: null,
     node: "intro",
     flags: {},
     bonds: { maya: 0, ren: 0 },
     romance: null,
-    // Equipped weapons — starter kit gets +0 bonus; every loot drop is
-    // an upgrade. Bonuses stack into the per-swing / per-shot dice in
-    // combat.js on top of the base damage range.
+    // Equipped weapons — starter kit is a pocket knife only. Your first
+    // firearm is looted from Mrs. Cho's apartment; every drop after
+    // that is an upgrade. Bonuses stack into the per-swing / per-shot
+    // dice in combat.js on top of the base damage range.
     bestMelee:  { name: "Pocket Knife", bonus: 0, slot: "melee" },
-    bestRanged: { name: "Handgun",       bonus: 0, slot: "ranged" },
+    bestRanged: null,
     // Looted consumables and keepsakes. Each entry has {id, name, desc,
     // qty, heal?, stam?, stamRefill?}. Consumables (any heal/stam field)
     // render a 'Use' button in the inventory modal.
