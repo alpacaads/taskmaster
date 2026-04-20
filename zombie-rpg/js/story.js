@@ -451,7 +451,13 @@ window.Story = {
   },
 
   chore_done: {
-    scene: "briefing_tent",
+    scene: function(s) {
+      const c = s.flags && s.flags.choreChosen;
+      if (c === "medbay")    return "chore_done_medbay";
+      if (c === "perimeter") return "chore_done_perimeter";
+      if (c === "kitchen")   return "chore_done_kitchen";
+      return "chore_done";
+    },
     sceneClass: "indoor",
     chapter: "Day 4 — Briefing",
     speaker: "Captain Vega",
