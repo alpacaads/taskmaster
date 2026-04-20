@@ -209,25 +209,40 @@ window.Combat = (function () {
     const wrap = document.getElementById("combat-allies");
     if (!wrap) return;
     const chips = [];
+    const build = (key, face, label, ready, status) =>
+      `<span class="ally-chip ${ready ? "ready" : ""}" data-ally="${key}">` +
+        `<span class="ally-face">${face}</span>` +
+        `<span class="ally-body">` +
+          `<span class="ally-name">${label}</span>` +
+          `<span class="ally-state">${status}</span>` +
+        `</span>` +
+      `</span>`;
     if (mayaPresent()) {
       const ready = state.mayaCd <= 0;
-      chips.push(`<span class="ally-chip ${ready ? "ready" : ""}">` +
-        `MAYA ` + (ready ? "— NEXT SHOT" : `— ${state.mayaCd}`) +
-        `</span>`);
+      chips.push(build("maya", "👩‍🦰", "MAYA", ready, ready ? "NEXT SHOT" : `CD ${state.mayaCd}`));
     }
     if (renPresent()) {
       const ready = state.renCd <= 0;
-      chips.push(`<span class="ally-chip ${ready ? "ready" : ""}">` +
-        `REN ` + (ready ? "— TRIAGE" : `— ${state.renCd}`) +
-        `</span>`);
+      chips.push(build("ren", "🧑‍⚕️", "REN", ready, ready ? "TRIAGE" : `CD ${state.renCd}`));
     }
     if (vegaPresent()) {
       const ready = state.vegaCd <= 0;
-      chips.push(`<span class="ally-chip ${ready ? "ready" : ""}">` +
-        `VEGA ` + (ready ? "— RIFLE READY" : `— ${state.vegaCd}`) +
-        `</span>`);
+      chips.push(build("vega", "🫡", "VEGA", ready, ready ? "RIFLE READY" : `CD ${state.vegaCd}`));
     }
     wrap.innerHTML = chips.join("");
+  }
+
+  // Brief flash on an ally chip the moment they act. Call AFTER re-rendering
+  // allies (so the chip exists) — removes the class after the anim ends.
+  function flashAlly(key) {
+    renderAllies();
+    const chip = document.querySelector(`.ally-chip[data-ally="${key}"]`);
+    if (!chip) return;
+    chip.classList.add("firing");
+    setTimeout(() => {
+      const c = document.querySelector(`.ally-chip[data-ally="${key}"]`);
+      if (c) c.classList.remove("firing");
+    }, 650);
   }
 
   // ---------- lifecycle ----------
@@ -729,6 +744,7 @@ window.Combat = (function () {
         hitFlash();
         updateEnemyHp();
         state.mayaCd = lovedMaya() ? 2 : 3;
+        flashAlly("maya");
         if (state.enemy.hp <= 0) {
           log(`${state.enemy.name} falls.`, "crit");
           Sound.play("victory");
@@ -751,6 +767,7 @@ window.Combat = (function () {
         floatDamage(heal, "heal");
         refreshHud();
         state.renCd = cd;
+        flashAlly("ren");
       } else if (state.renCd <= 0) {
         state.renCd = 1;
       }
@@ -770,6 +787,7 @@ window.Combat = (function () {
         hitFlash();
         updateEnemyHp();
         state.vegaCd = 2;
+        flashAlly("vega");
         if (state.enemy.hp <= 0) {
           log(`${state.enemy.name} falls.`, "crit");
           Sound.play("victory");
