@@ -62,13 +62,13 @@ window.Story = {
   cho_loot: {
     sceneClass: "indoor",
     chapter: "Day 1 — Apartment 3A",
-    text: "She's still. Truly still this time.\n\nIn the bottom dresser drawer, wrapped in an old cloth: her late husband's service pistol. A small box beside it — three rounds.\n\nYou're not a shooter. But you're not empty-handed anymore.",
+    text: "She's still. Truly still this time.\n\nIn the bottom dresser drawer, wrapped in an old service cloth: a well-kept .38 Special revolver. Her husband's name — HAN CHO — etched into the backstrap. A small box of six rounds beside it.\n\nYou're not a shooter. But you're not empty-handed anymore.",
     choices: [
       { label: "Take the pistol. Head for the stairs.",
         effect: s => {
-          Game.giveWeapon({ name: "Service Pistol", bonus: 1, slot: "ranged" });
-          s.ammo = 3;
-          Game.toast("🔫 Service Pistol · 3 rounds");
+          Game.giveWeapon({ name: "Cho's .38", bonus: 1, slot: "ranged" });
+          s.ammo = 6;
+          Game.toast("🔫 Cho's .38 · 6 rounds");
         },
         next: "stairwell_first" },
     ]
