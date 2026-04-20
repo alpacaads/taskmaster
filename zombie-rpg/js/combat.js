@@ -367,13 +367,19 @@ window.Combat = (function () {
       s.stam -= 1;
       const base = rand(1, 3);
       const weaponBonus = s.bestMelee ? s.bestMelee.bonus : 0;
-      const crit = Math.random() < (0.12 + noraCritBump());
+      // Brace-dodge on the previous turn sets up a counter: double crit
+      // chance, consumed by this swing.
+      const counter = !!state.counterReady;
+      state.counterReady = false;
+      const critChance = (0.12 + noraCritBump()) * (counter ? 2 : 1);
+      const crit = Math.random() < critChance;
       const dmg = base + weaponBonus + noraBonus();
       const total = crit ? dmg + 2 : dmg;
       state.enemy.hp -= total;
       const weaponName = s.bestMelee ? s.bestMelee.name.toLowerCase() : "crowbar";
+      const prefix = counter && crit ? "Reading the lunge — " : "";
       log(crit
-        ? `You drive the ${weaponName} through its skull. CRITICAL ${total}.`
+        ? `${prefix}You drive the ${weaponName} through its skull. CRITICAL ${total}.`
         : `You swing — ${total} damage.`,
         crit ? "crit" : "hero");
       Sound.play(crit ? "crit" : "melee");
@@ -382,6 +388,7 @@ window.Combat = (function () {
       spawnMark(crit ? "slashCrit" : "slash");
     }
     else if (action === "shoot") {
+      state.counterReady = false;
       s.ammo -= 1;
       Sound.play("gunshot");
       gunFlash();
@@ -402,6 +409,7 @@ window.Combat = (function () {
       }
     }
     else if (action === "brace") {
+      state.counterReady = false;
       s.stam -= 1;
       state.bracing = true;
       log("You plant your feet.", "info");
@@ -628,8 +636,10 @@ window.Combat = (function () {
     const hitChance = Math.max(0.35, baseHit - mayaDodge() - braceDodge);
     const hit = Math.random() < hitChance;
     if (!hit) {
+      // Brace-dodge sets up a counter: your next melee has double crit.
+      if (state.bracing) state.counterReady = true;
       const line = state.bracing
-        ? `You plant your feet — the ${e.name} skims off your guard.`
+        ? `You plant your feet — the ${e.name} skims off your guard. Counter ready.`
         : mayaPresent() && Math.random() < 0.5
           ? `Maya's shout — you slip the ${e.name}'s lunge.`
           : `${e.name} lunges — you twist away.`;
