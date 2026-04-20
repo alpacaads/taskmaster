@@ -392,11 +392,17 @@ window.Story = {
     speaker: "Captain Vega",
     text: "Coffee that tastes like dirt. Sun coming up through the pines.\n\n\"You earned a day before we put you to work,\" Vega says. \"Pick a hand to lend. Or don't. Free country — what's left of it.\"",
     choices: [
-      { label: "Help Ren in the medbay", tag: "BOND", tagClass: "warn", next: "chore_medbay" },
+      { label: "Help Ren in the medbay", tag: "BOND", tagClass: "warn",
+        effect: s => { s.flags.choreChosen = "medbay"; },
+        next: "chore_medbay" },
       { label: "Walk the perimeter with Maya",
         require: s => s.flags.maya,
-        tag: "BOND", tagClass: "warn", next: "chore_perimeter" },
-      { label: "Cook for the camp", next: "chore_kitchen" },
+        tag: "BOND", tagClass: "warn",
+        effect: s => { s.flags.choreChosen = "perimeter"; },
+        next: "chore_perimeter" },
+      { label: "Cook for the camp",
+        effect: s => { s.flags.choreChosen = "kitchen"; },
+        next: "chore_kitchen" },
     ]
   },
 
@@ -449,7 +455,21 @@ window.Story = {
     sceneClass: "indoor",
     chapter: "Day 4 — Briefing",
     speaker: "Captain Vega",
-    text: "\"Old Mercy Hospital. Three klicks south. Pharmacy on the second floor — antibiotics, painkillers, anything that hasn't walked off.\"\n\nShe spreads a hand-drawn map. \"In and out. Don't be a hero. Pick someone to take.\"",
+    text: function(s) {
+      // Short tag scene acknowledging who noticed you weren't around
+      // this morning, based on the chore you picked.
+      let tag = "";
+      if (s.flags.choreChosen === "medbay" && s.flags.maya) {
+        tag = "Maya is in the corner of the tent, breaking down a rifle. She doesn't look up when you walk in. The treeline could've used a second pair of eyes today.\n\n";
+      } else if (s.flags.choreChosen === "perimeter") {
+        tag = "Ren's at the briefing too, clipboard balanced on her knee. \"Med inventory's thinner than it should be,\" she murmurs as you sit down. It's not a complaint. It lands like one anyway.\n\n";
+      } else if (s.flags.choreChosen === "kitchen") {
+        tag = "Ren sets a mug of something hot in front of you without meeting your eye. " +
+          (s.flags.maya ? "Maya's across the table, back half-turned. The map is the only thing the three of you are willing to look at.\n\n"
+                        : "Vega's the only other person here, and she's all business.\n\n");
+      }
+      return tag + "\"Old Mercy Hospital. Three klicks south. Pharmacy on the second floor — antibiotics, painkillers, anything that hasn't walked off.\"\n\nShe spreads a hand-drawn map. \"In and out. Don't be a hero. Pick someone to take.\"";
+    },
     choices: [
       { label: "Take Maya — she knows how to fight",
         require: s => s.flags.maya,
