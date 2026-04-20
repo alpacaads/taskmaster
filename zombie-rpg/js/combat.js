@@ -140,6 +140,9 @@ window.Combat = (function () {
   function noraPresent() {
     const s = Game.state;
     if (s.companion2 !== "Nora") return false;
+    // Horde defense happens at camp — she's hidden in the medbay but
+    // still spotting for you, so the bonus applies.
+    if (s.flags && s.flags.hordeDefense) return true;
     if (s.flags && "missionPartner" in s.flags) {
       return s.flags.bringNora === true;
     }
@@ -205,8 +208,12 @@ window.Combat = (function () {
   // now" flag — it overrides the long-lived companion relationship
   // (e.g. Maya is still your companion, but you left her at camp and
   // took Ren on the hospital run).
+  //
+  // hordeDefense overrides both: the camp is on the wall, so every
+  // surviving ally is in this fight regardless of mission bookkeeping.
   function mayaPresent() {
     const s = Game.state;
+    if (s.flags && s.flags.hordeDefense) return !!s.flags.maya;
     if (s.flags && "missionPartner" in s.flags) {
       return s.flags.missionPartner === "maya";
     }
@@ -214,15 +221,17 @@ window.Combat = (function () {
   }
   function renPresent() {
     const s = Game.state;
+    if (s.flags && s.flags.hordeDefense) return true; // camp medic, always here
     if (s.flags && "missionPartner" in s.flags) {
       return s.flags.missionPartner === "ren";
     }
     return false;
   }
-  // Vega only rides along for the traitor confrontation on the
-  // "bring the cavalry" path. She's not a persistent companion.
+  // Vega rides along for the traitor confrontation on the "bring the
+  // cavalry" path, and stands on the wall for the horde defense.
   function vegaPresent() {
     const s = Game.state;
+    if (s.flags && s.flags.hordeDefense) return true;
     if (!s.flags || !s.flags.toldVega) return false;
     return !!state && state.enemyId === "traitor";
   }
@@ -288,10 +297,14 @@ window.Combat = (function () {
     if (!def) { console.error("Unknown enemy", config.enemy); return; }
 
     // Risky encounters (story choices tagged RISKY or explicit risk:true)
-    // scale the enemy up — +1 to both HP and each damage bound.
+    // scale the enemy up — +1 to both HP and each damage bound. Story
+    // nodes can also override hp/atk outright for bespoke fights (e.g.
+    // the camp-wide horde defense where the whole party is on the wall).
     const risky = !!config.risky;
-    const hp = def.hp + (risky ? Math.max(1, Math.round(def.hp * 0.25)) : 0);
-    const atk = risky ? [def.atk[0] + 1, def.atk[1] + 1] : def.atk;
+    const baseHp = def.hp + (risky ? Math.max(1, Math.round(def.hp * 0.25)) : 0);
+    const baseAtk = risky ? [def.atk[0] + 1, def.atk[1] + 1] : def.atk;
+    const hp = config.hp !== undefined ? config.hp : baseHp;
+    const atk = config.atk || baseAtk;
 
     state = {
       enemy: { ...def, hp, maxHp: hp, atk },

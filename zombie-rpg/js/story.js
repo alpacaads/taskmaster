@@ -438,15 +438,30 @@ window.Story = {
       if (s.flags.exposedTraitor) intro += "Thanks to last night's warning the camp is ready. The south fence is reinforced, the armory is open, every rifle is loaded.\n\n";
       else if (s.flags.killedTraitor) intro += "No one knows what you did at the south fence. The camp is calm — until it isn't.\n\n";
       else intro += "Something's wrong with the south fence — whatever it is, there's no time to fix it now.\n\n";
+      const rally = [];
+      if (s.flags.maya) rally.push("Maya racks her rifle");
+      rally.push("Ren throws a med kit over her shoulder");
+      rally.push("Vega's already on the wall");
+      if (s.flags.savedNora) rally.push("Nora ducks into the medbay sandbags");
+      intro += rally.join(", ") + ".\n\n";
       return intro + "\"We hold, or we run. Choose.\"";
     },
     choices: [
       { label: "Hold the wall.", tag: "COMBAT", tagClass: "danger",
+        effect: s => {
+          // Every saved ally is on the wall for this one.
+          s.flags.hordeDefense = true;
+        },
         combat: function (s) {
+          // The party is much larger (Maya + Ren + Vega + Nora's spotting),
+          // so scale the horde up accordingly — harder fight, more of us.
+          // Camp isn't ready when you didn't warn them about the breach.
+          const ready = !!s.flags.exposedTraitor;
           return {
             enemy: "horde",
-            // Camp isn't ready when you didn't warn them about the breach.
-            risky: !s.flags.exposedTraitor,
+            risky: !ready,
+            hp: ready ? 38 : 46,
+            atk: ready ? [4, 7] : [5, 8],
             onWin: "post_horde_win",
             onLose: "post_horde_lose",
           };
