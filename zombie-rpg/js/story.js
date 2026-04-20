@@ -695,7 +695,16 @@ window.Story = {
     scene: "greenbelt_camp",
     sceneClass: "forest",
     chapter: "Day 4 — Camp, dusk",
-    text: "You hand the meds to Ren — who beams, just for a second — and then notice something at the south fence: a chain link, cleanly cut. Not zombies. Hands.",
+    text: function(s) {
+      const p = s.flags.missionPartner;
+      if (p === "ren") {
+        return "Ren drops the med bag on the aid-tent table and is already sorting bottles by label before she's even shrugged her jacket off. She catches your eye, exhales once — that was close — then goes back to work.\n\nOn your way out of the tent you notice something at the south fence: a chain link, cleanly cut. Not zombies. Hands.";
+      }
+      if (p === "maya") {
+        return "Maya lets you carry the med bag the last hundred yards. You hand it to Ren at the aid tent — who beams, just for a second — and Maya peels off to dump her rifle on her cot.\n\nOn your way back you notice something at the south fence: a chain link, cleanly cut. Not zombies. Hands.";
+      }
+      return "You hand the meds to Ren — who beams, just for a second — and then notice something at the south fence: a chain link, cleanly cut. Not zombies. Hands.";
+    },
     choices: [
       { label: "Investigate the cut fence", tag: "CLUE", tagClass: "warn",
         effect: s => {
