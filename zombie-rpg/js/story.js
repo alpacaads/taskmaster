@@ -60,7 +60,6 @@ window.Story = {
   },
 
   cho_loot: {
-    scene: "neighbour_apt",
     sceneClass: "indoor",
     chapter: "Day 1 — Apartment 3A",
     text: "She's still. Truly still this time.\n\nIn the bottom dresser drawer, wrapped in an old cloth: her late husband's service pistol. A small box beside it — three rounds.\n\nYou're not a shooter. But you're not empty-handed anymore.",
@@ -170,7 +169,6 @@ window.Story = {
   },
 
   grocery_front_win: {
-    scene: "grocery_front",
     sceneClass: "indoor",
     chapter: "Day 1 — Grocery",
     text: "The second walker slumps against a tipped cart. One of them was wearing a police load-bearing vest — scarred up but the plates are intact. You cut it free and shrug into it.\n\nIt won't save your life twice. Once is more than nothing.",

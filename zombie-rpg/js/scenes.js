@@ -738,7 +738,7 @@ window.Scenes = (function () {
   // fresh image URLs automatically, so a commit on one device (PC)
   // shows up on another (phone) as soon as Pages rebuilds, without
   // relying on localStorage which is per-device.
-  const BUILD = "98";
+  const BUILD = "99";
 
   // Smart cache-bust: per-scene timestamp from the admin takes priority
   // (committer sees their upload immediately), then a device-wide global
@@ -774,6 +774,8 @@ window.Scenes = (function () {
     alone_street:        "empty post-apocalyptic city street at night, abandoned cars choking the road, a single shambling zombie silhouette between the wrecks, dim sodium streetlamp, fog, moonlight, oppressive stillness",
     street_plan:         "two survivors crouched behind an abandoned car at night, woman in army jacket pointing toward a corner store across a rubble-strewn street, dim flashlight, tense planning moment, gritty",
     grocery_front:       "dark abandoned supermarket entrance at night, jammed automatic glass doors, two zombies lurching out past tipped shopping carts, broken neon sign, flickering interior fluorescent light, blood smears on glass",
+    grocery_front_win:   "interior of a dark abandoned supermarket at night, two zombie bodies slumped against tipped shopping carts, one of them wearing a scarred police load-bearing vest with exposed trauma plates, a lone survivor crouched beside it cutting the vest free with a knife, flickering fluorescent light, shallow blood on tile, cinematic aftermath moment, photorealistic, gritty",
+    cho_loot:            "dim cluttered elderly woman's apartment interior at night, an open bottom dresser drawer with an old cloth pulled aside to reveal a worn service pistol and a small cardboard box of three rounds, soft warm lamp light from a nightstand, framed family photos in the background, quiet melancholy tone, intimate still-life moment, cinematic",
     grocery_exterior:    "back loading dock of an abandoned supermarket at night, rusted back door hanging off one hinge, dumpsters and scattered crates, dim sodium light from a distant streetlamp, fog, oppressive silence, atmospheric horror",
     grocery_inside:      "dark abandoned supermarket interior, ransacked shelves with scattered cans and broken bottles, lone survivor with a flashlight in the aisle, beam catching dust, dripping ceiling, eerie silence, deep shadows",
     grocery_quick_exit:  "rear loading dock of an abandoned supermarket at night, fast zombie runner emerging from the alley with bared teeth, scattered debris, single flickering security light overhead, motion, danger",
