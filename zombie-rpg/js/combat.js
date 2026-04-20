@@ -198,6 +198,13 @@ window.Combat = (function () {
     const s = Game.state;
     return s.flags && s.flags.missionPartner === "ren";
   }
+  // Vega only rides along for the traitor confrontation on the
+  // "bring the cavalry" path. She's not a persistent companion.
+  function vegaPresent() {
+    const s = Game.state;
+    if (!s.flags || !s.flags.toldVega) return false;
+    return !!state && state.enemyId === "traitor";
+  }
   function renderAllies() {
     const wrap = document.getElementById("combat-allies");
     if (!wrap) return;
@@ -212,6 +219,12 @@ window.Combat = (function () {
       const ready = state.renCd <= 0;
       chips.push(`<span class="ally-chip ${ready ? "ready" : ""}">` +
         `REN ` + (ready ? "— TRIAGE" : `— ${state.renCd}`) +
+        `</span>`);
+    }
+    if (vegaPresent()) {
+      const ready = state.vegaCd <= 0;
+      chips.push(`<span class="ally-chip ${ready ? "ready" : ""}">` +
+        `VEGA ` + (ready ? "— RIFLE READY" : `— ${state.vegaCd}`) +
         `</span>`);
     }
     wrap.innerHTML = chips.join("");
@@ -239,6 +252,8 @@ window.Combat = (function () {
       // Romance lets the companion act one step sooner.
       mayaCd: lovedMaya() ? 0 : 1,
       renCd:  lovedRen()  ? 1 : 2,
+      // Vega opens the scene with a rifle ready; she can fire turn one.
+      vegaCd: 0,
       startMs: Date.now(),
     };
 
@@ -738,6 +753,30 @@ window.Combat = (function () {
         state.renCd = cd;
       } else if (state.renCd <= 0) {
         state.renCd = 1;
+      }
+    }
+
+    if (vegaPresent()) {
+      state.vegaCd = (state.vegaCd || 0) - 1;
+      if (state.vegaCd <= 0) {
+        // Captain's rifle hits hard but the angle is tight — 3-4 dmg.
+        const dmg = rand(3, 4);
+        state.enemy.hp -= dmg;
+        log(`Vega's rifle cracks — ${dmg} damage.`, "ally");
+        Sound.play("gunshot");
+        gunFlash();
+        spawnMark("hit");
+        floatDamage(dmg);
+        hitFlash();
+        updateEnemyHp();
+        state.vegaCd = 2;
+        if (state.enemy.hp <= 0) {
+          log(`${state.enemy.name} falls.`, "crit");
+          Sound.play("victory");
+          applyLoot(state.enemyId);
+          setTimeout(() => end("win"), 950);
+          return;
+        }
       }
     }
   }
