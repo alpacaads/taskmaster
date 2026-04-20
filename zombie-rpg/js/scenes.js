@@ -738,7 +738,7 @@ window.Scenes = (function () {
   // fresh image URLs automatically, so a commit on one device (PC)
   // shows up on another (phone) as soon as Pages rebuilds, without
   // relying on localStorage which is per-device.
-  const BUILD = "101";
+  const BUILD = "102";
 
   // Smart cache-bust: per-scene timestamp from the admin takes priority
   // (committer sees their upload immediately), then a device-wide global
@@ -795,9 +795,15 @@ window.Scenes = (function () {
     chore_kitchen:       "communal outdoor camp kitchen at sunrise, survivor peeling potatoes over a battered iron pot on a campfire, other survivors chatting around tents, warm sunrise light, slice of life moment in the apocalypse",
     chore_done:          "interior of a tactical command tent at dusk, female captain in fatigues spreading a hand-drawn map across a folding table, lit by a hurricane lamp, two survivors leaning in to study a marked hospital, mission briefing, intense focus",
     mission_journey:     "two survivors walking down a desolate countryside road at dusk between abandoned cars, dramatic warm sunset light through trees, quiet conversation, cinematic wide shot, hopeful but tense",
+    mission_journey_maya: "desolate countryside service road at dusk between rusting abandoned cars, Maya — a tough red-haired woman in a faded olive army jacket — walks point three steps ahead with a rifle at low ready, the survivor follows behind, warm dramatic sunset light filtering through pines, tense protective atmosphere, cinematic wide shot",
+    mission_journey_ren:  "desolate countryside service road at dusk between rusting abandoned cars, Ren — a gentle dark-haired woman in a grey medic top under a worn olive jacket with a medkit slung across her chest — walks beside the survivor, her head turned to him mid-sentence as if softly humming, warm dramatic sunset light filtering through pines, quiet intimate tone, cinematic wide shot",
+    mission_journey_solo: "lone survivor walking down a desolate countryside service road at dusk between rusting abandoned cars, hand near a holstered pistol, every shadow a threat, warm dramatic sunset light filtering through pines, oppressive silence, isolated and vulnerable, cinematic wide shot",
     hospital_arrive:     "ruined hospital exterior at dusk, large red faded medical cross above the entrance, broken windows, wreckage in the parking lot, smoke in the air, two cautious survivors approaching with weapons drawn, oppressive atmosphere",
     pharmacy_combat:     "dark abandoned hospital pharmacy at night, scattered pill bottles on the floor, two zombies lurching out of the shadows between toppled shelves, single flashlight beam, blood smears, intense horror combat moment",
     hospital_lobby:      "dim abandoned hospital lobby at night, two survivors sitting beside each other on a row of cracked plastic waiting chairs, exhausted, faint moonlight through broken windows, vending machine glow, tender quiet moment after violence",
+    hospital_lobby_maya: "dim abandoned hospital lobby at night, the survivor and Maya — a red-haired woman in an army jacket — sit side by side on a row of cracked plastic waiting chairs, not touching but close, her rifle across her knees, her eyes on him, dim humming streetlight outside, broken windows, vending machine flickering, tense electric quiet moment after violence, cinematic",
+    hospital_lobby_ren:  "dim abandoned hospital lobby at night, the survivor and Ren — a dark-haired young medic in a grey scrub top and worn olive jacket — sit close on a row of cracked plastic waiting chairs, she's gently cleaning a scratch on his forearm with a gauze pad, soft warm phone-flashlight glow between them, broken windows, vending machine flickering, tender caring quiet moment after violence, cinematic",
+    hospital_lobby_solo: "dim abandoned hospital lobby at night, a lone survivor slumped alone across a row of cracked plastic waiting chairs, med bag beside him, head tilted back against the wall catching his breath, faint moonlight through broken windows, vending machine flickering, oppressive silence and isolation after violence, cinematic",
     mission_return:      "fortified survivor camp at dusk, returning survivors handing a medical bag to camp medic, joyful relief, in the background a freshly cut chainlink fence with bolt cutters lying in the grass, ominous detail, warm fading light",
     investigate_traitor: "moonlit gap in a chainlink fence at the edge of a survivor camp, fresh bolt cutters lying in the grass, fresh boot prints in mud leading inward, lone survivor crouched investigating with a flashlight, tense detective moment",
     confront_traitor:    "tense night confrontation at a perimeter fence, lone survivor confronting a panicked man with a fresh black bite mark on his forearm, sleeve pushed up, distant glow of a survivor camp behind them, moonlight, moral horror",

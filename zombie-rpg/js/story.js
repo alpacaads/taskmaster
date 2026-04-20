@@ -590,7 +590,12 @@ window.Story = {
   },
 
   mission_journey: {
-    scene: "highway_dawn",
+    scene: function(s) {
+      const p = s.flags && s.flags.missionPartner;
+      if (p === "maya") return "mission_journey_maya";
+      if (p === "ren")  return "mission_journey_ren";
+      return "mission_journey_solo";
+    },
     sceneClass: "forest",
     chapter: "Day 4 — South Road",
     text: function(s) {
@@ -653,7 +658,12 @@ window.Story = {
   },
 
   hospital_lobby: {
-    scene: "hospital_lobby",
+    scene: function(s) {
+      const p = s.flags && s.flags.missionPartner;
+      if (p === "maya") return "hospital_lobby_maya";
+      if (p === "ren")  return "hospital_lobby_ren";
+      return "hospital_lobby_solo";
+    },
     sceneClass: "indoor",
     chapter: "Day 4 — Lobby",
     speaker: function(s) {

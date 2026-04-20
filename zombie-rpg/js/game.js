@@ -460,15 +460,18 @@ window.Game = (function () {
   function resolveScene(nodeId, node) {
     const P = (window.Scenes && Scenes.PROMPTS) || {};
     const S = (window.Scenes && Scenes.SCENES)  || {};
+    // node.scene may be a function that branches on state (e.g. per
+    // mission partner). Call it once and treat the result as the static
+    // scene id for the rest of the lookup.
+    const declared = typeof node.scene === "function" ? node.scene(state) : node.scene;
     // Priority, most specific first:
-    // 1. The node ID itself has a baked image -> use it (this is the
-    //    narrative-specific choice and should win over legacy node.scene
-    //    values left over from the SVG-composition era).
+    // 1. The dynamic / declared scene wins when baked — per-partner art
+    //    needs to beat the generic node id.
+    if (declared && P[declared]) return declared;
+    // 2. The node ID itself has a baked image.
     if (P[nodeId]) return nodeId;
-    // 2. node.scene is set and has a baked image -> use it.
-    if (node.scene && P[node.scene]) return node.scene;
     // 3. Legacy SVG scene name -> remap to the closest baked image.
-    if (node.scene && STORY_SCENE_REMAP[node.scene]) return STORY_SCENE_REMAP[node.scene];
+    if (declared && STORY_SCENE_REMAP[declared]) return STORY_SCENE_REMAP[declared];
     // 4. nodeId aliased to a known scene (legacy aliases table).
     if (SCENE_ALIASES[nodeId] && P[SCENE_ALIASES[nodeId]]) return SCENE_ALIASES[nodeId];
     // 5. Raw SCENES primitives, for completeness.
