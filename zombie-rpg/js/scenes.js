@@ -738,7 +738,7 @@ window.Scenes = (function () {
   // fresh image URLs automatically, so a commit on one device (PC)
   // shows up on another (phone) as soon as Pages rebuilds, without
   // relying on localStorage which is per-device.
-  const BUILD = "93";
+  const BUILD = "94";
 
   // Smart cache-bust: per-scene timestamp from the admin takes priority
   // (committer sees their upload immediately), then a device-wide global
@@ -817,10 +817,13 @@ window.Scenes = (function () {
     ending_final_lovers_road: "two lovers walking hand in hand at the front of a small group of survivors on a misty highway at dawn, hopeful new beginning together, cinematic wide shot",
     death:               "dark blood-red haze, faint silhouette of a fallen body on the ground, faint cross marker in the distance, deep grief, oppressive horror finality, painterly cinematic",
 
+    nora_asks:           "a small ten-year-old girl with messy copper-brown hair and a ragged little backpack, standing at the open wooden gate of a fortified survivor camp at sunrise, looking up pleadingly at a lone survivor tightening rucksack straps, pine forest and watchtower in the background, warm dawn light, tender quiet moment before a dangerous mission, cinematic",
+
     // ---- Party portraits (round combat-HUD avatars, transparent PNG) ----
     portrait_maya: "tight chest-up portrait of Maya, tough late-20s woman with messy shoulder-length dark red hair, green eyes, faint scar through one eyebrow, wearing a faded olive army jacket over a grey undershirt, serious alert expression, jaw set, soft warm rim light on hair, transparent background, isolated portrait, no scenery, photorealistic, cinematic, in the style of The Last of Us, gritty, highly detailed, no text, no logo, no watermark",
     portrait_ren: "tight chest-up portrait of Ren, gentle mid-20s woman with messy dark brown hair tucked behind one ear, warm brown eyes, freckles, small silver stethoscope around her neck, wearing a grey medic's scrub top under a worn olive jacket, calm tired kind expression, faint smile, warm soft rim light, transparent background, isolated portrait, no scenery, photorealistic, cinematic, in the style of The Last of Us, painterly, highly detailed, no text, no logo, no watermark",
     portrait_vega: "tight chest-up portrait of Captain Vega, hardened mid-30s woman with black hair pulled back tight, sharp grey eyes, thin scar along her cheekbone, wearing tactical fatigues with a captain's patch on the shoulder and a rifle sling visible across her chest, stern commanding expression, cold blue rim light, transparent background, isolated portrait, no scenery, photorealistic, cinematic, dramatic low-key lighting, in the style of The Last of Us, gritty, highly detailed, no text, no logo, no watermark",
+    portrait_nora: "tight chest-up portrait of Nora, a wary ten-year-old girl with messy copper-brown hair in a loose ponytail, big hazel eyes, dirt-smudged cheeks, wearing an oversized grey hoodie under a small olive jacket, quiet observant expression, faint soft rim light, transparent background, isolated portrait, no scenery, photorealistic, cinematic, in the style of The Last of Us, painterly, highly detailed, no text, no logo, no watermark",
 
     // ---- Combat backdrops (per enemy) ----
     // These aren't story scenes; they are dedicated portraits that

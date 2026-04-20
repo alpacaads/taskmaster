@@ -275,6 +275,12 @@ window.Combat = (function () {
       const ready = state.vegaCd <= 0;
       chips.push(build("vega", "🫡", "VEGA", ready, ready ? "RIFLE READY" : `CD ${state.vegaCd}`));
     }
+    if (noraPresent()) {
+      // Nora doesn't fight — she's on watch. The chip is a persistent
+      // 'ready' so her portrait keeps the warm pulse while her passive
+      // +1 damage / +5% crit bonuses are active.
+      chips.push(build("nora", "👧", "NORA", true, "ON WATCH"));
+    }
     wrap.innerHTML = chips.join("");
   }
 

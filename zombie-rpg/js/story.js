@@ -408,7 +408,6 @@ window.Story = {
   },
 
   nora_asks: {
-    scene: "camp_morning",
     sceneClass: "forest",
     chapter: "Day 4 — Camp gate",
     speaker: "Nora",
