@@ -738,7 +738,7 @@ window.Scenes = (function () {
   // fresh image URLs automatically, so a commit on one device (PC)
   // shows up on another (phone) as soon as Pages rebuilds, without
   // relying on localStorage which is per-device.
-  const BUILD = "77";
+  const BUILD = "78";
 
   // Smart cache-bust: per-scene timestamp from the admin takes priority
   // (committer sees their upload immediately), then a device-wide global
@@ -759,6 +759,7 @@ window.Scenes = (function () {
     return IMG_BASE + sceneId + ".jpg?v=" + v;
   }
   const PROMPTS = {
+    title:               "post-apocalyptic ruined city skyline at night under a heavy moon, crumbling skyscrapers silhouetted, distant fires, smoke rising, abandoned streets, cinematic dread, photorealistic, The Last of Us style, 3:2 widescreen",
     intro:               "ruined city skyline at night, military helicopter flying away into the distance, abandoned skyscrapers, smoke rising, broken cars on the street, lone hooded survivor watching from a rooftop, faint moonlight",
     apt_hallway:         "dark narrow apartment building hallway at night, single flickering ceiling bulb, dried blood streak on the floor leading away, peeling wallpaper, ajar door with chain dangling, claustrophobic horror atmosphere",
     neighbour_apt:       "cluttered small apartment interior at night, elderly woman slumped in an armchair facing away, pantry shelves with canned food, medical bag on a counter, dim warm lamp light, suspended dust motes",
