@@ -352,6 +352,15 @@ window.Combat = (function () {
 
   function rand(min, max) { return Math.floor(Math.random() * (max - min + 1)) + min; }
 
+  // 'the Crowbar' but 'Her Husband's Service Pistol' (no article). Skips
+  // the article when the weapon name already starts with a possessive
+  // or an article. Keeps casing so proper nouns stay capitalised.
+  function weaponPhrase(name) {
+    return /^(the |a |an |mrs?\.|ms\.|her |his |their |your )/i.test(name)
+      ? name
+      : "the " + name;
+  }
+
   // ---------- player turn ----------
   function act(action) {
     if (!state) return;
@@ -376,10 +385,10 @@ window.Combat = (function () {
       const dmg = base + weaponBonus + noraBonus();
       const total = crit ? dmg + 2 : dmg;
       state.enemy.hp -= total;
-      const weaponName = s.bestMelee ? s.bestMelee.name.toLowerCase() : "crowbar";
+      const weaponPhr = weaponPhrase(s.bestMelee ? s.bestMelee.name : "Crowbar");
       const prefix = counter && crit ? "Reading the lunge — " : "";
       log(crit
-        ? `${prefix}You drive the ${weaponName} through its skull. CRITICAL ${total}.`
+        ? `${prefix}You drive ${weaponPhr} through its skull. CRITICAL ${total}.`
         : `You swing — ${total} damage.`,
         crit ? "crit" : "hero");
       Sound.play(crit ? "crit" : "melee");
@@ -401,8 +410,8 @@ window.Combat = (function () {
         const weaponBonus = s.bestRanged ? s.bestRanged.bonus : 0;
         const dmg = base + weaponBonus + noraBonus();
         state.enemy.hp -= dmg;
-        const weaponName = s.bestRanged ? s.bestRanged.name : "handgun";
-        log(`You fire the ${weaponName.toLowerCase()} — ${dmg} damage.`, "hero");
+        const weaponPhr = weaponPhrase(s.bestRanged ? s.bestRanged.name : "Handgun");
+        log(`You fire ${weaponPhr} — ${dmg} damage.`, "hero");
         floatDamage(dmg);
         hitFlash();
         spawnMark("hit");
