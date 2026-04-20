@@ -460,25 +460,28 @@ window.Game = (function () {
   function resolveScene(nodeId, node) {
     const P = (window.Scenes && Scenes.PROMPTS) || {};
     const S = (window.Scenes && Scenes.SCENES)  || {};
-    // node.scene may be a function that branches on state (e.g. per
-    // mission partner). Call it once and treat the result as the static
-    // scene id for the rest of the lookup.
-    const declared = typeof node.scene === "function" ? node.scene(state) : node.scene;
+    // node.scene as a function branches on state (per-partner variants).
+    // node.scene as a string is a legacy static override.
+    const dynamicScene = typeof node.scene === "function" ? node.scene(state) : null;
+    const staticScene  = typeof node.scene === "string"   ? node.scene : null;
     // Priority, most specific first:
-    // 1. The dynamic / declared scene wins when baked — per-partner art
-    //    needs to beat the generic node id.
-    if (declared && P[declared]) return declared;
-    // 2. The node ID itself has a baked image.
+    // 1. Dynamic function-scene wins (e.g. mission_journey_maya).
+    if (dynamicScene && P[dynamicScene]) return dynamicScene;
+    // 2. The node ID itself has a baked image — the narrative-specific
+    //    choice. Beats static legacy overrides.
     if (P[nodeId]) return nodeId;
-    // 3. Legacy SVG scene name -> remap to the closest baked image.
-    if (declared && STORY_SCENE_REMAP[declared]) return STORY_SCENE_REMAP[declared];
+    // 3. Static scene override has a baked image.
+    if (staticScene && P[staticScene]) return staticScene;
+    // 4. Legacy SVG scene name -> remap to the closest baked image.
+    if (staticScene && STORY_SCENE_REMAP[staticScene]) return STORY_SCENE_REMAP[staticScene];
     // 4. nodeId aliased to a known scene (legacy aliases table).
     if (SCENE_ALIASES[nodeId] && P[SCENE_ALIASES[nodeId]]) return SCENE_ALIASES[nodeId];
     // 5. Raw SCENES primitives, for completeness.
-    if (node.scene && S[node.scene]) return node.scene;
+    if (dynamicScene && S[dynamicScene]) return dynamicScene;
+    if (staticScene && S[staticScene]) return staticScene;
     if (S[nodeId]) return nodeId;
     if (SCENE_ALIASES[nodeId]) return SCENE_ALIASES[nodeId];
-    return node.scene || nodeId;
+    return dynamicScene || staticScene || nodeId;
   }
 
   // Map a grapheme (single visible glyph) to an animation class.
