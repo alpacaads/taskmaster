@@ -57,20 +57,9 @@ html, body {
 #title-screen {
   background: #050507;
   color: var(--text);
-  justify-content: space-between;
-  padding: 24px 20px 28px;
-  position: relative;
+  padding: 0;
   overflow: hidden;
-}
-.title-bg {
-  position: relative;
-  flex: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 40%;
-  overflow: hidden;
-  border-radius: 12px;
+  display: block;
 }
 .title-image {
   position: absolute;
@@ -78,30 +67,50 @@ html, body {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  filter: grayscale(0.25) contrast(1.05) brightness(0.75);
+  object-position: center;
+  background: #050507;
+  filter: grayscale(0.2) contrast(1.05) brightness(0.8);
+  z-index: 0;
 }
 .title-vignette {
   position: absolute;
   inset: 0;
   pointer-events: none;
+  z-index: 1;
   background:
-    radial-gradient(ellipse at 50% 40%, transparent 0%, rgba(0,0,0,0.55) 80%),
-    linear-gradient(180deg, rgba(0,0,0,0.35) 0%, rgba(0,0,0,0) 30%, rgba(0,0,0,0.6) 100%);
+    radial-gradient(ellipse at 50% 35%, transparent 0%, rgba(0,0,0,0.35) 70%),
+    linear-gradient(180deg, rgba(0,0,0,0.35) 0%, rgba(0,0,0,0) 28%, rgba(0,0,0,0.85) 72%, rgba(0,0,0,0.95) 100%);
 }
 /* Fallback if images/title.jpg isn't there yet — falls back to a
    moody radial so the screen still reads. */
-.title-bg.no-image {
+#title-screen.no-image {
   background: radial-gradient(ellipse at top, #1a2414 0%, #0b0f0a 70%);
 }
-.title-bg.no-image .title-image { display: none; }
-.title-bg.no-image::after {
+#title-screen.no-image .title-image { display: none; }
+#title-screen.no-image::after {
   content: "🌕";
-  font-size: 80px;
+  position: absolute;
+  top: 14%;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 88px;
   filter: drop-shadow(0 0 22px rgba(220, 230, 180, 0.5));
   animation: moonPulse 6s ease-in-out infinite;
+  z-index: 1;
 }
 @keyframes moonPulse {
   50% { filter: drop-shadow(0 0 38px rgba(220, 230, 180, 0.8)); }
+}
+.title-content {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: 24px 20px calc(28px + env(safe-area-inset-bottom, 0px));
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  z-index: 2;
 }
 .title-text {
   text-align: center;
@@ -125,7 +134,6 @@ html, body {
   display: flex;
   flex-direction: column;
   gap: 10px;
-  margin-top: 18px;
 }
 
 /* Buttons */

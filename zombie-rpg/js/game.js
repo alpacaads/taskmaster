@@ -530,9 +530,26 @@ window.Game = (function () {
 
   // Load admin-uploaded image overrides (if any) before any scene renders.
   // User lands on the title screen first, so there's time for IDB to resolve.
+  // After overrides resolve, refresh the title image so admin uploads show
+  // up on the title screen too — the title is just another managed scene.
   document.addEventListener("DOMContentLoaded", () => {
-    if (window.Overrides) window.Overrides.loadAll();
+    refreshTitleImage();
+    if (window.Overrides) {
+      window.Overrides.loadAll().then(refreshTitleImage, refreshTitleImage);
+    }
   });
+
+  function refreshTitleImage() {
+    const img = document.getElementById("title-image");
+    const screen = document.getElementById("title-screen");
+    if (!img || !screen) return;
+    const override = (window.__OVERRIDES && window.__OVERRIDES.title) || null;
+    const url = override ||
+      (typeof window.sceneImageURL === "function" ? window.sceneImageURL("title") : "images/title.jpg");
+    img.onload = () => screen.classList.remove("no-image");
+    img.onerror = () => screen.classList.add("no-image");
+    img.src = url;
+  }
 
   // On load, sync the mute button icon with saved preference
   document.addEventListener("DOMContentLoaded", () => {
