@@ -456,17 +456,18 @@ window.Combat = (function () {
       s.stam -= 1;
       const base = rand(1, 3);
       const weaponBonus = s.bestMelee ? s.bestMelee.bonus : 0;
-      // Brace-dodge on the previous turn sets up a counter: double crit
-      // chance, consumed by this swing.
+      // Brace-dodge on the previous turn sets up a counter: guaranteed
+      // crit and a flat damage bonus, consumed by this swing.
       const counter = !!state.counterReady;
       state.counterReady = false;
-      const critChance = (0.12 + noraCritBump()) * (counter ? 2 : 1);
+      const critChance = counter ? 1 : (0.12 + noraCritBump());
       const crit = Math.random() < critChance;
-      const dmg = base + weaponBonus + noraBonus();
+      const counterBonus = counter ? 3 : 0;
+      const dmg = base + weaponBonus + noraBonus() + counterBonus;
       const total = crit ? dmg + 2 : dmg;
       state.enemy.hp -= total;
       const weaponPhr = weaponPhrase(s.bestMelee ? s.bestMelee.name : "Crowbar");
-      const prefix = counter && crit ? "Reading the lunge — " : "";
+      const prefix = counter ? "Reading the lunge — " : "";
       log(crit
         ? `${prefix}You drive ${weaponPhr} through its skull. CRITICAL ${total}.`
         : `You swing — ${total} damage.`,
@@ -714,18 +715,20 @@ window.Combat = (function () {
     const savage = Math.random() < 0.12;
     if (savage) dmg += 2;
 
-    if (state.bracing) dmg = Math.max(0, dmg - (savage ? 1 : 2));
+    // Brace absorbs more now: -3 normal, -2 on savage.
+    if (state.bracing) dmg = Math.max(0, dmg - (savage ? 2 : 3));
 
     // Misses are rare; you get hit. Maya teaches you to slip hits —
     // her dodge bonus is subtracted from the enemy's hit chance, with
     // a floor so the fight still matters. Brace also adds a flat
     // dodge bump for the turn you plant your feet.
     const baseHit = e.human ? 0.82 : 0.92;
-    const braceDodge = state.bracing ? 0.15 : 0;
-    const hitChance = Math.max(0.35, baseHit - mayaDodge() - braceDodge);
+    const braceDodge = state.bracing ? 0.25 : 0;
+    const hitChance = Math.max(0.3, baseHit - mayaDodge() - braceDodge);
     const hit = Math.random() < hitChance;
     if (!hit) {
-      // Brace-dodge sets up a counter: your next melee has double crit.
+      // Brace-dodge sets up a counter: your next melee is a guaranteed
+      // crit with a flat damage bonus.
       if (state.bracing) state.counterReady = true;
       const line = state.bracing
         ? `You plant your feet — the ${e.name} skims off your guard. Counter ready.`
@@ -735,7 +738,12 @@ window.Combat = (function () {
       log(line, "info");
       Sound.play("dodge");
     } else if (dmg === 0) {
-      log(`${e.name} hits — you absorb it.`, "ally");
+      // Full absorb through brace also opens a counter — you weathered it.
+      if (state.bracing) state.counterReady = true;
+      log(state.bracing
+        ? `${e.name} hits — your guard swallows it. Counter ready.`
+        : `${e.name} hits — you absorb it.`,
+        "ally");
       Sound.play("brace");
       spawnMark("block");
     } else {
