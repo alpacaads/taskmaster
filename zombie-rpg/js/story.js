@@ -414,7 +414,7 @@ window.Story = {
     speaker: "Captain Vega",
     text: function(s) {
       let intro = "A siren shatters the morning. A horde — hundreds — pouring down the old highway. They'll hit the fence in minutes.\n\n";
-      if (s.flags.exposedTraitor) intro += "Vega has the camp ready. The fence is reinforced. Every rifle is loaded. Calder is in restraints.\n\n";
+      if (s.flags.exposedTraitor) intro += "Thanks to last night's warning the camp is ready. The south fence is reinforced, the armory is open, every rifle is loaded.\n\n";
       else if (s.flags.killedTraitor) intro += "No one knows what you did at the south fence. The camp is calm — until it isn't.\n\n";
       else intro += "Something's wrong with the south fence — whatever it is, there's no time to fix it now.\n\n";
       return intro + "\"We hold, or we run. Choose.\"";
@@ -626,7 +626,12 @@ window.Story = {
     sceneClass: "night",
     chapter: "Day 4 — South Fence",
     speaker: "???",
-    text: "He freezes when he sees you. A trader from two tents over — Calder. Sleeve pushed up. The bite mark on his forearm is fresh and black.\n\n\"Please. They said if I let them in, they'd let me live. I have a d—\"\n\nHis throat spasms. His eyes fog. The bite has already won.",
+    text: function(s) {
+      if (s.flags.toldVega) {
+        return "Vega moves like she's done this before — two rifles and a blinding flashlight at your back. The man crouched at the cut fence spins. A trader from two tents over — Calder. Sleeve pushed up. The bite mark on his forearm is fresh and black.\n\n\"Please. They said if I let them in, they'd let me live. I have a d—\"\n\nHis throat spasms. His eyes fog. The bite has already won — and you're between him and Vega's rifles.";
+      }
+      return "He freezes when he sees you. A trader from two tents over — Calder. Sleeve pushed up. The bite mark on his forearm is fresh and black.\n\n\"Please. They said if I let them in, they'd let me live. I have a d—\"\n\nHis throat spasms. His eyes fog. The bite has already won.";
+    },
     choices: [
       { label: "He lunges. Put him down.", tag: "BOSS", tagClass: "danger",
         combat: { enemy: "traitor", risky: true, onWin: "traitor_aftermath", onLose: "death" } },
@@ -637,9 +642,15 @@ window.Story = {
     scene: "confront_traitor",
     sceneClass: "night",
     chapter: "Day 4 — South Fence",
-    text: "It's over. He's smaller now. Calder again, almost.\n\nYou stand in the dark with the weight of it — and the choice still yours.",
+    text: function(s) {
+      if (s.flags.toldVega) {
+        return "It's over. He's smaller now. Calder again, almost.\n\nVega lowers her rifle and spits into the grass. \"Whole camp hears about this before sunrise,\" she says, already turning toward the bell.";
+      }
+      return "It's over. He's smaller now. Calder again, almost.\n\nYou stand in the dark with the weight of it — and the choice still yours.";
+    },
     choices: [
       { label: "Bury him quietly. The camp will not know.", tag: "HARD", tagClass: "danger",
+        require: s => !s.flags.toldVega,
         effect: s => {
           s.flags.killedTraitor = true;
           // Maya notices. She would've told Vega.
@@ -648,9 +659,20 @@ window.Story = {
         },
         next: "bonfire_invite" },
       { label: "Tell Vega. They deserve the truth.",
+        require: s => !s.flags.toldVega,
         effect: s => {
           s.flags.exposedTraitor = true;
           // Vega opens the armory; camp reinforces the fence overnight.
+          s.ammo += 2;
+          Game.giveRandomItem();
+          if (s.bonds) s.bonds.ren = (s.bonds.ren || 0) + 1;
+          Game.toast("+2 🔫  · Ren's trust +1");
+        },
+        next: "bonfire_invite" },
+      { label: "Help Vega rouse the camp. Reinforce the fence tonight.",
+        require: s => s.flags.toldVega,
+        effect: s => {
+          s.flags.exposedTraitor = true;
           s.ammo += 2;
           Game.giveRandomItem();
           if (s.bonds) s.bonds.ren = (s.bonds.ren || 0) + 1;
