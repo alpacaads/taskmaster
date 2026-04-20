@@ -240,7 +240,15 @@ window.Story = {
     choices: [
       { label: "Keep walking. Find the camp.", next: "ambush" },
       { label: "Rest in a station wagon",
-        effect: s => { s.hp = Math.min(s.hpMax, s.hp + 2); s.stam = s.stamMax; Game.toast("+2 ❤️, ⚡ refilled"); },
+        effect: s => {
+          s.hp = s.hpMax;
+          s.stam = s.stamMax;
+          // Rummage the cab — gloveboxes on this highway have been
+          // picked over, but not all.
+          Game.giveRandomItem();
+          s.flags.restedInCar = true;
+          Game.toast("❤️ ⚡ restored + glovebox loot");
+        },
         next: "ambush" },
     ]
   },
@@ -261,13 +269,27 @@ window.Story = {
     sceneClass: "forest",
     chapter: "Day 2 — The Pines",
     speaker: "???",
-    text: "A shotgun racks behind you. \"Drop the bag. Slow.\"\n\nTwo men step out from the pines. Not infected — worse. Bandits.",
+    text: function(s) {
+      if (s.flags.restedInCar) {
+        return "You clocked their pickup a mile back through the station wagon's rear window — two men, rifles across the seats. When they step out of the pines shouting \"drop the bag,\" you already have a plan.";
+      }
+      return "A shotgun racks behind you. \"Drop the bag. Slow.\"\n\nTwo men step out from the pines. Not infected — worse. Bandits.";
+    },
     choices: [
       { label: "Drop the bag. Live to fight another day.",
         effect: s => { s.ammo = Math.max(0, s.ammo - 2); Game.toast("-2 🔫"); },
         next: "after_ambush_mercy" },
       { label: "Fight — you need these supplies", tag: "COMBAT", tagClass: "danger",
-        combat: { enemy: "bandit", risky: true, onWin: "after_ambush_fight", onLose: "death" } },
+        combat: function (s) {
+          return {
+            enemy: "bandit",
+            // Rested + spotted = you get the jump on them: non-risky
+            // combat (no +25% HP / +1 damage bump on the bandits).
+            risky: !s.flags.restedInCar,
+            onWin: "after_ambush_fight",
+            onLose: "death",
+          };
+        } },
       { label: "\"Take me. Let the kid go.\"", tag: "SACRIFICE", tagClass: "warn",
         require: s => s.companion2 === "Nora",
         next: "sacrifice_intro" },
