@@ -397,12 +397,33 @@ window.Story = {
       { label: "Take Maya — she knows how to fight",
         require: s => s.flags.maya,
         effect: s => { s.flags.missionPartner = "maya"; },
-        next: "mission_journey" },
+        next: s => s.flags.savedNora ? "nora_asks" : "mission_journey" },
       { label: "Take Ren — she knows what to grab",
         effect: s => { s.flags.missionPartner = "ren"; },
-        next: "mission_journey" },
+        next: s => s.flags.savedNora ? "nora_asks" : "mission_journey" },
       { label: "Go alone. Less mouths, less risk.",
         effect: s => { s.flags.missionPartner = null; s.flags.solo_mission = true; },
+        next: s => s.flags.savedNora ? "nora_asks" : "mission_journey" },
+    ]
+  },
+
+  nora_asks: {
+    scene: "camp_morning",
+    sceneClass: "forest",
+    chapter: "Day 4 — Camp gate",
+    speaker: "Nora",
+    text: "You're tightening a strap when small boots hit the dirt behind you. Nora — breathless, already wearing her little pack.\n\n\"Take me. I watch for things grown-ups miss. I'm quiet. I won't slow you down.\"\n\nShe's too small for what's out there. Her eyes are too big for what she already is.",
+    choices: [
+      { label: "\"Stay close. Do exactly what I say.\"", tag: "RISKY", tagClass: "warn",
+        effect: s => {
+          s.flags.bringNora = true;
+          Game.toast("Nora is coming with you");
+        },
+        next: "mission_journey" },
+      { label: "\"Not this one, kid. You're safer here.\"",
+        effect: s => {
+          s.flags.bringNora = false;
+        },
         next: "mission_journey" },
     ]
   },
@@ -502,13 +523,18 @@ window.Story = {
     sceneClass: "forest",
     chapter: "Day 4 — South Road",
     text: function(s) {
+      let base;
       if (s.flags.missionPartner === "maya") {
-        return "Maya walks point. Three steps ahead, eyes everywhere. The pines thin into a service road.\n\n\"You ever miss anything from before?\" she asks, not turning around.";
+        base = "Maya walks point. Three steps ahead, eyes everywhere. The pines thin into a service road.\n\n\"You ever miss anything from before?\" she asks, not turning around.";
+      } else if (s.flags.missionPartner === "ren") {
+        base = "Ren keeps pace beside you. She hums, low — a song you almost recognise.\n\n\"My grandmother used to sing it,\" she says when she catches you listening. \"It's the only thing of hers I have left.\"";
+      } else {
+        base = "You walk alone. Every shadow is a question. Every step is loud.";
       }
-      if (s.flags.missionPartner === "ren") {
-        return "Ren keeps pace beside you. She hums, low — a song you almost recognise.\n\n\"My grandmother used to sing it,\" she says when she catches you listening. \"It's the only thing of hers I have left.\"";
+      if (s.flags.bringNora) {
+        base += "\n\nNora walks between you, one hand in your jacket. She watches the treeline like it might blink first.";
       }
-      return "You walk alone. Every shadow is a question. Every step is loud.";
+      return base;
     },
     choices: [
       { label: "\"Coffee. Real coffee.\"",
@@ -606,6 +632,7 @@ window.Story = {
           // Sneaking out alone. Nobody's with you at the fence.
           delete s.flags.missionPartner;
           delete s.flags.solo_mission;
+          delete s.flags.bringNora;
         },
         next: "investigate_traitor" },
       { label: "Mention it to Vega in the morning. Get warm by the fire.",
@@ -613,6 +640,7 @@ window.Story = {
           // Back at camp — the mission is over, companion rules apply again.
           delete s.flags.missionPartner;
           delete s.flags.solo_mission;
+          delete s.flags.bringNora;
         },
         next: "bonfire_invite" },
     ]

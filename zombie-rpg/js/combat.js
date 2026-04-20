@@ -134,7 +134,18 @@ window.Combat = (function () {
   }
 
   // ---------- Flags & helpers tied to Game.state ----------
-  function noraBonus()      { return Game.state.companion2 === "Nora" ? 1 : 0; }
+  // Nora's with you if she's in companion2 AND (you're not currently on
+  // a mission, or you explicitly brought her on this mission). Keeps her
+  // out of hospital fights when you told her to stay at camp.
+  function noraPresent() {
+    const s = Game.state;
+    if (s.companion2 !== "Nora") return false;
+    if (s.flags && "missionPartner" in s.flags) {
+      return s.flags.bringNora === true;
+    }
+    return true;
+  }
+  function noraBonus()      { return noraPresent() ? 1 : 0; }
   function lovedMaya()      { return !!(Game.state.flags && Game.state.flags.lovedMaya); }
   function lovedRen()       { return !!(Game.state.flags && Game.state.flags.lovedRen);  }
 
@@ -181,7 +192,7 @@ window.Combat = (function () {
   // We haven't been tracking Nora's bond explicitly, so +1 base plus a
   // crit chance bump while she's with you.
   function noraCritBump() {
-    return Game.state.companion2 === "Nora" ? 0.05 : 0;
+    return noraPresent() ? 0.05 : 0;
   }
 
   // Expose for game.js applyPartyBuffs.
