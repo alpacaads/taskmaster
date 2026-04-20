@@ -733,14 +733,17 @@ window.Scenes = (function () {
   // GitHub Pages serves them directly with correct MIME types and no
   // sandbox CSP, so relative paths work reliably.
   const IMG_BASE = "images/";
-  // Smart cache-bust: only applied to scenes the admin has marked as
-  // recently committed. Normal (unchanged) scenes keep using the
-  // browser's HTTP cache for speed.
-  //
-  // dl_committed_overrides is written by admin.html on every successful
-  // commit as { sceneId: timestampMs }. We read it here and append the
-  // scene's timestamp as ?v=... to force Safari past its 10-minute
-  // Cache-Control: max-age=600 on just that file.
+  // Deploy version — bumped together with the ?v= on script tags
+  // whenever we ship. Every device that loads the new scenes.js gets
+  // fresh image URLs automatically, so a commit on one device (PC)
+  // shows up on another (phone) as soon as Pages rebuilds, without
+  // relying on localStorage which is per-device.
+  const BUILD = "77";
+
+  // Smart cache-bust: per-scene timestamp from the admin takes priority
+  // (committer sees their upload immediately), then a device-wide global
+  // bust, then the BUILD string above as a final fallback so we always
+  // ship a ?v= that changes on every deploy.
   function readCommitTimes() {
     try { return JSON.parse(localStorage.getItem("dl_committed_overrides") || "{}") || {}; }
     catch (e) { return {}; }
@@ -752,8 +755,8 @@ window.Scenes = (function () {
   function imgUrlFor(sceneId) {
     const perScene = readCommitTimes()[sceneId];
     const global = globalCacheBust();
-    const v = perScene || global;
-    return IMG_BASE + sceneId + ".jpg" + (v ? "?v=" + v : "");
+    const v = perScene || global || BUILD;
+    return IMG_BASE + sceneId + ".jpg?v=" + v;
   }
   const PROMPTS = {
     intro:               "ruined city skyline at night, military helicopter flying away into the distance, abandoned skyscrapers, smoke rising, broken cars on the street, lone hooded survivor watching from a rooftop, faint moonlight",
