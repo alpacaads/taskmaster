@@ -621,14 +621,18 @@ window.Combat = (function () {
 
     // Misses are rare; you get hit. Maya teaches you to slip hits —
     // her dodge bonus is subtracted from the enemy's hit chance, with
-    // a floor so the fight still matters.
+    // a floor so the fight still matters. Brace also adds a flat
+    // dodge bump for the turn you plant your feet.
     const baseHit = e.human ? 0.82 : 0.92;
-    const hitChance = Math.max(0.45, baseHit - mayaDodge());
+    const braceDodge = state.bracing ? 0.15 : 0;
+    const hitChance = Math.max(0.35, baseHit - mayaDodge() - braceDodge);
     const hit = Math.random() < hitChance;
     if (!hit) {
-      const line = mayaPresent() && Math.random() < 0.5
-        ? `Maya's shout — you slip the ${e.name}'s lunge.`
-        : `${e.name} lunges — you twist away.`;
+      const line = state.bracing
+        ? `You plant your feet — the ${e.name} skims off your guard.`
+        : mayaPresent() && Math.random() < 0.5
+          ? `Maya's shout — you slip the ${e.name}'s lunge.`
+          : `${e.name} lunges — you twist away.`;
       log(line, "info");
       Sound.play("dodge");
     } else if (dmg === 0) {
