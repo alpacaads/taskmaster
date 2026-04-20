@@ -738,7 +738,7 @@ window.Scenes = (function () {
   // fresh image URLs automatically, so a commit on one device (PC)
   // shows up on another (phone) as soon as Pages rebuilds, without
   // relying on localStorage which is per-device.
-  const BUILD = "87";
+  const BUILD = "88";
 
   // Smart cache-bust: per-scene timestamp from the admin takes priority
   // (committer sees their upload immediately), then a device-wide global
@@ -756,7 +756,12 @@ window.Scenes = (function () {
     const perScene = readCommitTimes()[sceneId];
     const global = globalCacheBust();
     const v = perScene || global || BUILD;
-    return IMG_BASE + sceneId + ".jpg?v=" + v;
+    return IMG_BASE + sceneId + "." + extFor(sceneId) + "?v=" + v;
+  }
+  // Portrait images preserve transparency, so they're committed as PNG.
+  // Everything else is a photographic scene → JPG.
+  function extFor(sceneId) {
+    return /^portrait_/.test(sceneId) ? "png" : "jpg";
   }
   const PROMPTS = {
     title:               "post-apocalyptic ruined city skyline at night under a heavy moon, crumbling skyscrapers silhouetted, distant fires, smoke rising, abandoned streets, cinematic dread, photorealistic, The Last of Us style, 3:2 widescreen",
@@ -811,6 +816,11 @@ window.Scenes = (function () {
     ending_final_loverlost:   "lone grieving survivor kneeling at a fresh grave in a pine forest at sunset, candle flickering in a jar, deep sorrow, golden warm light, painterly cinematic",
     ending_final_lovers_road: "two lovers walking hand in hand at the front of a small group of survivors on a misty highway at dawn, hopeful new beginning together, cinematic wide shot",
     death:               "dark blood-red haze, faint silhouette of a fallen body on the ground, faint cross marker in the distance, deep grief, oppressive horror finality, painterly cinematic",
+
+    // ---- Party portraits (round combat-HUD avatars, transparent PNG) ----
+    portrait_maya: "tight chest-up portrait of Maya, tough late-20s woman with messy shoulder-length dark red hair, green eyes, faint scar through one eyebrow, wearing a faded olive army jacket over a grey undershirt, serious alert expression, jaw set, soft warm rim light on hair, transparent background, isolated portrait, no scenery, photorealistic, cinematic, in the style of The Last of Us, gritty, highly detailed, no text, no logo, no watermark",
+    portrait_ren: "tight chest-up portrait of Ren, gentle mid-20s woman with messy dark brown hair tucked behind one ear, warm brown eyes, freckles, small silver stethoscope around her neck, wearing a grey medic's scrub top under a worn olive jacket, calm tired kind expression, faint smile, warm soft rim light, transparent background, isolated portrait, no scenery, photorealistic, cinematic, in the style of The Last of Us, painterly, highly detailed, no text, no logo, no watermark",
+    portrait_vega: "tight chest-up portrait of Captain Vega, hardened mid-30s woman with black hair pulled back tight, sharp grey eyes, thin scar along her cheekbone, wearing tactical fatigues with a captain's patch on the shoulder and a rifle sling visible across her chest, stern commanding expression, cold blue rim light, transparent background, isolated portrait, no scenery, photorealistic, cinematic, dramatic low-key lighting, in the style of The Last of Us, gritty, highly detailed, no text, no logo, no watermark",
 
     // ---- Combat backdrops (per enemy) ----
     // These aren't story scenes; they are dedicated portraits that
@@ -885,6 +895,7 @@ window.Scenes = (function () {
 
   // Expose the resolver so admin.html can use the same URL pattern.
   window.sceneImageURL = imgUrlFor;
+  window.sceneImageExt = extFor;
 
   // Public helper: render only the SVG (no AI image) for a scene id.
   function renderSVG(sceneId) {

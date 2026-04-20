@@ -209,14 +209,30 @@ window.Combat = (function () {
     const wrap = document.getElementById("combat-allies");
     if (!wrap) return;
     const chips = [];
-    const build = (key, face, label, ready, status) =>
-      `<span class="ally-chip ${ready ? "ready" : ""}" data-ally="${key}">` +
-        `<span class="ally-face">${face}</span>` +
+    const portraitURL = (key) => {
+      const id = "portrait_" + key;
+      const override = window.__OVERRIDES && window.__OVERRIDES[id];
+      if (override) return override;
+      return typeof window.sceneImageURL === "function"
+        ? window.sceneImageURL(id)
+        : "images/" + id + ".png";
+    };
+    const build = (key, face, label, ready, status) => {
+      const src = portraitURL(key);
+      // Image overlays the emoji. If it fails to load, onerror hides it
+      // and the emoji underneath becomes visible — graceful fallback
+      // until the user uploads portrait_<key>.png via admin.
+      const onErr = "this.style.display='none'";
+      return `<span class="ally-chip ${ready ? "ready" : ""}" data-ally="${key}">` +
+        `<span class="ally-face"><span class="ally-emoji">${face}</span>` +
+          `<img class="ally-portrait" alt="" src="${src}" onerror="${onErr}" />` +
+        `</span>` +
         `<span class="ally-body">` +
           `<span class="ally-name">${label}</span>` +
           `<span class="ally-state">${status}</span>` +
         `</span>` +
       `</span>`;
+    };
     if (mayaPresent()) {
       const ready = state.mayaCd <= 0;
       chips.push(build("maya", "👩‍🦰", "MAYA", ready, ready ? "NEXT SHOT" : `CD ${state.mayaCd}`));

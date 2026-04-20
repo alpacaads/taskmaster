@@ -372,10 +372,15 @@
         });
       }
 
-      // Resize an uploaded image to max 1200px on the long edge and
-      // encode it as JPEG quality 0.85. Typical 2-3 MB PNG -> ~100 KB
-      // JPEG, with no perceptible quality loss at phone size.
-      async function compressImage(file, maxEdge = 1200, quality = 0.85) {
+      // Resize an uploaded image to max 1200px on the long edge. Photographic
+      // scenes encode as JPEG quality 0.85 (typical 2-3 MB PNG -> ~100 KB).
+      // Portrait IDs (transparent background) keep PNG so the alpha channel
+      // is preserved for the round combat-HUD avatars.
+      function extForId(id) {
+        return (window.sceneImageExt && window.sceneImageExt(id)) ||
+          (/^portrait_/.test(id) ? "png" : "jpg");
+      }
+      async function compressImage(file, id, maxEdge = 1200, quality = 0.85) {
         const dataUrl = await new Promise((resolve, reject) => {
           const r = new FileReader();
           r.onload = () => resolve(r.result);
@@ -395,9 +400,15 @@
         canvas.width = w; canvas.height = h;
         const ctx = canvas.getContext("2d");
         ctx.drawImage(img, 0, 0, w, h);
+        const wantPng = extForId(id) === "png";
         const blob = await new Promise((resolve, reject) => {
-          canvas.toBlob(b => b ? resolve(b) : reject(new Error("toBlob failed")),
-            "image/jpeg", quality);
+          if (wantPng) {
+            canvas.toBlob(b => b ? resolve(b) : reject(new Error("toBlob failed")),
+              "image/png");
+          } else {
+            canvas.toBlob(b => b ? resolve(b) : reject(new Error("toBlob failed")),
+              "image/jpeg", quality);
+          }
         });
         return blob;
       }
@@ -506,7 +517,7 @@
         if (!blob) { toast("No override for " + id, "err"); return; }
         try {
           const commit = await GH.commitFiles(
-            [{ path: GH.pathPrefix + id + ".jpg", blob }],
+            [{ path: GH.pathPrefix + id + "." + extForId(id), blob }],
             "Update scene image: " + id
           );
           // Keep the local override in place. It IS the committed image,
@@ -535,7 +546,10 @@
         const prevText = commitAllBtn.textContent;
         commitAllBtn.textContent = "Committing…";
         try {
-          const files = items.map(({ id, blob }) => ({ path: GH.pathPrefix + id + ".jpg", blob }));
+          const files = items.map(({ id, blob }) => ({
+            path: GH.pathPrefix + id + "." + extForId(id),
+            blob,
+          }));
           const ids = items.map(i => i.id);
           const msg = ids.length === 1
             ? "Update scene image: " + ids[0]
@@ -637,7 +651,7 @@
             const blob = await Overrides.get(id);
             sizeEl.textContent = blob ? "(" + fmtSize(blob.size) + ")" : "";
           } else {
-            img.src = "images/" + id + ".jpg?t=" + Date.now();
+            img.src = "images/" + id + "." + extForId(id) + "?t=" + Date.now();
             card.classList.remove("replaced", "committed");
             badge.textContent = "live";
             revertBtn.hidden = true; revertBtn.disabled = true;
@@ -666,7 +680,7 @@
           if (!card.classList.contains("replaced")) {
             const ph = document.createElement("div");
             ph.className = "missing";
-            ph.textContent = "no image at images/" + id + ".jpg";
+            ph.textContent = "no image at images/" + id + "." + extForId(id);
             img.replaceWith(ph);
           }
         });
@@ -675,7 +689,7 @@
           const file = e.target.files && e.target.files[0];
           if (!file) return;
           try {
-            const compressed = await compressImage(file);
+            const compressed = await compressImage(file, id);
             await Overrides.save(id, compressed);
             await Overrides.loadAll(); // refresh objectURL map
             await refresh();
@@ -689,7 +703,7 @@
           let blob = await Overrides.get(id);
           if (!blob) {
             try {
-              blob = await fetch("images/" + id + ".jpg").then(r => {
+              blob = await fetch("images/" + id + "." + extForId(id)).then(r => {
                 if (!r.ok) throw new Error(r.status);
                 return r.blob();
               });
@@ -700,7 +714,7 @@
           }
           const a = document.createElement("a");
           a.href = URL.createObjectURL(blob);
-          a.download = id + ".jpg";
+          a.download = id + "." + extForId(id);
           document.body.appendChild(a); a.click();
           setTimeout(() => URL.revokeObjectURL(a.href), 1000);
           a.remove();
@@ -744,7 +758,7 @@
           const zip = new JSZip();
           const folder = zip.folder("images");
           items.forEach(({ id, blob }, i) => {
-            folder.file(id + ".jpg", blob);
+            folder.file(id + "." + extForId(id), blob);
             downloadAllBtn.textContent = "Zipping… " + (i + 1) + "/" + items.length;
           });
           const out = await zip.generateAsync({ type: "blob" });
