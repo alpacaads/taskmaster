@@ -276,10 +276,8 @@ window.Combat = (function () {
       chips.push(build("vega", "🫡", "VEGA", ready, ready ? "RIFLE READY" : `CD ${state.vegaCd}`));
     }
     if (noraPresent()) {
-      // Nora doesn't fight — she's on watch. The chip is a persistent
-      // 'ready' so her portrait keeps the warm pulse while her passive
-      // +1 damage / +5% crit bonuses are active.
-      chips.push(build("nora", "👧", "NORA", true, "ON WATCH"));
+      const ready = (state.noraCd || 0) <= 0;
+      chips.push(build("nora", "👧", "NORA", ready, ready ? "SPOTTER" : `CD ${state.noraCd}`));
     }
     wrap.innerHTML = chips.join("");
   }
@@ -325,6 +323,9 @@ window.Combat = (function () {
       renCd:  lovedRen()  ? 1 : 2,
       // Vega opens the scene with a rifle ready; she can fire turn one.
       vegaCd: 0,
+      // Nora spots a threat every few turns — first warning around turn 3.
+      noraCd: 3,
+      noraWarn: false,
       startMs: Date.now(),
     };
 
@@ -716,6 +717,19 @@ window.Combat = (function () {
     const s = Game.state;
     const e = state.enemy;
 
+    // Nora's warning from the previous round — consume it to force
+    // a clean miss. Doesn't interact with brace counter (she's dodging
+    // for you, not opening a guard).
+    if (state.noraWarn) {
+      state.noraWarn = false;
+      log(`Nora's warning — the ${e.name} whiffs past you.`, "info");
+      Sound.play("dodge");
+      companionTurn();
+      state.turn += 1;
+      renderAllies();
+      return;
+    }
+
     let dmg = rand(e.atk[0], e.atk[1]);
     // Rare savage hit — ignores 1 of brace.
     const savage = Math.random() < 0.12;
@@ -859,6 +873,25 @@ window.Combat = (function () {
           setTimeout(() => end("win"), 950);
           return;
         }
+      }
+    }
+
+    if (noraPresent()) {
+      state.noraCd = (state.noraCd || 0) - 1;
+      if (state.noraCd <= 0 && !state.noraWarn) {
+        // Nora spots a feint and whispers the angle — next enemy swing
+        // goes wide. Doesn't feed the brace counter (she's dodging for
+        // you, not planting your feet).
+        state.noraWarn = true;
+        const cues = [
+          "Nora whispers — \"Left side. Duck.\"",
+          "Nora tugs your sleeve — \"It's going for your arm.\"",
+          "Nora's eyes go wide — \"Behind the pipe. Now.\"",
+        ];
+        log(cues[rand(0, cues.length - 1)], "ally");
+        Sound.play("dodge");
+        flashAlly("nora");
+        state.noraCd = 4;
       }
     }
   }
