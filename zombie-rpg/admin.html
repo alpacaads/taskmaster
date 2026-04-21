@@ -245,7 +245,57 @@
       border-radius: 6px;
       padding: 8px 10px;
       margin: 4px 0;
+      display: grid;
+      grid-template-columns: 120px 1fr auto;
+      gap: 10px;
+      align-items: start;
     }
+    .flow-thumb-wrap {
+      position: relative;
+      width: 120px; aspect-ratio: 3 / 2;
+      background: #000;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      overflow: hidden;
+      flex-shrink: 0;
+    }
+    .flow-thumb-wrap img {
+      width: 100%; height: 100%; object-fit: cover; display: block;
+    }
+    .flow-thumb-wrap.img-missing::after {
+      content: "no image";
+      position: absolute; inset: 0;
+      display: flex; align-items: center; justify-content: center;
+      color: var(--text-muted); font-size: 10px; letter-spacing: 1px;
+      background: repeating-linear-gradient(45deg, #0a0d08 0 8px, #11140d 8px 16px);
+      pointer-events: none;
+    }
+    .flow-thumb-wrap .flow-badge {
+      position: absolute; top: 3px; right: 3px;
+      background: rgba(0,0,0,0.7); color: var(--accent-2);
+      font-size: 9px; padding: 2px 5px; border-radius: 3px;
+      letter-spacing: 0.5px;
+    }
+    .flow-thumb-wrap.replaced .flow-badge { background: var(--warn); color: #0b0f0a; }
+    .flow-thumb-wrap.replaced.committed .flow-badge { background: var(--accent); color: #0b0f0a; }
+    .flow-main { min-width: 0; }
+    .flow-controls {
+      display: flex; flex-direction: column; gap: 4px; align-items: stretch;
+    }
+    .flow-controls label, .flow-controls button {
+      background: var(--panel-2); color: var(--text);
+      border: 1px solid var(--border); border-radius: 4px;
+      padding: 3px 8px; font-size: 10px; letter-spacing: 0.5px;
+      cursor: pointer; white-space: nowrap; font-family: inherit;
+      text-align: center;
+    }
+    .flow-controls label:hover, .flow-controls button:hover { background: #2c3920; }
+    .flow-controls label input { display: none; }
+    .flow-controls button.flow-commit:disabled { opacity: 0.4; cursor: not-allowed; }
+    .flow-controls button.flow-commit.needs-token { color: var(--warn); border-color: var(--warn); }
+    .flow-node.no-card { grid-template-columns: 1fr; }
+    .flow-node.no-card .flow-thumb-wrap,
+    .flow-node.no-card .flow-controls { display: none; }
     .flow-node.combat { border-left-color: var(--danger); }
     .flow-node.ending { border-left-color: var(--warn); }
     .flow-node.ref { opacity: 0.55; border-left-style: dashed; }
@@ -361,12 +411,12 @@
   </footer>
 
   <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
-  <script src="js/overrides.js?v=114"></script>
-  <script src="js/scenes.js?v=114"></script>
+  <script src="js/overrides.js?v=115"></script>
+  <script src="js/scenes.js?v=115"></script>
   <!-- story.js is read-only here: we pull chapters / text / choices
        to annotate each scene card so the flow is legible without
        having to play through. -->
-  <script src="js/story.js?v=114"></script>
+  <script src="js/story.js?v=115"></script>
   <script>
     (async function () {
       const PROMPTS = (window.Scenes && window.Scenes.PROMPTS) || {};
@@ -832,27 +882,27 @@
       function renderFlow() {
         const Story = window.Story || {};
         if (!Story.intro) {
-          flowEl.innerHTML = `<div class="flow-node">Story not loaded.</div>`;
+          flowEl.innerHTML = `<div class="flow-node no-card"><div class="flow-main">Story not loaded.</div></div>`;
           return;
         }
         const visited = new Set();
         function render(id, depth) {
           if (!id) return "";
-          // Game-special ids that don't resolve to story nodes.
-          if (id === "__title__") return `<div class="flow-node ref">↻ back to title</div>`;
-          if (id === "__restart__") return `<div class="flow-node ref">↻ restart</div>`;
+          if (id === "__title__") return `<div class="flow-node ref no-card"><div class="flow-main">↻ back to title</div></div>`;
+          if (id === "__restart__") return `<div class="flow-node ref no-card"><div class="flow-main">↻ restart</div></div>`;
           const already = visited.has(id);
           const node = Story[id];
           if (!node) {
-            return `<div class="flow-node ref"><span class="flow-id">${escapeText(id)}</span> <span class="flow-chapter">(missing node)</span></div>`;
+            return `<div class="flow-node ref no-card"><div class="flow-main"><span class="flow-id">${escapeText(id)}</span> <span class="flow-chapter">(missing node)</span></div></div>`;
           }
           if (already) {
-            return `<div class="flow-node repeat"><span class="flow-id">${escapeText(id)}</span> <span class="flow-chapter">(seen above ↑)</span></div>`;
+            return `<div class="flow-node repeat no-card"><div class="flow-main"><span class="flow-id">${escapeText(id)}</span> <span class="flow-chapter">(seen above ↑)</span></div></div>`;
           }
           visited.add(id);
           const isEnding = /^ending_final_|^death$/.test(id);
           const isCombat = (node.choices || []).some(c => c && c.combat);
           const cls = isEnding ? "ending" : isCombat ? "combat" : "";
+          const hasCard = !!PROMPTS[id];
           const headParts = [`<span class="flow-id">${escapeText(id)}</span>`];
           if (node.chapter) headParts.push(`<span class="flow-chapter">${escapeText(node.chapter)}</span>`);
           const head = headParts.join("");
@@ -862,7 +912,6 @@
             : node.text
               ? `<div class="flow-text">${escapeText(snippet(node.text, 160))}</div>`
               : "";
-          // Collect choice rows + children to render below.
           const choices = Array.isArray(node.choices) ? node.choices : [];
           const choiceLines = [];
           const childrenHtml = [];
@@ -900,12 +949,98 @@
             }
           });
           const children = childrenHtml.filter(Boolean).join("");
+          const thumbCol = hasCard
+            ? `<div class="flow-thumb-wrap" data-flow-id="${escapeText(id)}"><img alt="${escapeText(id)}" /><span class="flow-badge">live</span></div>`
+            : "";
+          const controlsCol = hasCard
+            ? `<div class="flow-controls" data-flow-id="${escapeText(id)}">
+                 <label class="flow-upload">📤 Upload<input type="file" accept="image/*" /></label>
+                 <button class="flow-commit" disabled title="Upload an image first">🚀 Commit</button>
+               </div>`
+            : "";
+          const nodeClasses = ["flow-node", cls, hasCard ? "" : "no-card"].filter(Boolean).join(" ");
+          const body = `<div class="flow-main">${head}${text}${choiceLines.join("")}</div>`;
           return (
-            `<div class="flow-node ${cls}">${head}${text}${choiceLines.join("")}</div>` +
+            `<div class="${nodeClasses}">${thumbCol}${body}${controlsCol}</div>` +
             (children ? `<div class="flow-children">${children}</div>` : "")
           );
         }
         flowEl.innerHTML = render("intro", 0);
+        wireFlowControls();
+      }
+
+      // Hook every flow-node's thumbnail/upload/commit to the same
+      // Overrides + GH pipeline as the grid cards.
+      function wireFlowControls() {
+        flowEl.querySelectorAll(".flow-thumb-wrap[data-flow-id]").forEach(wrap => {
+          const id = wrap.dataset.flowId;
+          const img = wrap.querySelector("img");
+          const badge = wrap.querySelector(".flow-badge");
+          const refresh = () => {
+            wrap.classList.remove("img-missing");
+            const override = (window.__OVERRIDES || {})[id];
+            const committed = isCommitted(id);
+            if (override) {
+              img.src = override;
+              wrap.classList.add("replaced");
+              wrap.classList.toggle("committed", committed);
+              badge.textContent = committed ? "COMMITTED" : "OVERRIDE";
+            } else {
+              img.src = "images/" + id + "." + extForId(id) + "?t=" + Date.now();
+              wrap.classList.remove("replaced", "committed");
+              badge.textContent = "live";
+            }
+          };
+          img.addEventListener("error", () => {
+            if (!wrap.classList.contains("replaced")) {
+              wrap.classList.add("img-missing");
+              img.removeAttribute("src");
+            }
+          });
+          refresh();
+        });
+        flowEl.querySelectorAll(".flow-controls[data-flow-id]").forEach(ctrl => {
+          const id = ctrl.dataset.flowId;
+          const fileInput = ctrl.querySelector('input[type="file"]');
+          const commitBtn = ctrl.querySelector(".flow-commit");
+          const setCommitState = () => {
+            const hasOverride = !!(window.__OVERRIDES || {})[id];
+            commitBtn.disabled = !hasOverride;
+            commitBtn.classList.toggle("needs-token", hasOverride && !GH.token);
+            commitBtn.title = !hasOverride
+              ? "Upload an image first"
+              : GH.token ? "Commit to repo" : "Add a GitHub token in Settings first";
+          };
+          setCommitState();
+          fileInput.addEventListener("change", async (e) => {
+            const file = e.target.files && e.target.files[0];
+            if (!file) return;
+            try {
+              const compressed = await compressImage(file, id);
+              await Overrides.save(id, compressed);
+              await Overrides.loadAll();
+              renderFlow();
+            } catch (err) {
+              alert("Could not save: " + (err && err.message ? err.message : err));
+            }
+            fileInput.value = "";
+          });
+          commitBtn.addEventListener("click", async () => {
+            if (!GH.token) {
+              toast("No GitHub token saved. Opening Settings…", "err");
+              settingsModal.hidden = false;
+              return;
+            }
+            commitBtn.disabled = true;
+            const prev = commitBtn.textContent;
+            commitBtn.textContent = "Committing…";
+            try {
+              await commitOne(id);
+              renderFlow();
+            } catch (e) {}
+            finally { commitBtn.textContent = prev; }
+          });
+        });
       }
 
       function setView(which) {
