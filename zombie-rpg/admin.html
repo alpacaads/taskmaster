@@ -250,13 +250,13 @@
       position: sticky; top: 0; z-index: 10;
       background: #0b0f0a;
       border-bottom: 1px solid var(--border);
-      padding: 10px 18px;
-      display: flex; gap: 8px; align-items: center; flex-wrap: wrap;
+      padding: 8px 18px;
+      display: flex; gap: 6px; align-items: center; flex-wrap: wrap;
     }
     .reader-bar button, .reader-bar select {
       background: var(--panel-2); color: var(--text);
       border: 1px solid var(--border); border-radius: 4px;
-      padding: 5px 10px; font-size: 12px; font-family: inherit;
+      padding: 4px 9px; font-size: 11px; font-family: inherit;
       cursor: pointer;
     }
     .reader-bar button:hover:not(:disabled),
@@ -264,7 +264,7 @@
     .reader-bar button:disabled { opacity: 0.35; cursor: not-allowed; }
     .reader-bar .crumbs {
       font-family: ui-monospace, "SF Mono", Menlo, monospace;
-      font-size: 11px; color: var(--text-muted);
+      font-size: 10px; color: var(--text-muted);
       flex: 1 1 auto; min-width: 0;
       overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
     }
@@ -272,26 +272,49 @@
       color: var(--text-dim); text-decoration: none; cursor: pointer;
     }
     .reader-bar .crumbs a:hover { color: var(--accent-2); }
-    .reader-bar .crumbs .sep { margin: 0 5px; color: var(--border); }
+    .reader-bar .crumbs .sep { margin: 0 4px; color: var(--border); }
     .reader-bar .crumbs .current { color: var(--accent-2); font-weight: 700; }
+    .reader-bar .reader-devtoggle.active {
+      background: var(--accent); color: #0b0f0a; border-color: var(--accent);
+    }
 
+    /* Game-shaped frame — mirrors the phone-frame look of the real game. */
     .reader {
-      max-width: 760px;
+      max-width: 520px;
       margin: 0 auto;
       padding: 18px;
-      display: flex; flex-direction: column; gap: 14px;
+      display: flex; flex-direction: column;
+      gap: 0;
+      background: var(--bg);
     }
-    .reader-image {
+    .reader-hud {
+      background: linear-gradient(180deg, #14190f, #0e130a);
+      border-bottom: 1px solid var(--border);
+      padding: 8px 12px;
+      display: flex; align-items: center; justify-content: space-between;
+      font-size: 12px;
+    }
+    .reader-hud .name {
+      font-weight: 700; color: var(--accent-2); letter-spacing: 1px;
+      font-size: 13px;
+    }
+    .reader-hud .stats { display: flex; gap: 10px; color: var(--text); }
+    .reader-hud .stat {
+      background: var(--panel);
+      padding: 3px 7px;
+      border-radius: 5px;
+      border: 1px solid var(--border);
+    }
+    .reader-scene {
       position: relative;
       width: 100%; aspect-ratio: 3 / 2;
       background: #000;
-      border-radius: 6px;
       overflow: hidden;
-      border: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
       cursor: pointer;
     }
-    .reader-image img { width: 100%; height: 100%; object-fit: cover; display: block; }
-    .reader-image.img-missing::after {
+    .reader-scene img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .reader-scene.img-missing::after {
       content: "click to upload scene art";
       position: absolute; inset: 0;
       display: flex; align-items: center; justify-content: center;
@@ -299,7 +322,7 @@
       background: repeating-linear-gradient(45deg, #0a0d08 0 8px, #11140d 8px 16px);
       pointer-events: none;
     }
-    .reader-image::before {
+    .reader-scene::before {
       content: "✎ click to swap";
       position: absolute; inset: 0;
       display: flex; align-items: center; justify-content: center;
@@ -309,126 +332,127 @@
       transition: opacity 120ms ease;
       pointer-events: none;
     }
-    .reader-image:hover::before { opacity: 1; }
-    .reader-image .reader-badge {
-      position: absolute; top: 6px; right: 6px;
+    .reader-scene:hover::before { opacity: 1; }
+    .reader-scene .reader-chapter-overlay {
+      position: absolute; left: 10px; top: 8px;
       background: rgba(0,0,0,0.7); color: var(--accent-2);
       font-size: 10px; padding: 3px 7px; border-radius: 4px;
+      letter-spacing: 1px; text-transform: uppercase;
+    }
+    .reader-scene .reader-badge {
+      position: absolute; right: 6px; top: 6px;
+      background: rgba(0,0,0,0.7); color: var(--accent-2);
+      font-size: 9px; padding: 2px 6px; border-radius: 4px;
       letter-spacing: 1px;
     }
-    .reader-image.replaced .reader-badge { background: var(--warn); color: #0b0f0a; }
-    .reader-image.replaced.committed .reader-badge { background: var(--accent); color: #0b0f0a; }
+    .reader-scene.replaced .reader-badge { background: var(--warn); color: #0b0f0a; }
+    .reader-scene.replaced.committed .reader-badge { background: var(--accent); color: #0b0f0a; }
 
-    .reader-meta {
-      display: flex; gap: 10px; align-items: center; flex-wrap: wrap;
+    .reader-narrative {
+      padding: 14px 16px 8px;
+      background: var(--bg);
+      min-height: 80px;
     }
-    .reader-meta .chapter {
-      font-size: 11px; letter-spacing: 2px; text-transform: uppercase;
-      color: var(--text-muted);
-    }
-    .reader-meta .id {
-      font-family: ui-monospace, "SF Mono", Menlo, monospace;
-      font-size: 11px; color: var(--accent-2); font-weight: 700;
-    }
-    .reader-meta .commit-btn {
-      margin-left: auto;
-      background: var(--panel-2); color: var(--text);
-      border: 1px solid var(--border); border-radius: 4px;
-      padding: 4px 10px; font-size: 11px; cursor: pointer; font-family: inherit;
-    }
-    .reader-meta .commit-btn:hover:not(:disabled) { background: #2c3920; }
-    .reader-meta .commit-btn:disabled { opacity: 0.35; cursor: not-allowed; }
-    .reader-meta .commit-btn.needs-token { color: var(--warn); border-color: var(--warn); opacity: 1; }
-
-    .reader-speaker {
+    .reader-narrative .speaker {
       font-size: 12px; color: var(--warn); font-style: italic;
-      letter-spacing: 0.5px;
+      letter-spacing: 0.5px; margin-bottom: 6px;
     }
-    .reader-text {
-      font-size: 14px; line-height: 1.55;
-      color: var(--text);
-      white-space: pre-wrap;
-      padding: 12px 14px;
-      background: var(--panel);
-      border: 1px solid var(--border);
-      border-radius: 6px;
-    }
-    .reader-text.branch-note {
-      color: var(--text-muted); font-style: italic;
-      border-style: dashed;
-    }
-    .reader-variants {
-      background: var(--panel);
-      border: 1px dashed var(--warn);
-      border-radius: 6px;
-      padding: 10px 12px;
-      display: flex; flex-direction: column; gap: 8px;
-    }
-    .reader-variants .variant-head {
-      font-size: 10px; letter-spacing: 2px; text-transform: uppercase;
-      color: var(--warn);
-    }
-    .reader-variants .variant {
-      font-size: 12px; line-height: 1.45; color: var(--text-dim);
-      padding: 6px 8px;
-      background: #0a0d08;
-      border-left: 2px solid var(--warn);
-      border-radius: 3px;
+    .reader-narrative .text {
+      font-size: 14px; line-height: 1.55; color: var(--text);
       white-space: pre-wrap;
     }
-    .reader-variants .variant b { color: var(--accent-2); font-weight: 700; }
 
     .reader-choices {
-      display: flex; flex-direction: column; gap: 6px;
+      padding: 10px 16px 16px;
+      display: flex; flex-direction: column; gap: 8px;
+      background: var(--bg);
     }
-    .reader-choice {
+    .reader-btn {
       background: var(--panel);
+      color: var(--text);
       border: 1px solid var(--border);
-      border-radius: 6px;
-      padding: 10px 12px;
-      display: flex; flex-direction: column; gap: 6px;
+      border-radius: 10px;
+      padding: 12px 14px;
+      font-family: inherit;
+      font-size: 14px;
+      text-align: center;
+      cursor: pointer;
+      transition: transform 0.08s ease, background 0.2s ease;
     }
-    .reader-choice.gated { opacity: 0.55; border-style: dashed; }
-    .reader-choice .label {
-      font-size: 13px; color: var(--text);
+    .reader-btn:hover:not(:disabled) { background: var(--panel-2); }
+    .reader-btn:active { transform: translateY(1px); }
+    .reader-btn.primary {
+      background: linear-gradient(180deg, #6d9a33, #557824);
+      color: #0b0f0a;
+      border-color: #7fa644;
+      font-weight: 600;
+      box-shadow: 0 2px 0 #3e5a1a, 0 6px 14px rgba(0,0,0,0.4);
     }
-    .reader-choice .tag {
+    .reader-btn.primary:hover { background: linear-gradient(180deg, #7fa83d, #63872a); }
+    .reader-btn.danger { border-color: #5a2323; }
+    .reader-btn[disabled] { opacity: 0.35; cursor: not-allowed; }
+    .reader-btn .tag {
       display: inline-block; padding: 1px 6px; border-radius: 3px;
       font-size: 9px; letter-spacing: 1px; text-transform: uppercase;
       margin-left: 8px;
+      vertical-align: 1px;
     }
-    .reader-choice .tag.warn { background: var(--warn); color: #0b0f0a; }
-    .reader-choice .tag.danger { background: var(--danger); color: #fff; }
-    .reader-choice .require {
+    .reader-btn .tag.warn { background: var(--warn); color: #0b0f0a; }
+    .reader-btn .tag.danger { background: var(--danger); color: #fff; }
+    .reader-btn.gated {
+      border-style: dashed;
+      opacity: 0.55;
+    }
+    .reader-btn.combat {
+      /* Combat choice — preview the enemy + branching destinations. */
+      display: flex; flex-direction: column; gap: 4px;
+    }
+    .reader-btn.combat .combat-meta {
+      display: flex; gap: 8px; justify-content: center;
       font-size: 10px; color: var(--text-muted);
       font-family: ui-monospace, "SF Mono", Menlo, monospace;
     }
-    .reader-choice .effect {
-      font-size: 10px; color: var(--accent);
-      font-family: ui-monospace, "SF Mono", Menlo, monospace;
+    .reader-btn.combat .combat-meta .pill {
+      padding: 1px 7px; border-radius: 3px;
+      background: var(--panel-2); border: 1px solid var(--border);
+      cursor: pointer;
     }
-    .reader-choice .nav {
-      display: flex; flex-wrap: wrap; gap: 6px;
-    }
-    .reader-choice .jump {
+    .reader-btn.combat .combat-meta .pill:hover { background: var(--accent); color: #0b0f0a; border-color: var(--accent); }
+    .reader-btn.combat .combat-meta .pill.lose { border-style: dashed; }
+
+    /* Dev toggle surfaces variants / effect / require blocks. */
+    .reader-devpanel {
+      margin: 8px 16px 0;
+      padding: 10px 12px;
       background: var(--panel-2);
-      border: 1px solid var(--border);
-      border-radius: 4px;
-      padding: 4px 10px;
+      border: 1px dashed var(--border);
+      border-radius: 6px;
       font-family: ui-monospace, "SF Mono", Menlo, monospace;
       font-size: 11px;
+      color: var(--text-dim);
+      line-height: 1.45;
+      display: none;
+    }
+    body.view-flow.dev .reader-devpanel { display: block; }
+    .reader-devpanel .k {
       color: var(--accent-2);
-      cursor: pointer;
-      text-decoration: none;
+      margin-right: 6px;
     }
-    .reader-choice .jump:hover {
-      background: var(--accent); color: #0b0f0a; border-color: var(--accent);
+    .reader-devpanel .v-row {
+      margin-top: 6px;
+      padding-top: 6px;
+      border-top: 1px solid var(--border);
     }
-    .reader-choice.combat .jump { color: var(--danger); border-color: var(--danger); }
-    .reader-choice.combat .jump.lose { border-style: dashed; }
-    .reader-choice .jump-label {
-      font-size: 10px; color: var(--text-muted);
-      margin-right: 2px;
+    .reader-devpanel .v-row b { color: var(--warn); }
+    .reader-devpanel .v-row .variant-text { display: block; color: var(--text-dim); margin-top: 2px; }
+    .reader-devpanel pre {
+      margin: 4px 0 0;
+      padding: 4px 6px;
+      background: #0a0d08;
+      border-radius: 3px;
+      color: var(--text);
+      white-space: pre-wrap;
+      word-break: break-all;
     }
     body.view-flow #grid { display: none; }
     body.view-flow #flow { display: block; }
@@ -803,12 +827,12 @@
   </footer>
 
   <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
-  <script src="js/overrides.js?v=120"></script>
-  <script src="js/scenes.js?v=120"></script>
+  <script src="js/overrides.js?v=121"></script>
+  <script src="js/scenes.js?v=121"></script>
   <!-- story.js is read-only here: we pull chapters / text / choices
        to annotate each scene card so the flow is legible without
        having to play through. -->
-  <script src="js/story.js?v=120"></script>
+  <script src="js/story.js?v=121"></script>
   <script>
     (async function () {
       const PROMPTS = (window.Scenes && window.Scenes.PROMPTS) || {};
@@ -1424,102 +1448,108 @@
           ? callFn(node.text, readerDummyState())
           : (node.text || "");
 
-        let variantsHtml = "";
-        if (isTextFn) {
-          const variants = enumerateTextVariants(node) || [];
-          const extras = variants.filter(v => v.text !== textStr);
-          if (extras.length) {
-            variantsHtml =
-              `<div class="reader-variants">` +
-              `<div class="variant-head">⌥ Other text variants (branches on state)</div>` +
-              extras.map(v =>
-                `<div class="variant"><b>${escapeText(v.tag)}:</b> ${escapeText(v.text)}</div>`
-              ).join("") +
-              `</div>`;
-          }
-        }
-
         const choices = Array.isArray(node.choices) ? node.choices : [];
         const fakeState = readerDummyState();
-        const choiceHtml = choices.map(c => {
+        const choiceHtml = choices.map((c, idx) => {
           if (!c) return "";
           const gated = typeof c.require === "function" && !callFn(c.require, fakeState);
           const tag = c.tag
             ? `<span class="tag ${c.tagClass || ""}">${escapeText(c.tag)}</span>`
             : "";
-          const reqHint = typeof c.require === "function"
-            ? `<div class="require">require: ${escapeText(c.require.toString().replace(/\s+/g, " ").slice(0, 100))}</div>`
-            : "";
-          const effectHint = typeof c.effect === "function"
-            ? `<div class="effect">effect: ${escapeText(c.effect.toString().replace(/\s+/g, " ").slice(0, 100))}…</div>`
-            : "";
-          const nav = [];
+          const primary = idx === 0 && !gated ? " primary" : "";
+          const label = `${escapeText(c.label || "")}${tag}`;
           if (c.combat) {
             const cfg = typeof c.combat === "function" ? callFn(c.combat, fakeState) : c.combat;
-            const enemy = cfg && cfg.enemy ? cfg.enemy : "(branches)";
-            nav.push(`<span class="jump-label">⚔</span><span class="jump" style="cursor:default;background:transparent">${escapeText(enemy)}</span>`);
-            if (cfg && cfg.onWin) {
-              nav.push(`<span class="jump-label">win →</span><a class="jump" data-jump="${escapeText(cfg.onWin)}">${escapeText(cfg.onWin)}</a>`);
-            }
-            if (cfg && cfg.onLose && cfg.onLose !== cfg.onWin) {
-              nav.push(`<span class="jump-label">lose →</span><a class="jump lose" data-jump="${escapeText(cfg.onLose)}">${escapeText(cfg.onLose)}</a>`);
-            }
-            return `<div class="reader-choice combat${gated ? " gated" : ""}">` +
-              `<div class="label">${escapeText(c.label || "")} ${tag}</div>` +
-              reqHint + effectHint +
-              `<div class="nav">${nav.join("")}</div>` +
+            const enemy = cfg && cfg.enemy ? cfg.enemy : "?";
+            const winId = cfg && cfg.onWin ? cfg.onWin : "";
+            const loseId = cfg && cfg.onLose ? cfg.onLose : "";
+            const metaBits = [];
+            metaBits.push(`⚔ ${escapeText(enemy)}`);
+            if (winId)  metaBits.push(`<span class="pill" data-jump="${escapeText(winId)}">win → ${escapeText(winId)}</span>`);
+            if (loseId && loseId !== winId) metaBits.push(`<span class="pill lose" data-jump="${escapeText(loseId)}">lose → ${escapeText(loseId)}</span>`);
+            return `<button class="reader-btn combat${primary ? " primary" : ""}${gated ? " gated" : ""}" ${gated ? "disabled" : ""}>` +
+              `<span>${label}</span>` +
+              `<span class="combat-meta">${metaBits.join("")}</span>` +
+              `</button>`;
+          }
+          // Regular choice: click the button to navigate.
+          let jumpTarget = "";
+          if (typeof c.next === "function") {
+            const targets = enumerateNextTargets(c);
+            jumpTarget = targets[0] || "";
+          } else if (c.next) {
+            jumpTarget = c.next;
+          }
+          return `<button class="reader-btn${primary}${gated ? " gated" : ""}" ` +
+            (jumpTarget ? `data-jump="${escapeText(jumpTarget)}"` : "disabled") +
+            ` ${gated ? "disabled" : ""}>${label}</button>`;
+        }).join("");
+        const noChoices = !choices.length
+          ? `<button class="reader-btn gated" disabled>(dead end — back to title / restart)</button>`
+          : "";
+
+        // --- dev panel: variants + effect/require sources ---
+        let devPanelHtml = "";
+        if (isTextFn) {
+          const variants = enumerateTextVariants(node) || [];
+          const extras = variants.filter(v => v.text !== textStr);
+          if (extras.length) {
+            devPanelHtml +=
+              `<div class="v-row"><span class="k">text variants:</span>` +
+              extras.map(v =>
+                `<div><b>${escapeText(v.tag)}:</b><span class="variant-text">${escapeText(v.text)}</span></div>`
+              ).join("") +
               `</div>`;
+          }
+        }
+        choices.forEach((c, idx) => {
+          const bits = [];
+          if (typeof c.require === "function") {
+            bits.push(`<div><b>require:</b><pre>${escapeText(c.require.toString())}</pre></div>`);
+          }
+          if (typeof c.effect === "function") {
+            bits.push(`<div><b>effect:</b><pre>${escapeText(c.effect.toString())}</pre></div>`);
           }
           if (typeof c.next === "function") {
             const targets = enumerateNextTargets(c);
-            if (targets.length) {
-              targets.forEach(t => {
-                nav.push(`<span class="jump-label">→</span><a class="jump" data-jump="${escapeText(t)}">${escapeText(t)}</a>`);
-              });
-            } else {
-              nav.push(`<span class="jump-label">→</span><span class="jump" style="cursor:default">(branches on state)</span>`);
-            }
-          } else if (c.next) {
-            nav.push(`<span class="jump-label">→</span><a class="jump" data-jump="${escapeText(c.next)}">${escapeText(c.next)}</a>`);
-          } else {
-            nav.push(`<span class="jump-label">(no destination)</span>`);
+            bits.push(`<div><b>next fn → targets:</b> ${escapeText(targets.join(", ") || "(none resolved)")}</div>`);
           }
-          return `<div class="reader-choice${gated ? " gated" : ""}">` +
-            `<div class="label">${escapeText(c.label || "")} ${tag}</div>` +
-            reqHint + effectHint +
-            `<div class="nav">${nav.join("")}</div>` +
-            `</div>`;
-        }).join("");
-
-        const noChoices = !choices.length
-          ? `<div class="reader-choice gated"><div class="label">(dead end — back to title / restart)</div></div>`
+          if (bits.length) {
+            devPanelHtml += `<div class="v-row"><span class="k">choice ${idx + 1}: ${escapeText(c.label || "")}</span>` + bits.join("") + `</div>`;
+          }
+        });
+        const devPanel = devPanelHtml
+          ? `<div class="reader-devpanel"><span class="k">DEV</span>${devPanelHtml}</div>`
           : "";
 
         flowEl.innerHTML =
           `<div class="reader-bar">` +
-            `<button class="reader-back" ${back ? "" : "disabled"}>← Back</button>` +
-            `<button class="reader-fwd" ${fwd ? "" : "disabled"}>Forward →</button>` +
-            `<button class="reader-start" title="Jump to intro">⟲ intro</button>` +
+            `<button class="reader-back" ${back ? "" : "disabled"}>←</button>` +
+            `<button class="reader-fwd" ${fwd ? "" : "disabled"}>→</button>` +
+            `<button class="reader-start" title="Jump to intro">⟲</button>` +
             `<span class="crumbs">${crumbs}</span>` +
             `<select class="reader-jump">${jumpOptions}</select>` +
+            `<button class="reader-devtoggle" title="Show branch internals">⋮ dev</button>` +
+            (imgSourceId ? `<button class="commit-btn" disabled title="Upload an image first">🚀</button>` : "") +
           `</div>` +
           `<div class="reader">` +
             (imgSourceId
-              ? `<div class="reader-image" data-flow-id="${escapeText(imgSourceId)}">
+              ? `<div class="reader-scene" data-flow-id="${escapeText(imgSourceId)}">
                    <img alt="${escapeText(imgSourceId)}" />
+                   ${chapter ? `<span class="reader-chapter-overlay">${escapeText(chapter)}</span>` : ""}
                    <span class="reader-badge">${escapeText(badge)}</span>
                    <input type="file" accept="image/*" hidden />
                  </div>`
-              : `<div class="reader-image img-missing"><span class="reader-badge">no card</span></div>`) +
-            `<div class="reader-meta">` +
-              (chapter ? `<span class="chapter">${escapeText(chapter)}</span>` : "") +
-              `<span class="id">${escapeText(id)}</span>` +
-              (imgSourceId ? `<button class="commit-btn" disabled title="Upload an image first">🚀 Commit</button>` : "") +
+              : `<div class="reader-scene img-missing">
+                   ${chapter ? `<span class="reader-chapter-overlay">${escapeText(chapter)}</span>` : ""}
+                   <span class="reader-badge">no card</span>
+                 </div>`) +
+            `<div class="reader-narrative">` +
+              (speaker ? `<div class="speaker">${escapeText(speaker)}</div>` : "") +
+              `<div class="text">${escapeText(textStr || "(no text)")}</div>` +
             `</div>` +
-            (speaker ? `<div class="reader-speaker">${escapeText(speaker)}</div>` : "") +
-            `<div class="reader-text${isTextFn ? " branch-note" : ""}">${escapeText(textStr || "(no text)")}</div>` +
-            variantsHtml +
             `<div class="reader-choices">${choiceHtml}${noChoices}</div>` +
+            devPanel +
           `</div>`;
 
         wireReaderControls(imgSourceId);
@@ -1543,37 +1573,53 @@
             renderFlow();
           });
         });
-        flowEl.querySelectorAll(".reader-choice a.jump[data-jump]").forEach(a => {
-          a.addEventListener("click", () => readerGoTo(a.dataset.jump));
+        // Dev toggle shows the hidden panel with variants / effect / require.
+        const devToggle = flowEl.querySelector(".reader-devtoggle");
+        if (devToggle) {
+          devToggle.classList.toggle("active", document.body.classList.contains("dev"));
+          devToggle.addEventListener("click", () => {
+            document.body.classList.toggle("dev");
+            devToggle.classList.toggle("active", document.body.classList.contains("dev"));
+          });
+        }
+        // Clicking a choice button (including combat meta pills) navigates.
+        flowEl.querySelectorAll(".reader-btn[data-jump]").forEach(btn => {
+          btn.addEventListener("click", () => readerGoTo(btn.dataset.jump));
+        });
+        flowEl.querySelectorAll(".reader-btn .combat-meta .pill[data-jump]").forEach(pill => {
+          pill.addEventListener("click", (e) => {
+            e.stopPropagation();
+            readerGoTo(pill.dataset.jump);
+          });
         });
         if (!imgSourceId) return;
-        const imgWrap = flowEl.querySelector(".reader-image[data-flow-id]");
-        if (imgWrap) {
-          const img = imgWrap.querySelector("img");
-          const badge = imgWrap.querySelector(".reader-badge");
-          const fileInput = imgWrap.querySelector('input[type="file"]');
+        const scene = flowEl.querySelector(".reader-scene[data-flow-id]");
+        if (scene) {
+          const img = scene.querySelector("img");
+          const badge = scene.querySelector(".reader-badge");
+          const fileInput = scene.querySelector('input[type="file"]');
           const refresh = () => {
-            imgWrap.classList.remove("img-missing");
+            scene.classList.remove("img-missing");
             const override = (window.__OVERRIDES || {})[imgSourceId];
             const committed = isCommitted(imgSourceId);
             if (override) {
               img.src = override;
-              imgWrap.classList.add("replaced");
-              imgWrap.classList.toggle("committed", committed);
+              scene.classList.add("replaced");
+              scene.classList.toggle("committed", committed);
               badge.textContent = committed ? "COMMITTED" : "OVERRIDE";
             } else {
               img.src = "images/" + imgSourceId + "." + extForId(imgSourceId) + "?t=" + Date.now();
-              imgWrap.classList.remove("replaced", "committed");
+              scene.classList.remove("replaced", "committed");
               badge.textContent = "live";
             }
           };
           img.addEventListener("error", () => {
-            if (!imgWrap.classList.contains("replaced")) {
-              imgWrap.classList.add("img-missing");
+            if (!scene.classList.contains("replaced")) {
+              scene.classList.add("img-missing");
               img.removeAttribute("src");
             }
           });
-          imgWrap.addEventListener("click", (e) => {
+          scene.addEventListener("click", (e) => {
             if (e.target.tagName === "INPUT") return;
             fileInput.click();
           });
@@ -1592,7 +1638,7 @@
           });
           refresh();
         }
-        const commitBtn = flowEl.querySelector(".commit-btn");
+        const commitBtn = flowEl.querySelector(".reader-bar .commit-btn");
         if (commitBtn) {
           const setCommitState = () => {
             const hasOverride = !!(window.__OVERRIDES || {})[imgSourceId];
@@ -1600,7 +1646,7 @@
             commitBtn.classList.toggle("needs-token", hasOverride && !GH.token);
             commitBtn.title = !hasOverride
               ? "Upload an image first"
-              : GH.token ? "Commit to repo" : "Add a GitHub token in Settings first";
+              : GH.token ? "Commit current scene to repo" : "Add a GitHub token in Settings first";
           };
           setCommitState();
           commitBtn.addEventListener("click", async () => {
@@ -1611,7 +1657,7 @@
             }
             commitBtn.disabled = true;
             const prev = commitBtn.textContent;
-            commitBtn.textContent = "Committing…";
+            commitBtn.textContent = "…";
             try {
               await commitOne(imgSourceId);
               renderFlow();
