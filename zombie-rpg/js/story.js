@@ -777,12 +777,20 @@ window.Story = {
       const mayaOffer = (s.companion === "Maya" || s.flags.maya) && s.romance === "maya" && s.flags.lovedMaya;
       if (mayaOffer) {
         intro += "Maya steps up beside her. She doesn't look at you — she can't. \"I can shoot. I can hold a gate. Let me do it, Ellis.\"\n\n";
+      } else if (s.flags.maya) {
+        // Maya didn't volunteer to stay (wrong romance, or not committed),
+        // but she's in the camp. Give her a beat so she doesn't vanish.
+        intro += "Maya is already at the gate, rifle braced across her forearm, pushing survivors through two at a time. She glances up at you. A short nod. Keep moving.\n\n";
       }
       // Ren doesn't volunteer to hold a gate — she volunteers to stay
       // with the too-wounded-to-walk so the column can move faster.
       const renOffer = s.romance === "ren" && s.flags.lovedRen;
       if (renOffer) {
         intro += "Ren's voice is quiet beside you. \"There are three in the medbay who can't walk. If I stay with them, the column moves twice as fast.\" She isn't asking.\n\n";
+      } else {
+        // Ren's always in camp by Day 5. If she isn't the one offering,
+        // she's still here — med kit, steady hands, funneling the injured.
+        intro += "Ren is further up, shepherding the walking wounded, med kit over her shoulder. She catches your eye once and keeps moving.\n\n";
       }
       intro += "The first of them are at the inner fence.";
       return intro;
@@ -925,7 +933,19 @@ window.Story = {
       } else {
         body = "The camp burns behind you. You don't know where you're going. You know you'll keep going.";
       }
-      return opener + body + noraTail;
+      // Acknowledge survivors who made it out. Skip if they're the
+      // romance lead (already covered) or they were the one who stayed.
+      let aside = "";
+      const mayaAlive = s.flags.maya && !s.flags.mayaSacrificed && !(s.romance === "maya" && s.flags.lovedMaya);
+      const renAlive  = !s.flags.renSacrificed && !(s.romance === "ren"  && s.flags.lovedRen);
+      if (mayaAlive && renAlive) {
+        aside = "\n\nMaya walks the flank, rifle low, eyes on the trees. Ren threads through the column with her med kit, bandaging blisters, catching stragglers. Neither of them has stopped moving since the gate.";
+      } else if (mayaAlive) {
+        aside = "\n\nMaya walks the flank, rifle low, eyes on the trees. Every so often she drifts in close enough to check you're still on your feet, then drifts out again.";
+      } else if (renAlive) {
+        aside = "\n\nRen threads through the column, med kit over her shoulder, bandaging blisters, catching stragglers. When she passes you she squeezes your arm once and keeps going.";
+      }
+      return opener + body + aside + noraTail;
     },
     choices: [
       { label: "— THE END —", next: function(s) {

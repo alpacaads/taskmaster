@@ -1026,21 +1026,53 @@ One section per story node, in definition order. Function-branching fields (text
 **Scene art:** `flee_rearguard`  
 **Speaker:** Captain Vega  
 
-<details><summary>Variant: default / with Maya companion / mission partner = maya / mission partner = ren / solo mission / rested in car / told Vega / chore: medbay / chore: perimeter / chore: kitchen / exposed traitor / killed traitor</summary>
+<details><summary>Variant: default / solo mission / rested in car / told Vega / killed traitor</summary>
 
 > The back gate is a bottleneck. Twenty survivors, one path, and the horde already beginning to wrap the wall. Whoever goes last buys the minutes the rest need.
 > 
 > Vega racks her rifle. "I'm the one with the most rounds and the least family. I stay. I slow them."
 > 
+> Ren is further up, shepherding the walking wounded, med kit over her shoulder. She catches your eye once and keeps moving.
+> 
 > The first of them are at the inner fence.
 
 </details>
 
-<details><summary>Variant: saved Nora / bring Nora on mission</summary>
+<details><summary>Variant: with Maya companion / mission partner = maya / mission partner = ren / chore: medbay / chore: perimeter / chore: kitchen / exposed traitor</summary>
+
+> The back gate is a bottleneck. Twenty survivors, one path, and the horde already beginning to wrap the wall. Whoever goes last buys the minutes the rest need.
+> 
+> Vega racks her rifle. "I'm the one with the most rounds and the least family. I stay. I slow them."
+> 
+> Maya is already at the gate, rifle braced across her forearm, pushing survivors through two at a time. She glances up at you. A short nod. Keep moving.
+> 
+> Ren is further up, shepherding the walking wounded, med kit over her shoulder. She catches your eye once and keeps moving.
+> 
+> The first of them are at the inner fence.
+
+</details>
+
+<details><summary>Variant: saved Nora</summary>
 
 > The back gate is a bottleneck. Twenty survivors, one path, and the horde already beginning to wrap the wall. Whoever goes last buys the minutes the rest need.
 > 
 > Vega racks her rifle. Her eyes flick once to Nora clinging to your sleeve, then away. "I'm the one with the most rounds and the least family. I stay. I slow them. Get the kid out."
+> 
+> Ren is further up, shepherding the walking wounded, med kit over her shoulder. She catches your eye once and keeps moving.
+> 
+> The first of them are at the inner fence.
+
+</details>
+
+<details><summary>Variant: bring Nora on mission</summary>
+
+> The back gate is a bottleneck. Twenty survivors, one path, and the horde already beginning to wrap the wall. Whoever goes last buys the minutes the rest need.
+> 
+> Vega racks her rifle. Her eyes flick once to Nora clinging to your sleeve, then away. "I'm the one with the most rounds and the least family. I stay. I slow them. Get the kid out."
+> 
+> Maya is already at the gate, rifle braced across her forearm, pushing survivors through two at a time. She glances up at you. A short nod. Keep moving.
+> 
+> Ren is further up, shepherding the walking wounded, med kit over her shoulder. She catches your eye once and keeps moving.
 > 
 > The first of them are at the inner fence.
 
@@ -1053,6 +1085,8 @@ One section per story node, in definition order. Function-branching fields (text
 > Vega racks her rifle. "I'm the one with the most rounds and the least family. I stay. I slow them."
 > 
 > Maya steps up beside her. She doesn't look at you — she can't. "I can shoot. I can hold a gate. Let me do it, Ellis."
+> 
+> Ren is further up, shepherding the walking wounded, med kit over her shoulder. She catches your eye once and keeps moving.
 > 
 > The first of them are at the inner fence.
 
@@ -1181,21 +1215,43 @@ One section per story node, in definition order. Function-branching fields (text
 **Chapter:** Dawn — The Long Road  
 **Scene art:** `ending_road`  
 
-<details><summary>Variant: default / with Maya companion / mission partner = maya / mission partner = ren / solo mission / rested in car / told Vega / chore: medbay / chore: perimeter / chore: kitchen / exposed traitor / killed traitor</summary>
+<details><summary>Variant: default / solo mission / rested in car / told Vega / killed traitor</summary>
 
 > The camp burns behind you. You don't know where you're going. You know you'll keep going.
+> 
+> Ren threads through the column, med kit over her shoulder, bandaging blisters, catching stragglers. When she passes you she squeezes your arm once and keeps going.
 
 </details>
 
-<details><summary>Variant: saved Nora / bring Nora on mission</summary>
+<details><summary>Variant: with Maya companion / mission partner = maya / mission partner = ren / chore: medbay / chore: perimeter / chore: kitchen / exposed traitor</summary>
+
+> The camp burns behind you. You don't know where you're going. You know you'll keep going.
+> 
+> Maya walks the flank, rifle low, eyes on the trees. Ren threads through the column with her med kit, bandaging blisters, catching stragglers. Neither of them has stopped moving since the gate.
+
+</details>
+
+<details><summary>Variant: saved Nora</summary>
 
 > Nora's hand is sticky in yours. She doesn't ask where you're going. None of them do. They follow your light.
+> 
+> Ren threads through the column, med kit over her shoulder, bandaging blisters, catching stragglers. When she passes you she squeezes your arm once and keeps going.
+
+</details>
+
+<details><summary>Variant: bring Nora on mission</summary>
+
+> Nora's hand is sticky in yours. She doesn't ask where you're going. None of them do. They follow your light.
+> 
+> Maya walks the flank, rifle low, eyes on the trees. Ren threads through the column with her med kit, bandaging blisters, catching stragglers. Neither of them has stopped moving since the gate.
 
 </details>
 
 <details><summary>Variant: romance Maya</summary>
 
 > Twenty survivors follow your light through the pines. Maya walks beside you, her hand finding yours in the dark. Neither of you lets go.
+> 
+> Ren threads through the column, med kit over her shoulder, bandaging blisters, catching stragglers. When she passes you she squeezes your arm once and keeps going.
 
 </details>
 
