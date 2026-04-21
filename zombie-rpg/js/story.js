@@ -341,10 +341,15 @@ window.Story = {
     sceneClass: "forest",
     chapter: "Day 2 — The Pines",
     text: function(s) {
+      const base =
+        "The older bandit laughs, then stops. Something in your face shuts him up.\n\n" +
+        "He jerks his chin at Nora. \"Hide, kid. Behind the big pine. Eyes shut.\"\n\n" +
+        "She looks at you. You nod once — go. She scrambles thirty feet into the brush and curls small behind a mossy log. You can still see the top of her head.";
       if (s.companion === "Maya") {
-        return "Maya's hand is on her knife. You put yours on her shoulder — hold. Not yet.\n\nThe older bandit laughs, then stops. Something in your face shuts him up.\n\nHe nods at Nora. \"Go, kid. Run.\"\n\nShe looks at you. You nod. Maya steps in beside you, not behind you. She's not running either.";
+        return "Maya's hand is on her knife. You put yours on her shoulder — hold. Not yet.\n\n" +
+          base + "\n\nMaya steps in beside you, not behind you. She's not going anywhere either.";
       }
-      return "The older bandit laughs, then stops. Something in your face shuts him up.\n\nHe nods at Nora. \"Go, kid. Run.\"\n\nShe looks at you. You nod.";
+      return base;
     },
     choices: [
       { label: "Fight for your life", tag: "COMBAT", tagClass: "danger",
@@ -406,7 +411,7 @@ window.Story = {
     art: "🚧🛡️⛺",
     sceneClass: "forest",
     chapter: "Day 3 — Greenbelt",
-    text: "You carry Nora the last mile. She's asleep by the time the gate slides open.\n\nThe guards look at you — bloodied, limping — and lower their rifles.",
+    text: "Afterwards you call her out from behind the mossy log. She comes slow, eyes enormous. She doesn't say anything about the blood. She walks the first half-mile and then her legs stop working and you carry her the rest.\n\nBy the time the gate slides open she's asleep on your shoulder. The guards look at you — bloodied, limping, small weight against your neck — and lower their rifles.",
     choices: [
       { label: "\"She needs food. Please.\"",
         effect: s => { s.flags.goodwill = true; },
@@ -668,6 +673,9 @@ window.Story = {
       base += "\n\nRen is at the wall, stitching a graze on a man's scalp with steady hands. She glances up at you as you pass, nods once — you did. We did.";
       if (s.companion2 === "Nora") {
         base += "\n\nA child finds your hand.";
+      } else if (s.flags.coward) {
+        // Callback for closing the freezer door on Day 1.
+        base += "\n\nYou think, unbidden, of a freezer you didn't open. You wonder what colour the walls went.";
       } else if (s.flags.solo) {
         // Pay off the 'I work better alone' / silent-stairwell beat.
         base += "\n\nNo one finds your hand. You made it alone. That was the whole idea.";
@@ -693,8 +701,13 @@ window.Story = {
         return "Ren sings the song. The one her grandmother taught her. She sings it the whole way through, and then again, and then once more.\n\nYou hear all three.";
       }
       // Ren is the camp medic — if nobody else is with the dying hero,
-      // she is. No romance, just presence.
-      return "They'll say you held the line longer than any one person should.\n\nRen stays with you in the medbay when the others can't. She doesn't try to fix you — she knows. She just keeps one hand on yours and hums something low, a song from before.\n\nThey'll carve your name beside the others.";
+      // she is. No romance, just presence. If Nora survived too, she
+      // sits on the floor at the foot of the cot and doesn't leave.
+      let base = "They'll say you held the line longer than any one person should.\n\nRen stays with you in the medbay when the others can't. She doesn't try to fix you — she knows. She just keeps one hand on yours and hums something low, a song from before.";
+      if (s.companion2 === "Nora") {
+        base += "\n\nNora sits on the floor at the foot of the cot. Nobody tells her to. Nobody can make her leave either.";
+      }
+      return base + "\n\nThey'll carve your name beside the others.";
     },
     choices: [
       { label: "— THE END —", next: function(s) {
@@ -807,7 +820,13 @@ window.Story = {
     scene: "hospital_ext",
     sceneClass: "city",
     chapter: "Day 4 — Old Mercy",
-    text: "The hospital squats against the dusk like a wounded animal. The red cross above the door has bled brown.\n\nSomething moves inside.",
+    text: function(s) {
+      let base = "The hospital squats against the dusk like a wounded animal. The red cross above the door has bled brown.\n\nSomething moves inside.";
+      if (s.flags.bringNora) {
+        base += "\n\nNora's hand tightens on your sleeve. You crouch, find her eyes. \"Stay behind me. Don't look at what I do. If I say run, you run all the way back to the road. Okay?\"\n\nShe nods once. She doesn't let go of your sleeve.";
+      }
+      return base;
+    },
     choices: [
       { label: "Through the front. Loud and fast.",
         next: "pharmacy_combat" },
@@ -818,7 +837,13 @@ window.Story = {
     scene: "pharmacy_fight",
     sceneClass: "blood",
     chapter: "Day 4 — Pharmacy",
-    text: "Two of them lurch out of the dark between the shelves. Pill bottles roll under your boots.",
+    text: function(s) {
+      let base = "Two of them lurch out of the dark between the shelves. Pill bottles roll under your boots.";
+      if (s.flags.bringNora) {
+        base += "\n\nYou shove Nora down behind the checkout counter and put yourself between her and the aisle.";
+      }
+      return base;
+    },
     choices: [
       { label: "Fight", tag: "COMBAT", tagClass: "danger",
         combat: { enemy: "walker_pair", onWin: "hospital_lobby", onLose: "death" } },
@@ -840,13 +865,18 @@ window.Story = {
            : "";
     },
     text: function(s) {
+      let base;
       if (s.flags.missionPartner === "maya") {
-        return "You drop into a row of waiting chairs. Maya sits beside you — not touching, but close.\n\n\"You handle yourself. I noticed.\"\n\nA streetlight, somehow still alive, hums outside. She hasn't looked away from you.";
+        base = "You drop into a row of waiting chairs. Maya sits beside you — not touching, but close.\n\n\"You handle yourself. I noticed.\"\n\nA streetlight, somehow still alive, hums outside. She hasn't looked away from you.";
+      } else if (s.flags.missionPartner === "ren") {
+        base = "Ren is shaking. She sits on the floor, back to a vending machine, knees up.\n\n\"I hate this part. After. When my hands remember.\"\n\nYou sit beside her. Her breath slows when you do.";
+      } else {
+        base = "You sit alone in a row of cracked plastic chairs. Stuff a backpack with what you came for. The hospital exhales around you — old breath, no life.\n\nThe vending machine flickers. A poster on the wall says HAVE YOU WASHED YOUR HANDS. Someone drew a face on it a long time ago.\n\nYou could sit another minute. Or you could go.";
       }
-      if (s.flags.missionPartner === "ren") {
-        return "Ren is shaking. She sits on the floor, back to a vending machine, knees up.\n\n\"I hate this part. After. When my hands remember.\"\n\nYou sit beside her. Her breath slows when you do.";
+      if (s.flags.bringNora) {
+        base += "\n\nNora is already out from under the counter. She crosses the lobby without being told and presses herself against your side. You feel her shaking through your jacket.";
       }
-      return "You sit alone in a row of cracked plastic chairs. Stuff a backpack with what you came for. The hospital exhales around you — old breath, no life.\n\nThe vending machine flickers. A poster on the wall says HAVE YOU WASHED YOUR HANDS. Someone drew a face on it a long time ago.\n\nYou could sit another minute. Or you could go.";
+      return base;
     },
     choices: [
       { label: "Lean closer. Let her see you see her.",
@@ -883,13 +913,19 @@ window.Story = {
     chapter: "Day 4 — Camp, dusk",
     text: function(s) {
       const p = s.flags.missionPartner;
+      let base;
       if (p === "ren") {
-        return "Ren drops the med bag on the aid-tent table and is already sorting bottles by label before she's even shrugged her jacket off. She catches your eye, exhales once — that was close — then goes back to work.\n\nOn your way out of the tent you notice something at the south fence: a chain link, cleanly cut. Not zombies. Hands.";
+        base = "Ren drops the med bag on the aid-tent table and is already sorting bottles by label before she's even shrugged her jacket off. She catches your eye, exhales once — that was close — then goes back to work.";
+      } else if (p === "maya") {
+        base = "Maya lets you carry the med bag the last hundred yards. You hand it to Ren at the aid tent — who beams, just for a second — and Maya peels off to dump her rifle on her cot.";
+      } else {
+        base = "You hand the meds to Ren — who beams, just for a second.";
       }
-      if (p === "maya") {
-        return "Maya lets you carry the med bag the last hundred yards. You hand it to Ren at the aid tent — who beams, just for a second — and Maya peels off to dump her rifle on her cot.\n\nOn your way back you notice something at the south fence: a chain link, cleanly cut. Not zombies. Hands.";
+      if (s.flags.bringNora) {
+        base += "\n\nNora doesn't let go of your jacket until you've both sat down on the cot. Then she does — slow, like she had to think about it.";
       }
-      return "You hand the meds to Ren — who beams, just for a second — and then notice something at the south fence: a chain link, cleanly cut. Not zombies. Hands.";
+      base += "\n\nOn your way " + (p === "ren" ? "out of the tent" : "back") + " you notice something at the south fence: a chain link, cleanly cut. Not zombies. Hands.";
+      return base;
     },
     choices: [
       { label: "Investigate the cut fence", tag: "CLUE", tagClass: "warn",

@@ -738,7 +738,7 @@ window.Scenes = (function () {
   // fresh image URLs automatically, so a commit on one device (PC)
   // shows up on another (phone) as soon as Pages rebuilds, without
   // relying on localStorage which is per-device.
-  const BUILD = "128";
+  const BUILD = "129";
 
   // Smart cache-bust: per-scene timestamp from the admin takes priority
   // (committer sees their upload immediately), then a device-wide global

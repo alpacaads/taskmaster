@@ -480,9 +480,9 @@ One section per story node, in definition order. Function-branching fields (text
 
 > The older bandit laughs, then stops. Something in your face shuts him up.
 > 
-> He nods at Nora. "Go, kid. Run."
+> He jerks his chin at Nora. "Hide, kid. Behind the big pine. Eyes shut."
 > 
-> She looks at you. You nod.
+> She looks at you. You nod once — go. She scrambles thirty feet into the brush and curls small behind a mossy log. You can still see the top of her head.
 
 </details>
 
@@ -492,9 +492,11 @@ One section per story node, in definition order. Function-branching fields (text
 > 
 > The older bandit laughs, then stops. Something in your face shuts him up.
 > 
-> He nods at Nora. "Go, kid. Run."
+> He jerks his chin at Nora. "Hide, kid. Behind the big pine. Eyes shut."
 > 
-> She looks at you. You nod. Maya steps in beside you, not behind you. She's not running either.
+> She looks at you. You nod once — go. She scrambles thirty feet into the brush and curls small behind a mossy log. You can still see the top of her head.
+> 
+> Maya steps in beside you, not behind you. She's not going anywhere either.
 
 </details>
 
@@ -583,9 +585,9 @@ One section per story node, in definition order. Function-branching fields (text
 **Chapter:** Day 3 — Greenbelt  
 **Scene art:** (no explicit scene — uses node id)  
 
-> You carry Nora the last mile. She's asleep by the time the gate slides open.
+> Afterwards you call her out from behind the mossy log. She comes slow, eyes enormous. She doesn't say anything about the blood. She walks the first half-mile and then her legs stop working and you carry her the rest.
 > 
-> The guards look at you — bloodied, limping — and lower their rifles.
+> By the time the gate slides open she's asleep on your shoulder. The guards look at you — bloodied, limping, small weight against your neck — and lower their rifles.
 
 **Choices:**
 
@@ -1000,11 +1002,23 @@ One section per story node, in definition order. Function-branching fields (text
 **Chapter:** Sunset — A Memorial  
 **Scene art:** `ending_grave`  
 
-<details><summary>Variant: default / with Maya companion / mission partner = maya / mission partner = ren / solo mission / saved Nora / bring Nora on mission / rested in car / told Vega / chore: medbay / chore: perimeter / chore: kitchen / exposed traitor / killed traitor</summary>
+<details><summary>Variant: default / with Maya companion / mission partner = maya / mission partner = ren / solo mission / rested in car / told Vega / chore: medbay / chore: perimeter / chore: kitchen / exposed traitor / killed traitor</summary>
 
 > They'll say you held the line longer than any one person should.
 > 
 > Ren stays with you in the medbay when the others can't. She doesn't try to fix you — she knows. She just keeps one hand on yours and hums something low, a song from before.
+> 
+> They'll carve your name beside the others.
+
+</details>
+
+<details><summary>Variant: saved Nora / bring Nora on mission</summary>
+
+> They'll say you held the line longer than any one person should.
+> 
+> Ren stays with you in the medbay when the others can't. She doesn't try to fix you — she knows. She just keeps one hand on yours and hums something low, a song from before.
+> 
+> Nora sits on the floor at the foot of the cot. Nobody tells her to. Nobody can make her leave either.
 > 
 > They'll carve your name beside the others.
 
@@ -1146,9 +1160,25 @@ One section per story node, in definition order. Function-branching fields (text
 **Chapter:** Day 4 — Old Mercy  
 **Scene art:** `hospital_ext`  
 
+<details><summary>Variant: default / with Maya companion / mission partner = maya / mission partner = ren / solo mission / saved Nora / rested in car / told Vega / chore: medbay / chore: perimeter / chore: kitchen / exposed traitor / killed traitor / romance Maya / romance Ren</summary>
+
 > The hospital squats against the dusk like a wounded animal. The red cross above the door has bled brown.
 > 
 > Something moves inside.
+
+</details>
+
+<details><summary>Variant: bring Nora on mission</summary>
+
+> The hospital squats against the dusk like a wounded animal. The red cross above the door has bled brown.
+> 
+> Something moves inside.
+> 
+> Nora's hand tightens on your sleeve. You crouch, find her eyes. "Stay behind me. Don't look at what I do. If I say run, you run all the way back to the road. Okay?"
+> 
+> She nods once. She doesn't let go of your sleeve.
+
+</details>
 
 **Choices:**
 
@@ -1161,7 +1191,19 @@ One section per story node, in definition order. Function-branching fields (text
 **Chapter:** Day 4 — Pharmacy  
 **Scene art:** `pharmacy_fight`  
 
+<details><summary>Variant: default / with Maya companion / mission partner = maya / mission partner = ren / solo mission / saved Nora / rested in car / told Vega / chore: medbay / chore: perimeter / chore: kitchen / exposed traitor / killed traitor / romance Maya / romance Ren</summary>
+
 > Two of them lurch out of the dark between the shelves. Pill bottles roll under your boots.
+
+</details>
+
+<details><summary>Variant: bring Nora on mission</summary>
+
+> Two of them lurch out of the dark between the shelves. Pill bottles roll under your boots.
+> 
+> You shove Nora down behind the checkout counter and put yourself between her and the aisle.
+
+</details>
 
 **Choices:**
 
@@ -1185,7 +1227,7 @@ One section per story node, in definition order. Function-branching fields (text
 
 </details>
 
-<details><summary>Variant: mission partner = maya / bring Nora on mission</summary>
+<details><summary>Variant: mission partner = maya</summary>
 
 > You drop into a row of waiting chairs. Maya sits beside you — not touching, but close.
 > 
@@ -1202,6 +1244,18 @@ One section per story node, in definition order. Function-branching fields (text
 > "I hate this part. After. When my hands remember."
 > 
 > You sit beside her. Her breath slows when you do.
+
+</details>
+
+<details><summary>Variant: bring Nora on mission</summary>
+
+> You drop into a row of waiting chairs. Maya sits beside you — not touching, but close.
+> 
+> "You handle yourself. I noticed."
+> 
+> A streetlight, somehow still alive, hums outside. She hasn't looked away from you.
+> 
+> Nora is already out from under the counter. She crosses the lobby without being told and presses herself against your side. You feel her shaking through your jacket.
 
 </details>
 
@@ -1231,11 +1285,13 @@ One section per story node, in definition order. Function-branching fields (text
 
 <details><summary>Variant: default / with Maya companion / solo mission / saved Nora / rested in car / told Vega / chore: medbay / chore: perimeter / chore: kitchen / exposed traitor / killed traitor / romance Maya / romance Ren</summary>
 
-> You hand the meds to Ren — who beams, just for a second — and then notice something at the south fence: a chain link, cleanly cut. Not zombies. Hands.
+> You hand the meds to Ren — who beams, just for a second.
+> 
+> On your way back you notice something at the south fence: a chain link, cleanly cut. Not zombies. Hands.
 
 </details>
 
-<details><summary>Variant: mission partner = maya / bring Nora on mission</summary>
+<details><summary>Variant: mission partner = maya</summary>
 
 > Maya lets you carry the med bag the last hundred yards. You hand it to Ren at the aid tent — who beams, just for a second — and Maya peels off to dump her rifle on her cot.
 > 
@@ -1248,6 +1304,16 @@ One section per story node, in definition order. Function-branching fields (text
 > Ren drops the med bag on the aid-tent table and is already sorting bottles by label before she's even shrugged her jacket off. She catches your eye, exhales once — that was close — then goes back to work.
 > 
 > On your way out of the tent you notice something at the south fence: a chain link, cleanly cut. Not zombies. Hands.
+
+</details>
+
+<details><summary>Variant: bring Nora on mission</summary>
+
+> Maya lets you carry the med bag the last hundred yards. You hand it to Ren at the aid tent — who beams, just for a second — and Maya peels off to dump her rifle on her cot.
+> 
+> Nora doesn't let go of your jacket until you've both sat down on the cot. Then she does — slow, like she had to think about it.
+> 
+> On your way back you notice something at the south fence: a chain link, cleanly cut. Not zombies. Hands.
 
 </details>
 
