@@ -52,7 +52,7 @@ window.Story = {
           Game.toast("+2 ❤️");
         },
         next: "neighbour_wake" },
-      { label: "Take only the medicine. Leave her in peace.",
+      { label: "Take only the medicine. Leave Mrs. Cho in peace.",
         effect: s => { s.hp = Math.min(s.hpMax, s.hp + 3); s.flags.honourable = true; Game.toast("+3 ❤️"); },
         next: "stairwell_first" },
     ]
@@ -64,7 +64,7 @@ window.Story = {
     chapter: "Day 1 — Apartment 3A",
     text: "The armchair creaks. Mrs. Cho's eyes open — milk-white, hungry.\n\nShe lunges.",
     choices: [
-      { label: "Fight her", tag: "COMBAT", tagClass: "danger",
+      { label: "Fight Mrs. Cho", tag: "COMBAT", tagClass: "danger",
         combat: { enemy: "walker_cho", onWin: "cho_loot", onLose: "death" } },
     ]
   },
@@ -509,7 +509,7 @@ window.Story = {
           Game.toast("❤️ ⚡ restored · Ren's trust +1");
         },
         next: "camp_morning" },
-      { label: "Sit with her in silence until she finishes.",
+      { label: "Sit with Ren in silence until she finishes.",
         effect: s => {
           s.hp = s.hpMax; s.stam = s.stamMax;
           s.bonds.ren += 2;
@@ -554,7 +554,7 @@ window.Story = {
       return base;
     },
     choices: [
-      { label: "Tell them about the boy in the subway fire",
+      { label: "Tell Ren about the boy in the subway fire",
         effect: s => { s.bonds.ren += 2; Game.toast("Ren's trust +2"); },
         next: "chore_done" },
       { label: "Change the subject. Some doors stay shut.",
@@ -570,7 +570,7 @@ window.Story = {
     speaker: "Maya",
     text: "Maya climbs the watchtower like she was born there. You hand up coffee. She drinks it without taking her eyes off the treeline.\n\n\"My brother used to do this watch with me. Before.\" She doesn't look at you. \"Six months. Feels like six years.\"\n\nThe wind moves through the pines. She's closer than she needs to be.",
     choices: [
-      { label: "\"Tell me about him.\"",
+      { label: "\"Tell me about your brother.\"",
         effect: s => { s.bonds.maya += 2; Game.toast("Maya's trust +2"); },
         next: "chore_done" },
       { label: "Stand watch in silence. Some things don't need words.",
@@ -964,18 +964,18 @@ window.Story = {
       return base;
     },
     choices: [
-      { label: "Lean closer. Let her see you see her.",
+      { label: "Lean closer. Let Maya see you see her.",
         require: s => s.flags.missionPartner === "maya",
         effect: s => { s.bonds.maya += 2; Game.toast("Maya's trust +2"); },
         next: "mission_return" },
       { label: "Keep it professional. Stand up.",
         require: s => s.flags.missionPartner === "maya",
         next: "mission_return" },
-      { label: "Take her hand. Say nothing.",
+      { label: "Take Ren's hand. Say nothing.",
         require: s => s.flags.missionPartner === "ren",
         effect: s => { s.bonds.ren += 2; Game.toast("Ren's trust +2"); },
         next: "mission_return" },
-      { label: "Give her space. Pack the bag.",
+      { label: "Give Ren space. Pack the bag.",
         require: s => s.flags.missionPartner === "ren",
         next: "mission_return" },
       { label: "Sit the extra minute. You've earned it.",
@@ -1198,7 +1198,7 @@ window.Story = {
       { label: "\"Don't disappear in the morning.\"",
         effect: s => { s.bonds.maya += 3; s.flags.lovedMaya = true; },
         next: "morning_after_maya" },
-      { label: "Kiss her temple. Let her sleep.",
+      { label: "Kiss Maya's temple. Let her sleep.",
         effect: s => { s.bonds.maya += 2; s.flags.lovedMaya = true; },
         next: "morning_after_maya" },
     ]
@@ -1221,7 +1221,7 @@ window.Story = {
       { label: "\"I've got you.\"",
         effect: s => { s.bonds.ren += 3; s.flags.lovedRen = true; },
         next: "morning_after_ren" },
-      { label: "Hold her till the candle dies",
+      { label: "Hold Ren till the candle dies",
         effect: s => { s.bonds.ren += 2; s.flags.lovedRen = true; },
         next: "morning_after_ren" },
     ]

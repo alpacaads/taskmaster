@@ -114,7 +114,7 @@ One section per story node, in definition order. Function-branching fields (text
 1. **Grab everything you can carry**
    - _effect:_ `s => { s.hp = Math.min(s.hpMax, s.hp + 2); Game.giveRandomItem(); Game.giveRandomItem(); Game.toast("+2 ❤️"); }`
    - → `neighbour_wake`
-2. **Take only the medicine. Leave her in peace.**
+2. **Take only the medicine. Leave Mrs. Cho in peace.**
    - _effect:_ `s => { s.hp = Math.min(s.hpMax, s.hp + 3); s.flags.honourable = true; Game.toast("+3 ❤️"); }`
    - → `stairwell_first`
 
@@ -130,7 +130,7 @@ One section per story node, in definition order. Function-branching fields (text
 
 **Choices:**
 
-1. **Fight her** `COMBAT`
+1. **Fight Mrs. Cho** `COMBAT`
    - ⚔ combat: enemy `walker_cho` → win `cho_loot` / lose `death`
 
 ---
@@ -696,7 +696,7 @@ One section per story node, in definition order. Function-branching fields (text
 1. **"Thank you."**
    - _effect:_ `s => { s.hp = s.hpMax; s.stam = s.stamMax; s.bonds.ren += 1; Game.toast("❤️ ⚡ restored · Ren's trust +1"); }`
    - → `camp_morning`
-2. **Sit with her in silence until she finishes.**
+2. **Sit with Ren in silence until she finishes.**
    - _effect:_ `s => { s.hp = s.hpMax; s.stam = s.stamMax; s.bonds.ren += 2; Game.toast("❤️ ⚡ restored · Ren's trust +2"); }`
    - → `camp_morning`
 
@@ -758,7 +758,7 @@ One section per story node, in definition order. Function-branching fields (text
 
 **Choices:**
 
-1. **Tell them about the boy in the subway fire**
+1. **Tell Ren about the boy in the subway fire**
    - _effect:_ `s => { s.bonds.ren += 2; Game.toast("Ren's trust +2"); }`
    - → `chore_done`
 2. **Change the subject. Some doors stay shut.**
@@ -780,7 +780,7 @@ One section per story node, in definition order. Function-branching fields (text
 
 **Choices:**
 
-1. **"Tell me about him."**
+1. **"Tell me about your brother."**
    - _effect:_ `s => { s.bonds.maya += 2; Game.toast("Maya's trust +2"); }`
    - → `chore_done`
 2. **Stand watch in silence. Some things don't need words.**
@@ -1320,15 +1320,15 @@ One section per story node, in definition order. Function-branching fields (text
 
 **Choices:**
 
-1. **Lean closer. Let her see you see her.** _require:_ `s => s.flags.missionPartner === "maya"`
+1. **Lean closer. Let Maya see you see her.** _require:_ `s => s.flags.missionPartner === "maya"`
    - _effect:_ `s => { s.bonds.maya += 2; Game.toast("Maya's trust +2"); }`
    - → `mission_return`
 2. **Keep it professional. Stand up.** _require:_ `s => s.flags.missionPartner === "maya"`
    - → `mission_return`
-3. **Take her hand. Say nothing.** _require:_ `s => s.flags.missionPartner === "ren"`
+3. **Take Ren's hand. Say nothing.** _require:_ `s => s.flags.missionPartner === "ren"`
    - _effect:_ `s => { s.bonds.ren += 2; Game.toast("Ren's trust +2"); }`
    - → `mission_return`
-4. **Give her space. Pack the bag.** _require:_ `s => s.flags.missionPartner === "ren"`
+4. **Give Ren space. Pack the bag.** _require:_ `s => s.flags.missionPartner === "ren"`
    - → `mission_return`
 5. **Sit the extra minute. You've earned it.** _require:_ `s => s.flags.solo_mission`
    - _effect:_ `s => { s.hp = s.hpMax; s.stam = s.stamMax; Game.toast("❤️ ⚡ restored"); }`
@@ -1606,7 +1606,7 @@ One section per story node, in definition order. Function-branching fields (text
 1. **"Don't disappear in the morning."**
    - _effect:_ `s => { s.bonds.maya += 3; s.flags.lovedMaya = true; }`
    - → `morning_after_maya`
-2. **Kiss her temple. Let her sleep.**
+2. **Kiss Maya's temple. Let her sleep.**
    - _effect:_ `s => { s.bonds.maya += 2; s.flags.lovedMaya = true; }`
    - → `morning_after_maya`
 
@@ -1652,7 +1652,7 @@ One section per story node, in definition order. Function-branching fields (text
 1. **"I've got you."**
    - _effect:_ `s => { s.bonds.ren += 3; s.flags.lovedRen = true; }`
    - → `morning_after_ren`
-2. **Hold her till the candle dies**
+2. **Hold Ren till the candle dies**
    - _effect:_ `s => { s.bonds.ren += 2; s.flags.lovedRen = true; }`
    - → `morning_after_ren`
 
