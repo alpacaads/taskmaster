@@ -442,8 +442,11 @@ window.Story = {
     choices: [
       { label: "\"She needs food. Please.\"",
         effect: s => {
-          s.flags.goodwill = true;
-          // Maya fought beside you for this kid. It lands.
+          // goodwill flag stays narrowly tied to the 'offer supplies
+          // at the gate' path — Vega's spare mag at the briefing
+          // literally references the rounds you handed over.
+          // The sacrifice path gets its reward via Maya's +2 bond
+          // and the carrying-Nora-through-the-gate narrative.
           if (s.companion === "Maya") { s.bonds.maya += 2; Game.toast("Maya's trust +2"); }
         },
         next: "greenbelt_in" },

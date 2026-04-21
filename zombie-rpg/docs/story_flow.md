@@ -606,7 +606,7 @@ One section per story node, in definition order. Function-branching fields (text
 **Choices:**
 
 1. **"She needs food. Please."**
-   - _effect:_ `s => { s.flags.goodwill = true; // Maya fought beside you for this kid. It lands. if (s.companion === "Maya") { s.bonds.maya += 2; Game.toast("Maya's trust +2"); } }`
+   - _effect:_ `s => { // goodwill flag stays narrowly tied to the 'offer supplies // at the gate' path — Vega's spare mag at the briefing // literally references the rounds you handed over. // The sacrifice path gets its reward via Maya's +2 bond // and the carrying-Nora-through-the-gate narrative. if (s.companion === "Maya") { s.bonds.maya += 2; Game.toast("Maya's trust +2"); } }`
    - → `greenbelt_in`
 
 ---
