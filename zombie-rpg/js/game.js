@@ -425,8 +425,6 @@ window.Game = (function () {
     greenbelt_in:       "greenbelt_camp",
     horde_warning:      "horde_charge",
     ending_hero:        "horde_wall",
-    ending_fallen:      "ending_grave",
-    ending_escape:      "ending_road",
     ending_final_hero:  "ending_dawn",
     ending_final_fallen:"ending_grave",
     ending_final_escape:"ending_road",

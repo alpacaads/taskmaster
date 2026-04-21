@@ -984,26 +984,6 @@ window.Story = {
     ]
   },
 
-  ending_fallen: {
-    art: "🌅🕯️",
-    sceneClass: "blood",
-    chapter: "Ending — Fallen",
-    text: "They'll say you held the line longer than any man should.\n\nThey'll carve your name into the wall beside the others.\n\nDead Light — for the living.",
-    choices: [
-      { label: "— THE END —", next: "ending_final_fallen" },
-    ]
-  },
-
-  ending_escape: {
-    art: "🌲🚶🚶‍♀️👧",
-    sceneClass: "forest",
-    chapter: "Ending — The Long Road",
-    text: "The camp burns behind you. Twenty survivors follow your flashlight through the pines.\n\nYou don't know where you're going. You know you'll keep going.\n\nThat's what the living do.",
-    choices: [
-      { label: "— THE END —", next: "ending_final_escape" },
-    ]
-  },
-
   ending_final_hero:        { scene: "ending_dawn",  sceneClass: "forest", chapter: "Ending A — Defender",  text: "You chose to stand. You chose to matter.\n\nThanks for playing Dead Light.", choices: [{ label: "Back to title", next: "__title__" }] },
   ending_final_fallen:      { scene: "ending_grave", sceneClass: "blood",  chapter: "Ending B — Martyr",    text: "You gave everything. They remember.\n\nThanks for playing Dead Light.",       choices: [{ label: "Back to title", next: "__title__" }] },
   ending_final_escape:      { scene: "ending_road",  sceneClass: "forest", chapter: "Ending C — Survivor",  text: "You chose to keep walking. For yourself. For them.\n\nThanks for playing Dead Light.", choices: [{ label: "Back to title", next: "__title__" }] },

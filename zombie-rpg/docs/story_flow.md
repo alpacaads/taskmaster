@@ -56,8 +56,6 @@ One section per story node, in definition order. Function-branching fields (text
 - [`romance_ren`](#romance_ren) — Day 4 — Ren's medbay
 - [`morning_after_maya`](#morning_after_maya) — Day 5 — Pre-dawn
 - [`morning_after_ren`](#morning_after_ren) — Day 5 — Pre-dawn
-- [`ending_fallen`](#ending_fallen) — Ending — Fallen
-- [`ending_escape`](#ending_escape) — Ending — The Long Road
 - [`ending_final_hero`](#ending_final_hero) — Ending A — Defender
 - [`ending_final_fallen`](#ending_final_fallen) — Ending B — Martyr
 - [`ending_final_escape`](#ending_final_escape) — Ending C — Survivor
@@ -1371,40 +1369,6 @@ One section per story node, in definition order. Function-branching fields (text
 
 1. **"You either."**
    - → `horde_warning`
-
----
-
-## <a id="ending_fallen"></a>`ending_fallen`
-**Chapter:** Ending — Fallen  
-**Scene art:** (no explicit scene — uses node id)  
-
-> They'll say you held the line longer than any man should.
-> 
-> They'll carve your name into the wall beside the others.
-> 
-> Dead Light — for the living.
-
-**Choices:**
-
-1. **— THE END —**
-   - → `ending_final_fallen`
-
----
-
-## <a id="ending_escape"></a>`ending_escape`
-**Chapter:** Ending — The Long Road  
-**Scene art:** (no explicit scene — uses node id)  
-
-> The camp burns behind you. Twenty survivors follow your flashlight through the pines.
-> 
-> You don't know where you're going. You know you'll keep going.
-> 
-> That's what the living do.
-
-**Choices:**
-
-1. **— THE END —**
-   - → `ending_final_escape`
 
 ---
 

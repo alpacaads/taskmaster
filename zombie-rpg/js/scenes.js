@@ -738,7 +738,7 @@ window.Scenes = (function () {
   // fresh image URLs automatically, so a commit on one device (PC)
   // shows up on another (phone) as soon as Pages rebuilds, without
   // relying on localStorage which is per-device.
-  const BUILD = "123";
+  const BUILD = "124";
 
   // Smart cache-bust: per-scene timestamp from the admin takes priority
   // (committer sees their upload immediately), then a device-wide global
@@ -770,8 +770,10 @@ window.Scenes = (function () {
     neighbour_apt:       "cluttered small apartment interior at night, elderly woman slumped in an armchair facing away, pantry shelves with canned food, medical bag on a counter, dim warm lamp light, suspended dust motes",
     neighbour_wake:      "horror still, elderly woman zombie rising from an armchair lunging forward with milky white eyes, mouth open, tattered nightgown, dim apartment interior, motion blur, shocking moment",
     stairwell:           "concrete apartment stairwell descending into darkness at night, single shaky flashlight beam from above illuminating dust and water dripping, pitch black below, claustrophobic horror, oppressive silence",
+    stairwell_first:     "dim concrete apartment stairwell at night, a lone survivor halfway down with a flickering flashlight, a shadowy figure one landing below partially lit — a woman in an army jacket with a hunting knife drawn — raspy whisper bouncing off the walls, peeling paint, water dripping, dust suspended in the beam, tense first-meeting moment, cinematic chiaroscuro",
     meet_maya:           "tense first meeting between two strangers in a dim concrete stairwell of a rundown apartment building at night, a tough woman in a faded army jacket cautiously holding out a crowbar toward a wary man with a flashlight, dust suspended in the flashlight beam, peeling paint, dripping water, claustrophobic, moody chiaroscuro lighting",
     alone_street:        "empty post-apocalyptic city street at night, abandoned cars choking the road, a single shambling zombie silhouette between the wrecks, dim sodium streetlamp, fog, moonlight, oppressive stillness",
+    alone_street_sneak:  "low-angle POV of a lone survivor crouched between two rusted abandoned cars at night, sliding forward like a shadow, a single shambling zombie silhouette twitching its head three cars down just past the windshield, dim sodium streetlamp, fog at ankle level, held breath tension, cinematic horror stealth moment",
     street_plan:         "two survivors crouched behind an abandoned car at night, woman in army jacket pointing toward a corner store across a rubble-strewn street, dim flashlight, tense planning moment, gritty",
     grocery_front:       "dark abandoned supermarket entrance at night, jammed automatic glass doors, two zombies lurching out past tipped shopping carts, broken neon sign, flickering interior fluorescent light, blood smears on glass",
     grocery_front_win:   "interior of a dark abandoned supermarket at night, two zombie bodies slumped against tipped shopping carts, one of them wearing a scarred police load-bearing vest with exposed trauma plates, a lone survivor crouched beside it cutting the vest free with a knife, flickering fluorescent light, shallow blood on tile, cinematic aftermath moment, photorealistic, gritty",
