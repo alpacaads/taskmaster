@@ -853,7 +853,13 @@ window.Combat = (function () {
       // Heal amount + cooldown both scale with bond / love.
       const heal = renHealAmount();
       const cd   = renHealCooldown();
-      if (state.renCd <= 0 && s.hp < s.hpMax) {
+      // Only actually spend the heal when it's worth spending:
+      //   - hero below 60% (things are getting dicey), OR
+      //   - hero low enough that the heal won't mostly overflow.
+      const lowHp = s.hp <= Math.floor(s.hpMax * 0.6);
+      const fullBenefit = s.hp <= s.hpMax - heal;
+      const shouldHeal = state.renCd <= 0 && (lowHp || fullBenefit);
+      if (shouldHeal) {
         s.hp = Math.min(s.hpMax, s.hp + heal);
         log(`Ren patches you — +${heal} HP.`, "ally");
         Sound.play("heal");
@@ -861,8 +867,9 @@ window.Combat = (function () {
         refreshHud();
         state.renCd = cd;
         flashAlly("ren");
-      } else if (state.renCd <= 0) {
-        state.renCd = 1;
+      } else if (state.renCd < 0) {
+        // Ready but not needed — hold, don't drift into deep negatives.
+        state.renCd = 0;
       }
     }
 
@@ -893,10 +900,14 @@ window.Combat = (function () {
 
     if (noraPresent()) {
       state.noraCd = (state.noraCd || 0) - 1;
-      if (state.noraCd <= 0 && !state.noraWarn) {
-        // Nora spots a feint and whispers the angle — next enemy swing
-        // goes wide. Doesn't feed the brace counter (she's dodging for
-        // you, not planting your feet).
+      // Hold the warning until you actually need it: she pipes up once
+      // the fight turns (hero below ~60%) OR the enemy is still healthy
+      // enough to keep hitting hard. Otherwise she keeps watching.
+      const lowHp = s.hp <= Math.floor(s.hpMax * 0.6);
+      const fightStillDangerous = state.enemy.hp > 5;
+      const shouldWarn = state.noraCd <= 0 && !state.noraWarn
+        && (lowHp || (state.turn >= 2 && fightStillDangerous));
+      if (shouldWarn) {
         state.noraWarn = true;
         const cues = [
           "Nora whispers — \"Left side. Duck.\"",
@@ -907,6 +918,8 @@ window.Combat = (function () {
         Sound.play("dodge");
         flashAlly("nora");
         state.noraCd = 4;
+      } else if (state.noraCd < 0) {
+        state.noraCd = 0;
       }
     }
   }
