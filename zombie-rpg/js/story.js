@@ -4,6 +4,16 @@
 // require: function(state) returns bool
 // combat: { enemy: 'walker'|'runner'|'bloater'|'bandit'|'horde', onWin, onLose }
 
+// Pay off flags.goodwill once, the first time the player crosses into
+// the Greenbelt camp proper. Bumped into a helper because two choices
+// at greenbelt_in both lead into camp and either should redeem the gift.
+function payGoodwillOnce(s) {
+  if (s.flags && s.flags.goodwill && !s.flags.goodwill_paid) {
+    s.ammo += 3;
+    s.flags.goodwill_paid = true;
+  }
+}
+
 window.Story = {
 
   intro: {
@@ -465,9 +475,14 @@ window.Story = {
     },
     choices: [
       { label: "Let Ren patch you up properly before bed.", tag: "BOND", tagClass: "warn",
+        effect: payGoodwillOnce,
         next: "ren_medbay_intro" },
       { label: "Sleep now. Tomorrow is another day.",
-        effect: s => { s.hp = s.hpMax; s.stam = s.stamMax; Game.toast("❤️ ⚡ restored"); },
+        effect: s => {
+          s.hp = s.hpMax; s.stam = s.stamMax;
+          payGoodwillOnce(s);
+          Game.toast("❤️ ⚡ restored");
+        },
         next: "camp_morning" },
     ]
   },
@@ -607,7 +622,13 @@ window.Story = {
           (s.flags.maya ? "Maya's across the table, back half-turned. The map is the only thing the three of you are willing to look at.\n\n"
                         : "Vega's the only other person here, and she's all business.\n\n");
       }
-      return tag + "\"Old Mercy Hospital. Three klicks south. Pharmacy on the second floor — antibiotics, painkillers, anything that hasn't walked off.\"\n\nShe spreads a hand-drawn map. \"In and out. Don't be a hero. Pick someone to take.\"";
+      let briefing = "\"Old Mercy Hospital. Three klicks south. Pharmacy on the second floor — antibiotics, painkillers, anything that hasn't walked off.\"";
+      if (s.flags.goodwill) {
+        // Pay off the gate 'offer supplies as a gift' choice.
+        briefing += "\n\nShe slides something across the table before she unfolds the map — a clean spare magazine. \"For the rounds you handed me at the gate. We remember that here.\"";
+      }
+      briefing += "\n\nShe spreads a hand-drawn map. \"In and out. Don't be a hero. Pick someone to take.\"";
+      return tag + briefing;
     },
     choices: [
       { label: "Take Maya — she knows how to fight",
@@ -677,6 +698,11 @@ window.Story = {
       rally.push("Vega's already on the wall");
       if (s.flags.savedNora) rally.push("Nora ducks into the medbay sandbags");
       intro += rally.join(", ") + ".\n\n";
+      // Ren notices the Maya romance on her way past. One quiet beat
+      // so the love triangle doesn't just hang silent.
+      if (s.romance === "maya" && s.flags.lovedMaya) {
+        intro += "Ren passes you on her way to the wall, med kit bouncing. She catches your eye. A small, real smile. \"Good,\" she says, and keeps moving.\n\n";
+      }
       return intro + "\"We hold, or we run. Choose.\"";
     },
     choices: [
@@ -725,6 +751,11 @@ window.Story = {
       } else if (s.flags.solo) {
         // Pay off the 'I work better alone' / silent-stairwell beat.
         base += "\n\nNo one finds your hand. You made it alone. That was the whole idea.";
+      }
+      if (s.flags.honourable) {
+        // Callback for leaving Mrs. Cho in peace. Folded in at the end
+        // as a grace note, independent of the companion branch above.
+        base += "\n\nA long breath. You think of an armchair. Of a small door you left shut. Of a woman who didn't have to become something she never wanted to be.";
       }
       return base;
     },
@@ -981,7 +1012,6 @@ window.Story = {
     choices: [
       { label: "Investigate the cut fence", tag: "CLUE", tagClass: "warn",
         effect: s => {
-          s.flags.foundCut = true;
           // Sneaking out alone. Nobody's with you at the fence.
           delete s.flags.missionPartner;
           delete s.flags.solo_mission;
@@ -1003,7 +1033,12 @@ window.Story = {
     scene: "gate_ajar_night",
     sceneClass: "night",
     chapter: "Day 4 — South Fence",
-    text: "Bolt cutters in the brush. Fresh boot prints. Whoever did this is in the camp — and they're coming back.",
+    text: function(s) {
+      if (s.companion === "Maya") {
+        return "Bolt cutters in the brush. Fresh boot prints. Whoever did this is in the camp — and they're coming back.\n\nMaya is already there, rifle low, crouched beside you. She must have heard you slip out.\n\n\"Can't say I'm surprised,\" she murmurs. \"What's the plan?\"";
+      }
+      return "Bolt cutters in the brush. Fresh boot prints. Whoever did this is in the camp — and they're coming back.";
+    },
     choices: [
       { label: "Lie in wait", tag: "RISKY", tagClass: "warn", next: "confront_traitor" },
       { label: "Tell Vega and bring the cavalry",
@@ -1020,8 +1055,15 @@ window.Story = {
     chapter: "Day 4 — South Fence",
     speaker: "???",
     text: function(s) {
+      const withMaya = s.companion === "Maya";
       if (s.flags.toldVega) {
+        if (withMaya) {
+          return "Vega on your left with a blinding rifle flashlight. Maya on your right, rifle up, breath even. You between them. The man crouched at the cut fence spins — a trader from two tents over. Calder. Sleeve pushed up. The bite mark on his forearm is fresh and black.\n\n\"Please. They said if I let them in, they'd let me live. I have a d—\"\n\nHis throat spasms. His eyes fog. The bite has already won — and you're the only clean angle.";
+        }
         return "Vega moves like she's done this before — two rifles and a blinding flashlight at your back. The man crouched at the cut fence spins. A trader from two tents over — Calder. Sleeve pushed up. The bite mark on his forearm is fresh and black.\n\n\"Please. They said if I let them in, they'd let me live. I have a d—\"\n\nHis throat spasms. His eyes fog. The bite has already won — and you're between him and Vega's rifles.";
+      }
+      if (withMaya) {
+        return "You and Maya wait in the brush, motionless. He doesn't see her until after he sees you.\n\nA trader from two tents over — Calder. Sleeve pushed up. The bite mark on his forearm is fresh and black.\n\n\"Please. They said if I let them in, they'd let me live. I have a d—\"\n\nHis throat spasms. His eyes fog. The bite has already won.";
       }
       return "He freezes when he sees you. A trader from two tents over — Calder. Sleeve pushed up. The bite mark on his forearm is fresh and black.\n\n\"Please. They said if I let them in, they'd let me live. I have a d—\"\n\nHis throat spasms. His eyes fog. The bite has already won.";
     },
@@ -1046,8 +1088,17 @@ window.Story = {
     sceneClass: "night",
     chapter: "Day 4 — South Fence",
     text: function(s) {
+      const withMaya = s.companion === "Maya";
       if (s.flags.toldVega) {
-        return "It's over. He's smaller now. Calder again, almost.\n\nVega lowers her rifle and spits into the grass. \"Whole camp hears about this before sunrise,\" she says, already turning toward the bell.\n\nRen is already at the fence by the time the bell starts. She catches your eye once — gratitude, quick as a blink — then kneels beside the body with a clean sheet.";
+        let base = "It's over. He's smaller now. Calder again, almost.\n\nVega lowers her rifle and spits into the grass. \"Whole camp hears about this before sunrise,\" she says, already turning toward the bell.";
+        if (withMaya) {
+          base += "\n\nMaya drops into a crouch beside the body and starts checking pockets, professional. \"Names in his wallet,\" she says without looking up. \"If he was signalling, the ones on the outside aren't far.\"";
+        }
+        base += "\n\nRen is already at the fence by the time the bell starts. She catches your eye once — gratitude, quick as a blink — then kneels beside the body with a clean sheet.";
+        return base;
+      }
+      if (withMaya) {
+        return "It's over. He's smaller now. Calder again, almost.\n\nMaya lowers her rifle slow. \"You okay?\" she asks without taking her eyes off the body.\n\n\"No.\"\n\n\"Neither am I. Choice still yours, though.\"";
       }
       return "It's over. He's smaller now. Calder again, almost.\n\nYou stand in the dark with the weight of it — and the choice still yours.";
     },

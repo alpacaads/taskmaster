@@ -652,9 +652,10 @@ One section per story node, in definition order. Function-branching fields (text
 **Choices:**
 
 1. **Let Ren patch you up properly before bed.** `BOND`
+   - _effect:_ `function payGoodwillOnce(s) { if (s.flags && s.flags.goodwill && !s.flags.goodwill_paid) { s.ammo += 3; s.flags.goodwill_paid = true; } }`
    - → `ren_medbay_intro`
 2. **Sleep now. Tomorrow is another day.**
-   - _effect:_ `s => { s.hp = s.hpMax; s.stam = s.stamMax; Game.toast("❤️ ⚡ restored"); }`
+   - _effect:_ `s => { s.hp = s.hpMax; s.stam = s.stamMax; payGoodwillOnce(s); Game.toast("❤️ ⚡ restored"); }`
    - → `camp_morning`
 
 ---
@@ -930,7 +931,7 @@ One section per story node, in definition order. Function-branching fields (text
 
 </details>
 
-<details><summary>Variant: with Maya companion / mission partner = maya / mission partner = ren / chore: medbay / chore: perimeter / chore: kitchen / romance Maya</summary>
+<details><summary>Variant: with Maya companion / mission partner = maya / mission partner = ren / chore: medbay / chore: perimeter / chore: kitchen</summary>
 
 > A siren shatters the morning. A horde — hundreds — pouring down the old highway. They'll hit the fence in minutes.
 > 
@@ -985,6 +986,20 @@ One section per story node, in definition order. Function-branching fields (text
 > No one knows what you did at the south fence. The camp is calm — until it isn't.
 > 
 > Ren throws a med kit over her shoulder, Vega's already on the wall.
+> 
+> "We hold, or we run. Choose."
+
+</details>
+
+<details><summary>Variant: romance Maya</summary>
+
+> A siren shatters the morning. A horde — hundreds — pouring down the old highway. They'll hit the fence in minutes.
+> 
+> Something's wrong with the south fence — whatever it is, there's no time to fix it now.
+> 
+> Maya racks her rifle, Ren throws a med kit over her shoulder, Vega's already on the wall.
+> 
+> Ren passes you on her way to the wall, med kit bouncing. She catches your eye. A small, real smile. "Good," she says, and keeps moving.
 > 
 > "We hold, or we run. Choose."
 
@@ -1364,7 +1379,7 @@ One section per story node, in definition order. Function-branching fields (text
 **Choices:**
 
 1. **Investigate the cut fence** `CLUE`
-   - _effect:_ `s => { s.flags.foundCut = true; // Sneaking out alone. Nobody's with you at the fence. delete s.flags.missionPartner; delete s.flags.solo_mission; delete s.flags.bringNora; }`
+   - _effect:_ `s => { // Sneaking out alone. Nobody's with you at the fence. delete s.flags.missionPartner; delete s.flags.solo_mission; delete s.flags.bringNora; }`
    - → `investigate_traitor`
 2. **Mention it to Vega in the morning. Get warm by the fire.**
    - _effect:_ `s => { // Back at camp — the mission is over, companion rules apply again. delete s.flags.missionPartner; delete s.flags.solo_mission; delete s.flags.bringNora; }`
@@ -1376,7 +1391,21 @@ One section per story node, in definition order. Function-branching fields (text
 **Chapter:** Day 4 — South Fence  
 **Scene art:** `gate_ajar_night`  
 
+<details><summary>Variant: default / mission partner = maya / mission partner = ren / solo mission / saved Nora / bring Nora on mission / rested in car / told Vega / chore: medbay / chore: perimeter / chore: kitchen / exposed traitor / killed traitor / romance Ren</summary>
+
 > Bolt cutters in the brush. Fresh boot prints. Whoever did this is in the camp — and they're coming back.
+
+</details>
+
+<details><summary>Variant: with Maya companion / romance Maya</summary>
+
+> Bolt cutters in the brush. Fresh boot prints. Whoever did this is in the camp — and they're coming back.
+> 
+> Maya is already there, rifle low, crouched beside you. She must have heard you slip out.
+> 
+> "Can't say I'm surprised," she murmurs. "What's the plan?"
+
+</details>
 
 **Choices:**
 
@@ -1393,9 +1422,21 @@ One section per story node, in definition order. Function-branching fields (text
 **Scene art:** fn → `confront_traitor` _(default, with Maya companion, mission partner = maya, mission partner = ren, solo mission, saved Nora, bring Nora on mission, rested in car, chore: medbay, chore: perimeter, chore: kitchen, exposed traitor, killed traitor, romance Maya, romance Ren)_, `confront_traitor_vega` _(told Vega)_  
 **Speaker:** ???  
 
-<details><summary>Variant: default / with Maya companion / mission partner = maya / mission partner = ren / solo mission / saved Nora / bring Nora on mission / rested in car / chore: medbay / chore: perimeter / chore: kitchen / exposed traitor / killed traitor / romance Maya / romance Ren</summary>
+<details><summary>Variant: default / mission partner = maya / mission partner = ren / solo mission / saved Nora / bring Nora on mission / rested in car / chore: medbay / chore: perimeter / chore: kitchen / exposed traitor / killed traitor / romance Ren</summary>
 
 > He freezes when he sees you. A trader from two tents over — Calder. Sleeve pushed up. The bite mark on his forearm is fresh and black.
+> 
+> "Please. They said if I let them in, they'd let me live. I have a d—"
+> 
+> His throat spasms. His eyes fog. The bite has already won.
+
+</details>
+
+<details><summary>Variant: with Maya companion / romance Maya</summary>
+
+> You and Maya wait in the brush, motionless. He doesn't see her until after he sees you.
+> 
+> A trader from two tents over — Calder. Sleeve pushed up. The bite mark on his forearm is fresh and black.
 > 
 > "Please. They said if I let them in, they'd let me live. I have a d—"
 > 
@@ -1425,11 +1466,23 @@ One section per story node, in definition order. Function-branching fields (text
 **Chapter:** Day 4 — South Fence  
 **Scene art:** fn → `traitor_aftermath` _(default, with Maya companion, mission partner = maya, mission partner = ren, solo mission, saved Nora, bring Nora on mission, rested in car, chore: medbay, chore: perimeter, chore: kitchen, exposed traitor, killed traitor, romance Maya, romance Ren)_, `traitor_aftermath_vega` _(told Vega)_  
 
-<details><summary>Variant: default / with Maya companion / mission partner = maya / mission partner = ren / solo mission / saved Nora / bring Nora on mission / rested in car / chore: medbay / chore: perimeter / chore: kitchen / exposed traitor / killed traitor / romance Maya / romance Ren</summary>
+<details><summary>Variant: default / mission partner = maya / mission partner = ren / solo mission / saved Nora / bring Nora on mission / rested in car / chore: medbay / chore: perimeter / chore: kitchen / exposed traitor / killed traitor / romance Ren</summary>
 
 > It's over. He's smaller now. Calder again, almost.
 > 
 > You stand in the dark with the weight of it — and the choice still yours.
+
+</details>
+
+<details><summary>Variant: with Maya companion / romance Maya</summary>
+
+> It's over. He's smaller now. Calder again, almost.
+> 
+> Maya lowers her rifle slow. "You okay?" she asks without taking her eyes off the body.
+> 
+> "No."
+> 
+> "Neither am I. Choice still yours, though."
 
 </details>
 
