@@ -189,6 +189,10 @@ window.Game = (function () {
     document.getElementById("speaker").textContent = speaker || "";
     const text = typeof node.text === "function" ? node.text(state) : node.text;
     document.getElementById("story-text").textContent = text || "";
+    // Reset scroll — long scenes used to land you mid-paragraph because
+    // the narrative panel kept its scrollTop from the previous node.
+    const narrativeEl = document.getElementById("narrative");
+    if (narrativeEl) narrativeEl.scrollTop = 0;
 
     // Choices
     const choicesEl = document.getElementById("choices");
@@ -203,6 +207,7 @@ window.Game = (function () {
       btn.addEventListener("click", () => handleChoice(c));
       choicesEl.appendChild(btn);
     });
+    choicesEl.scrollTop = 0;
 
     // Fade in the new scene content so jumps don't feel instant.
     // Re-triggering the CSS animation via a reflow is cheap and resets
