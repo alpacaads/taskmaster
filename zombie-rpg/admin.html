@@ -227,106 +227,141 @@
     .token-status.ok { background: #1a3010; color: var(--accent-2); }
     .token-status.missing { background: #3a1a1a; color: #e0a0a0; }
 
-    /* Flow view */
+    /* Flow chart view */
     #flow {
-      padding: 18px;
-      font-family: ui-monospace, "SF Mono", Menlo, monospace;
-      font-size: 12px; line-height: 1.5;
+      position: relative;
+      overflow: auto;
+      background: #06080a;
+      padding: 24px;
       color: var(--text);
       display: none;
+      /* Let the chart inside size itself beyond the viewport. */
+      min-height: calc(100vh - 80px);
     }
     body.view-flow #grid { display: none; }
     body.view-flow #flow { display: block; }
     body.view-flow footer { display: none; }
-    .flow-node {
+    .view-toggle.active {
+      background: var(--accent);
+      color: #0b0f0a;
+      border-color: var(--accent);
+      font-weight: 700;
+    }
+
+    .flow-chart {
+      position: relative;
+      /* JS sets width/height based on computed layout. */
+    }
+    .flow-chart svg {
+      position: absolute; top: 0; left: 0;
+      pointer-events: none;
+      overflow: visible;
+    }
+    .flow-chart svg path {
+      fill: none;
+      stroke: var(--accent);
+      stroke-width: 1.5;
+      opacity: 0.55;
+    }
+    .flow-chart svg path.combat { stroke: var(--danger); }
+    .flow-chart svg path.combat-lose { stroke: var(--danger); stroke-dasharray: 4 3; opacity: 0.45; }
+
+    .flow-box {
+      position: absolute;
+      width: 180px;
       background: var(--panel);
       border: 1px solid var(--border);
-      border-left: 3px solid var(--accent);
+      border-top: 3px solid var(--accent);
       border-radius: 6px;
-      padding: 8px 10px;
-      margin: 4px 0;
-      display: grid;
-      grid-template-columns: 120px 1fr auto;
-      gap: 10px;
-      align-items: start;
+      padding: 6px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+      display: flex; flex-direction: column; gap: 4px;
+      transition: transform 120ms ease, box-shadow 120ms ease;
     }
-    .flow-thumb-wrap {
+    .flow-box.combat { border-top-color: var(--danger); }
+    .flow-box.ending { border-top-color: var(--warn); }
+    .flow-box.ref { opacity: 0.55; border-top-style: dashed; }
+    .flow-box:hover { transform: translateY(-1px); box-shadow: 0 6px 18px rgba(0,0,0,0.6); }
+
+    .flow-thumb {
       position: relative;
-      width: 120px; aspect-ratio: 3 / 2;
+      width: 100%; aspect-ratio: 3 / 2;
       background: #000;
-      border: 1px solid var(--border);
       border-radius: 4px;
       overflow: hidden;
-      flex-shrink: 0;
+      cursor: pointer;
     }
-    .flow-thumb-wrap img {
+    .flow-thumb img {
       width: 100%; height: 100%; object-fit: cover; display: block;
     }
-    .flow-thumb-wrap.img-missing::after {
-      content: "no image";
+    .flow-thumb.img-missing::after {
+      content: "click to upload";
       position: absolute; inset: 0;
       display: flex; align-items: center; justify-content: center;
       color: var(--text-muted); font-size: 10px; letter-spacing: 1px;
       background: repeating-linear-gradient(45deg, #0a0d08 0 8px, #11140d 8px 16px);
       pointer-events: none;
     }
-    .flow-thumb-wrap .flow-badge {
+    .flow-thumb::before {
+      /* Hover hint overlay. */
+      content: "✎ swap";
+      position: absolute; inset: 0;
+      display: flex; align-items: center; justify-content: center;
+      color: #fff; font-size: 11px; letter-spacing: 2px;
+      background: rgba(0,0,0,0.55);
+      opacity: 0;
+      transition: opacity 120ms ease;
+      pointer-events: none;
+      z-index: 2;
+    }
+    .flow-thumb:hover::before { opacity: 1; }
+    .flow-thumb .flow-badge {
       position: absolute; top: 3px; right: 3px;
       background: rgba(0,0,0,0.7); color: var(--accent-2);
       font-size: 9px; padding: 2px 5px; border-radius: 3px;
       letter-spacing: 0.5px;
+      z-index: 3;
     }
-    .flow-thumb-wrap.replaced .flow-badge { background: var(--warn); color: #0b0f0a; }
-    .flow-thumb-wrap.replaced.committed .flow-badge { background: var(--accent); color: #0b0f0a; }
-    .flow-main { min-width: 0; }
-    .flow-controls {
-      display: flex; flex-direction: column; gap: 4px; align-items: stretch;
+    .flow-thumb.replaced .flow-badge { background: var(--warn); color: #0b0f0a; }
+    .flow-thumb.replaced.committed .flow-badge { background: var(--accent); color: #0b0f0a; }
+
+    .flow-box .flow-id {
+      font-family: ui-monospace, "SF Mono", Menlo, monospace;
+      font-size: 11px; color: var(--accent-2); font-weight: 700;
+      word-break: break-all;
     }
-    .flow-controls label, .flow-controls button {
+    .flow-box .flow-chapter {
+      font-size: 9px; color: var(--text-muted);
+      letter-spacing: 1px; text-transform: uppercase;
+    }
+    .flow-box .flow-commit {
       background: var(--panel-2); color: var(--text);
       border: 1px solid var(--border); border-radius: 4px;
-      padding: 3px 8px; font-size: 10px; letter-spacing: 0.5px;
-      cursor: pointer; white-space: nowrap; font-family: inherit;
+      padding: 3px 6px; font-size: 10px; letter-spacing: 0.5px;
+      cursor: pointer; font-family: inherit; width: 100%;
+    }
+    .flow-box .flow-commit:hover:not(:disabled) { background: #2c3920; }
+    .flow-box .flow-commit:disabled { opacity: 0.35; cursor: not-allowed; }
+    .flow-box .flow-commit.needs-token { color: var(--warn); border-color: var(--warn); opacity: 1; }
+
+    .flow-stub {
+      /* Non-scene refs: __title__, __restart__, missing, etc. */
+      position: absolute;
+      background: var(--panel-2);
+      border: 1px dashed var(--border);
+      border-radius: 4px;
+      padding: 6px 10px;
+      font-family: ui-monospace, "SF Mono", Menlo, monospace;
+      font-size: 11px;
+      color: var(--text-muted);
+      width: 180px;
       text-align: center;
     }
-    .flow-controls label:hover, .flow-controls button:hover { background: #2c3920; }
-    .flow-controls label input { display: none; }
-    .flow-controls button.flow-commit:disabled { opacity: 0.4; cursor: not-allowed; }
-    .flow-controls button.flow-commit.needs-token { color: var(--warn); border-color: var(--warn); }
-    .flow-node.no-card { grid-template-columns: 1fr; }
-    .flow-node.no-card .flow-thumb-wrap,
-    .flow-node.no-card .flow-controls { display: none; }
-    .flow-node.combat { border-left-color: var(--danger); }
-    .flow-node.ending { border-left-color: var(--warn); }
-    .flow-node.ref { opacity: 0.55; border-left-style: dashed; }
-    .flow-node.repeat { border-left-color: var(--text-muted); opacity: 0.6; }
-    .flow-id {
-      color: var(--accent-2); font-weight: 700;
-    }
-    .flow-chapter { color: var(--text-muted); font-size: 10.5px; letter-spacing: 1px; text-transform: uppercase; margin-left: 6px; }
-    .flow-text {
-      color: var(--text-dim); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      font-size: 12px; margin-top: 4px;
-    }
-    .flow-text.branch { color: var(--text-muted); font-style: italic; }
-    .flow-choice {
-      margin: 3px 0 0 10px; color: var(--text);
-    }
-    .flow-choice .label { color: var(--text); }
-    .flow-choice .arrow { color: var(--accent); margin: 0 6px; }
-    .flow-choice .target { color: var(--accent-2); }
-    .flow-choice.combat .arrow,
-    .flow-choice.combat .target { color: var(--danger); }
-    .flow-children {
-      border-left: 1px solid var(--border);
-      margin-left: 18px;
-      padding-left: 12px;
-    }
-    .view-toggle.active {
-      background: var(--accent);
-      color: #0b0f0a;
-      border-color: var(--accent);
-      font-weight: 700;
+    .flow-chart .flow-hint {
+      position: sticky; top: 0;
+      font-size: 11px; color: var(--text-muted);
+      letter-spacing: 1px; text-transform: uppercase;
+      padding: 4px 0 10px; z-index: 5;
     }
 
     /* Toast */
@@ -411,12 +446,12 @@
   </footer>
 
   <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
-  <script src="js/overrides.js?v=115"></script>
-  <script src="js/scenes.js?v=115"></script>
+  <script src="js/overrides.js?v=116"></script>
+  <script src="js/scenes.js?v=116"></script>
   <!-- story.js is read-only here: we pull chapters / text / choices
        to annotate each scene card so the flow is legible without
        having to play through. -->
-  <script src="js/story.js?v=115"></script>
+  <script src="js/story.js?v=116"></script>
   <script>
     (async function () {
       const PROMPTS = (window.Scenes && window.Scenes.PROMPTS) || {};
@@ -879,139 +914,227 @@
       // revisits are shown as dimmed references so the tree still reads
       // top-to-bottom even when multiple branches converge.
       const flowEl = document.getElementById("flow");
+      // Layout constants for the flow chart.
+      const FLOW_BOX_W = 180;
+      const FLOW_BOX_H = 210; // roughly node box height incl. padding
+      const FLOW_STUB_H = 40;
+      const FLOW_COL_GAP = 36;
+      const FLOW_ROW_GAP = 64;
+
+      // BFS-layer each reachable story node starting from intro, collect
+      // edges (src → dst with kind), then grid-lay columns/rows so we
+      // can draw an honest flow chart with SVG arrows between thumbnails.
+      function buildFlowGraph() {
+        const Story = window.Story || {};
+        const nodes = new Map(); // id -> { id, kind, depth, row, node? }
+        const edges = [];        // { src, dst, kind, label? }
+        const queue = [];
+        function ensure(id, kind) {
+          if (!id) return null;
+          if (!nodes.has(id)) {
+            nodes.set(id, { id, kind, depth: -1, row: 0, node: Story[id] || null });
+            queue.push(id);
+          } else if (kind && !nodes.get(id).kind) {
+            nodes.get(id).kind = kind;
+          }
+          return nodes.get(id);
+        }
+        ensure("intro", "story");
+        nodes.get("intro").depth = 0;
+        while (queue.length) {
+          const id = queue.shift();
+          const meta = nodes.get(id);
+          if (!Story[id]) { meta.kind = meta.kind || "ref"; continue; }
+          const n = Story[id];
+          const choices = Array.isArray(n.choices) ? n.choices : [];
+          choices.forEach(c => {
+            if (!c) return;
+            if (c.combat) {
+              const cfg = typeof c.combat === "function" ? null : c.combat;
+              const onWin = cfg && cfg.onWin ? cfg.onWin : null;
+              const onLose = cfg && cfg.onLose ? cfg.onLose : null;
+              if (onWin) {
+                ensure(onWin, "story");
+                edges.push({ src: id, dst: onWin, kind: "combat", label: "win" });
+                if (nodes.get(onWin).depth < 0) nodes.get(onWin).depth = meta.depth + 1;
+              }
+              if (onLose && onLose !== onWin) {
+                ensure(onLose, /^ending_|^death$/.test(onLose) ? "ending" : "story");
+                edges.push({ src: id, dst: onLose, kind: "combat-lose", label: "lose" });
+                if (nodes.get(onLose).depth < 0) nodes.get(onLose).depth = meta.depth + 1;
+              }
+            } else if (typeof c.next === "function") {
+              // Branch-by-state. Can't statically pick one target — skip.
+            } else if (c.next) {
+              const kind = c.next === "__title__" || c.next === "__restart__"
+                ? "ref"
+                : /^ending_final_|^death$/.test(c.next) ? "ending" : "story";
+              ensure(c.next, kind);
+              edges.push({ src: id, dst: c.next, kind: "next" });
+              if (nodes.get(c.next).depth < 0) nodes.get(c.next).depth = meta.depth + 1;
+            }
+          });
+        }
+        // Propagate depths for any node left at -1 by being referenced
+        // only through a function-scene (shouldn't happen for next, but
+        // guard anyway).
+        nodes.forEach(meta => { if (meta.depth < 0) meta.depth = 0; });
+        // Group by depth, assign row within each depth in insertion order.
+        const byDepth = new Map();
+        nodes.forEach(meta => {
+          if (!byDepth.has(meta.depth)) byDepth.set(meta.depth, []);
+          byDepth.get(meta.depth).push(meta);
+        });
+        byDepth.forEach(arr => arr.forEach((meta, i) => { meta.row = i; }));
+        return { nodes, edges, byDepth };
+      }
+
       function renderFlow() {
         const Story = window.Story || {};
         if (!Story.intro) {
-          flowEl.innerHTML = `<div class="flow-node no-card"><div class="flow-main">Story not loaded.</div></div>`;
+          flowEl.innerHTML = `<div style="padding:18px;color:#777">Story not loaded.</div>`;
           return;
         }
-        const visited = new Set();
-        function render(id, depth) {
-          if (!id) return "";
-          if (id === "__title__") return `<div class="flow-node ref no-card"><div class="flow-main">↻ back to title</div></div>`;
-          if (id === "__restart__") return `<div class="flow-node ref no-card"><div class="flow-main">↻ restart</div></div>`;
-          const already = visited.has(id);
-          const node = Story[id];
-          if (!node) {
-            return `<div class="flow-node ref no-card"><div class="flow-main"><span class="flow-id">${escapeText(id)}</span> <span class="flow-chapter">(missing node)</span></div></div>`;
-          }
-          if (already) {
-            return `<div class="flow-node repeat no-card"><div class="flow-main"><span class="flow-id">${escapeText(id)}</span> <span class="flow-chapter">(seen above ↑)</span></div></div>`;
-          }
-          visited.add(id);
-          const isEnding = /^ending_final_|^death$/.test(id);
-          const isCombat = (node.choices || []).some(c => c && c.combat);
-          const cls = isEnding ? "ending" : isCombat ? "combat" : "";
-          const hasCard = !!PROMPTS[id];
-          const headParts = [`<span class="flow-id">${escapeText(id)}</span>`];
-          if (node.chapter) headParts.push(`<span class="flow-chapter">${escapeText(node.chapter)}</span>`);
-          const head = headParts.join("");
-          const isTextFn = typeof node.text === "function";
-          const text = isTextFn
-            ? `<div class="flow-text branch">(branches on state)</div>`
-            : node.text
-              ? `<div class="flow-text">${escapeText(snippet(node.text, 160))}</div>`
-              : "";
-          const choices = Array.isArray(node.choices) ? node.choices : [];
-          const choiceLines = [];
-          const childrenHtml = [];
-          choices.forEach(c => {
-            const label = escapeText(c.label || "(unlabeled)");
-            if (c.combat) {
-              const cfg = typeof c.combat === "function" ? null : c.combat;
-              const enemy = cfg && cfg.enemy ? cfg.enemy : "(branches)";
-              const onWin = cfg && cfg.onWin ? cfg.onWin : null;
-              const onLose = cfg && cfg.onLose ? cfg.onLose : null;
-              choiceLines.push(
-                `<div class="flow-choice combat"><span class="label">${label}</span>` +
-                `<span class="arrow">⚔</span><span class="target">${escapeText(enemy)}</span>` +
-                (onWin ? ` <span class="arrow">win→</span><span class="target">${escapeText(onWin)}</span>` : "") +
-                (onLose ? ` <span class="arrow">lose→</span><span class="target">${escapeText(onLose)}</span>` : "") +
-                `</div>`
-              );
-              if (onWin) childrenHtml.push(render(onWin, depth + 1));
-              if (onLose && onLose !== onWin) childrenHtml.push(render(onLose, depth + 1));
-            } else if (typeof c.next === "function") {
-              choiceLines.push(
-                `<div class="flow-choice"><span class="label">${label}</span>` +
-                `<span class="arrow">→</span><span class="target">(branches)</span></div>`
-              );
-            } else if (c.next) {
-              choiceLines.push(
-                `<div class="flow-choice"><span class="label">${label}</span>` +
-                `<span class="arrow">→</span><span class="target">${escapeText(c.next)}</span></div>`
-              );
-              childrenHtml.push(render(c.next, depth + 1));
-            } else {
-              choiceLines.push(
-                `<div class="flow-choice"><span class="label">${label}</span></div>`
-              );
-            }
+        const { nodes, edges, byDepth } = buildFlowGraph();
+        const maxRows = Math.max(...Array.from(byDepth.values(), a => a.length));
+        const maxDepth = Math.max(...nodes.values()
+          ? [...Array.from(nodes.values()).map(m => m.depth)]
+          : [0]);
+
+        // Layout: depth = column, row = y position. Story boxes are taller
+        // than stub boxes, so pick a uniform row height and let each node
+        // center vertically within it.
+        const rowH = FLOW_BOX_H + FLOW_ROW_GAP;
+        const colW = FLOW_BOX_W + FLOW_COL_GAP;
+        const width = (maxDepth + 1) * colW + 40;
+        const height = maxRows * rowH + 40;
+
+        // Position lookup: id -> {x, y, w, h}
+        const pos = new Map();
+        nodes.forEach(meta => {
+          const x = 20 + meta.depth * colW;
+          const y = 20 + meta.row * rowH;
+          const isStub = meta.kind === "ref" || !PROMPTS[meta.id];
+          pos.set(meta.id, {
+            x, y,
+            w: FLOW_BOX_W,
+            h: isStub ? FLOW_STUB_H : FLOW_BOX_H,
           });
-          const children = childrenHtml.filter(Boolean).join("");
-          const thumbCol = hasCard
-            ? `<div class="flow-thumb-wrap" data-flow-id="${escapeText(id)}"><img alt="${escapeText(id)}" /><span class="flow-badge">live</span></div>`
-            : "";
-          const controlsCol = hasCard
-            ? `<div class="flow-controls" data-flow-id="${escapeText(id)}">
-                 <label class="flow-upload">📤 Upload<input type="file" accept="image/*" /></label>
-                 <button class="flow-commit" disabled title="Upload an image first">🚀 Commit</button>
-               </div>`
-            : "";
-          const nodeClasses = ["flow-node", cls, hasCard ? "" : "no-card"].filter(Boolean).join(" ");
-          const body = `<div class="flow-main">${head}${text}${choiceLines.join("")}</div>`;
-          return (
-            `<div class="${nodeClasses}">${thumbCol}${body}${controlsCol}</div>` +
-            (children ? `<div class="flow-children">${children}</div>` : "")
-          );
-        }
-        flowEl.innerHTML = render("intro", 0);
+        });
+
+        // Build DOM.
+        const chart = document.createElement("div");
+        chart.className = "flow-chart";
+        chart.style.width = width + "px";
+        chart.style.height = height + "px";
+        chart.innerHTML = `<div class="flow-hint">→ horizontal = next node · ⚔ red = combat · dashed = combat loss</div>`;
+
+        // SVG layer for arrows (drawn first so boxes sit on top).
+        const svgNS = "http://www.w3.org/2000/svg";
+        const svg = document.createElementNS(svgNS, "svg");
+        svg.setAttribute("width", width);
+        svg.setAttribute("height", height);
+        svg.style.width = width + "px";
+        svg.style.height = height + "px";
+        edges.forEach(e => {
+          const a = pos.get(e.src);
+          const b = pos.get(e.dst);
+          if (!a || !b) return;
+          // Arrow from right-middle of src to left-middle of dst.
+          const x1 = a.x + a.w;
+          const y1 = a.y + a.h / 2;
+          const x2 = b.x;
+          const y2 = b.y + b.h / 2;
+          const midX = (x1 + x2) / 2;
+          const d = `M ${x1} ${y1} C ${midX} ${y1}, ${midX} ${y2}, ${x2} ${y2}`;
+          const path = document.createElementNS(svgNS, "path");
+          path.setAttribute("d", d);
+          if (e.kind === "combat") path.setAttribute("class", "combat");
+          else if (e.kind === "combat-lose") path.setAttribute("class", "combat-lose");
+          svg.appendChild(path);
+        });
+        chart.appendChild(svg);
+
+        // Boxes.
+        nodes.forEach(meta => {
+          const p = pos.get(meta.id);
+          const isStub = meta.kind === "ref" || !PROMPTS[meta.id];
+          if (isStub) {
+            const stub = document.createElement("div");
+            stub.className = "flow-stub";
+            stub.style.left = p.x + "px";
+            stub.style.top = (p.y + (FLOW_BOX_H - FLOW_STUB_H) / 2) + "px";
+            const label = meta.id === "__title__" ? "↻ back to title"
+                        : meta.id === "__restart__" ? "↻ restart"
+                        : meta.id;
+            stub.textContent = label;
+            chart.appendChild(stub);
+            return;
+          }
+          const box = document.createElement("div");
+          const kindClass = /^ending_final_|^death$/.test(meta.id) ? "ending"
+                         : (meta.node && (meta.node.choices || []).some(c => c && c.combat)) ? "combat"
+                         : "";
+          box.className = "flow-box " + kindClass;
+          box.style.left = p.x + "px";
+          box.style.top = p.y + "px";
+          box.dataset.flowId = meta.id;
+          const chapter = meta.node && meta.node.chapter ? meta.node.chapter : "";
+          box.innerHTML = `
+            <div class="flow-thumb" data-flow-id="${escapeText(meta.id)}">
+              <img alt="${escapeText(meta.id)}" />
+              <span class="flow-badge">live</span>
+              <input type="file" accept="image/*" hidden />
+            </div>
+            <div class="flow-id">${escapeText(meta.id)}</div>
+            ${chapter ? `<div class="flow-chapter">${escapeText(chapter)}</div>` : ""}
+            <button class="flow-commit" disabled title="Upload an image first">🚀 Commit</button>
+          `;
+          chart.appendChild(box);
+        });
+
+        flowEl.innerHTML = "";
+        flowEl.appendChild(chart);
         wireFlowControls();
       }
 
-      // Hook every flow-node's thumbnail/upload/commit to the same
-      // Overrides + GH pipeline as the grid cards.
+      // Hook every flow-chart thumbnail/commit button to the same
+      // Overrides + GH pipeline as the grid cards. Clicking the
+      // thumbnail itself is the 'upload' action (a hidden file input
+      // inside each thumb is triggered).
       function wireFlowControls() {
-        flowEl.querySelectorAll(".flow-thumb-wrap[data-flow-id]").forEach(wrap => {
-          const id = wrap.dataset.flowId;
-          const img = wrap.querySelector("img");
-          const badge = wrap.querySelector(".flow-badge");
+        flowEl.querySelectorAll(".flow-thumb[data-flow-id]").forEach(thumb => {
+          const id = thumb.dataset.flowId;
+          const img = thumb.querySelector("img");
+          const badge = thumb.querySelector(".flow-badge");
+          const fileInput = thumb.querySelector('input[type="file"]');
           const refresh = () => {
-            wrap.classList.remove("img-missing");
+            thumb.classList.remove("img-missing");
             const override = (window.__OVERRIDES || {})[id];
             const committed = isCommitted(id);
             if (override) {
               img.src = override;
-              wrap.classList.add("replaced");
-              wrap.classList.toggle("committed", committed);
+              thumb.classList.add("replaced");
+              thumb.classList.toggle("committed", committed);
               badge.textContent = committed ? "COMMITTED" : "OVERRIDE";
             } else {
               img.src = "images/" + id + "." + extForId(id) + "?t=" + Date.now();
-              wrap.classList.remove("replaced", "committed");
+              thumb.classList.remove("replaced", "committed");
               badge.textContent = "live";
             }
           };
           img.addEventListener("error", () => {
-            if (!wrap.classList.contains("replaced")) {
-              wrap.classList.add("img-missing");
+            if (!thumb.classList.contains("replaced")) {
+              thumb.classList.add("img-missing");
               img.removeAttribute("src");
             }
           });
-          refresh();
-        });
-        flowEl.querySelectorAll(".flow-controls[data-flow-id]").forEach(ctrl => {
-          const id = ctrl.dataset.flowId;
-          const fileInput = ctrl.querySelector('input[type="file"]');
-          const commitBtn = ctrl.querySelector(".flow-commit");
-          const setCommitState = () => {
-            const hasOverride = !!(window.__OVERRIDES || {})[id];
-            commitBtn.disabled = !hasOverride;
-            commitBtn.classList.toggle("needs-token", hasOverride && !GH.token);
-            commitBtn.title = !hasOverride
-              ? "Upload an image first"
-              : GH.token ? "Commit to repo" : "Add a GitHub token in Settings first";
-          };
-          setCommitState();
+          thumb.addEventListener("click", (e) => {
+            // Don't retrigger the upload when the click originated on
+            // the hidden input itself (avoids a double-open).
+            if (e.target.tagName === "INPUT") return;
+            fileInput.click();
+          });
           fileInput.addEventListener("change", async (e) => {
             const file = e.target.files && e.target.files[0];
             if (!file) return;
@@ -1025,20 +1148,33 @@
             }
             fileInput.value = "";
           });
-          commitBtn.addEventListener("click", async () => {
+          refresh();
+        });
+        flowEl.querySelectorAll(".flow-box[data-flow-id] .flow-commit").forEach(btn => {
+          const id = btn.closest(".flow-box").dataset.flowId;
+          const setCommitState = () => {
+            const hasOverride = !!(window.__OVERRIDES || {})[id];
+            btn.disabled = !hasOverride;
+            btn.classList.toggle("needs-token", hasOverride && !GH.token);
+            btn.title = !hasOverride
+              ? "Upload an image first"
+              : GH.token ? "Commit to repo" : "Add a GitHub token in Settings first";
+          };
+          setCommitState();
+          btn.addEventListener("click", async () => {
             if (!GH.token) {
               toast("No GitHub token saved. Opening Settings…", "err");
               settingsModal.hidden = false;
               return;
             }
-            commitBtn.disabled = true;
-            const prev = commitBtn.textContent;
-            commitBtn.textContent = "Committing…";
+            btn.disabled = true;
+            const prev = btn.textContent;
+            btn.textContent = "Committing…";
             try {
               await commitOne(id);
               renderFlow();
             } catch (e) {}
-            finally { commitBtn.textContent = prev; }
+            finally { btn.textContent = prev; }
           });
         });
       }
