@@ -738,7 +738,7 @@ window.Scenes = (function () {
   // fresh image URLs automatically, so a commit on one device (PC)
   // shows up on another (phone) as soon as Pages rebuilds, without
   // relying on localStorage which is per-device.
-  const BUILD = "124";
+  const BUILD = "125";
 
   // Smart cache-bust: per-scene timestamp from the admin takes priority
   // (committer sees their upload immediately), then a device-wide global
@@ -879,6 +879,15 @@ window.Scenes = (function () {
     return Math.abs(h) % 999983;
   }
 
+  // Image-level aliases: when a scene id has an admin card but the
+  // image hasn't been uploaded yet, fall back to a related scene that
+  // does have one. Keeps newly-added cards from breaking the game
+  // between 'prompt added' and 'artwork committed'.
+  const IMAGE_ALIASES = {
+    stairwell_first: "stairwell",
+    alone_street_sneak: "alone_street",
+  };
+
   // Build the image scene element. All 50 scenes have committed PNGs in
   // images/, so we no longer fall back to Pollinations AI on error —
   // that fallback used to fire for stale cached 404s and cause the game
@@ -890,13 +899,20 @@ window.Scenes = (function () {
     // Lets you preview a new image in-game before committing it.
     const override = (window.__OVERRIDES && window.__OVERRIDES[sceneId]) || null;
     const localUrl = override || imgUrlFor(sceneId);
+    const aliasId = IMAGE_ALIASES[sceneId];
+    const fallbackUrl = aliasId ? imgUrlFor(aliasId) : "";
     const onLoad  = "this.closest('.scene-stage').classList.add('loaded');";
-    const onError =
+    // Two-stage error handler: first error tries the fallback (if any).
+    // Second error (or no fallback) marks the stage as failed.
+    const giveUp =
       "var s=this.closest('.scene-stage');" +
       "s.classList.add('loaded','error');" +
       "var e=s.querySelector('.scene-image-error');" +
       "if(e)e.textContent='image failed: '+this.src;" +
       "this.style.display='none';";
+    const onError = fallbackUrl
+      ? "if(!this.dataset.altTried){this.dataset.altTried='1';this.src='" + fallbackUrl + "';return;}" + giveUp
+      : giveUp;
     return `<div class="scene-stage scene-image-stage">` +
       `<div class="scene-image-loading">loading…</div>` +
       `<div class="scene-image-error">image missing: ${sceneId}.jpg</div>` +
