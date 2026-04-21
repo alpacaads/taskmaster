@@ -916,7 +916,7 @@ One section per story node, in definition order. Function-branching fields (text
 
 ## <a id="horde_warning"></a>`horde_warning`
 **Chapter:** Day 5 — Sunrise  
-**Scene art:** `horde_charge`  
+**Scene art:** fn → `horde_warning` _(default, with Maya companion, mission partner = maya, mission partner = ren, solo mission, saved Nora, bring Nora on mission, rested in car, told Vega, chore: medbay, chore: perimeter, chore: kitchen, exposed traitor, killed traitor, romance Maya, romance Ren)_  
 **Speaker:** Captain Vega  
 
 <details><summary>Variant: default / solo mission / rested in car / told Vega / romance Ren</summary>

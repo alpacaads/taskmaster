@@ -738,7 +738,7 @@ window.Scenes = (function () {
   // fresh image URLs automatically, so a commit on one device (PC)
   // shows up on another (phone) as soon as Pages rebuilds, without
   // relying on localStorage which is per-device.
-  const BUILD = "143";
+  const BUILD = "144";
 
   // Smart cache-bust: per-scene timestamp from the admin takes priority
   // (committer sees their upload immediately), then a device-wide global
@@ -828,6 +828,7 @@ window.Scenes = (function () {
     morning_after_maya:  "soft pre-dawn light inside a canvas tent, a red-haired woman in fatigues kissing a man on the corner of his mouth, a rifle slung over her shoulder, gentle warm light, tender quiet moment before danger",
     morning_after_ren:   "soft pre-dawn light inside a small medbay, young woman medic with messy dark hair handing a steaming mug of coffee to a survivor still in a cot, warm intimate moment, soft focus, painterly",
     horde_warning:       "ominous massive zombie horde at pre-dawn, hundreds of silhouetted shambling figures advancing down an abandoned highway toward a fortified survivor camp, blood red sky, smoke, dread, wide cinematic shot",
+    horde_warning_vega_rifle: "pre-dawn at a fortified survivor camp's armory doorway, Captain Vega in tactical fatigues shoving her personal ranger rifle into the survivor's hands while slinging a spare over her own shoulder, camp siren wailing, blood-red dawn sky over the treeline behind them, other survivors sprinting to the wall in the background, intense earned-trust moment, cinematic, in the style of The Last of Us",
     post_horde_win:      "blood-red dawn after a battle, fortified survivor camp behind a battered chainlink fence, smoking bodies of fallen zombies in a field, weary survivors embracing on the wall, hope amid devastation, cinematic emotional",
     post_horde_lose:     "somber sunset memorial scene, simple wooden grave markers in a forest clearing beside a battered survivor camp, lone mourner kneeling, flickering candles in jars, soft golden light, deep grief and quiet reverence",
     post_horde_flee:     "small group of survivors walking single file through a misty pine forest at dawn, leader carrying a flashlight, others carrying packs, smoke from a burning camp visible behind them, somber but determined, cinematic wide shot",

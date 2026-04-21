@@ -709,7 +709,15 @@ window.Story = {
   },
 
   horde_warning: {
-    scene: "horde_charge",
+    scene: function(s) {
+      // When Vega is about to hand you her ranger rifle, show the
+      // dedicated armory-door moment instead of the generic horde
+      // vista. Falls back to the default horde charge art otherwise.
+      if ((s.bonds && s.bonds.vega >= 3) && !s.flags.vegaRifleGiven) {
+        return "horde_warning_vega_rifle";
+      }
+      return "horde_warning";
+    },
     sceneClass: "blood",
     chapter: "Day 5 — Sunrise",
     speaker: "Captain Vega",
