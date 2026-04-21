@@ -434,8 +434,39 @@ window.Story = {
       return opener;
     },
     choices: [
-      { label: "Sleep. Tomorrow is another day.",
+      { label: "Let Ren patch you up properly before bed.", tag: "BOND", tagClass: "warn",
+        next: "ren_medbay_intro" },
+      { label: "Sleep now. Tomorrow is another day.",
         effect: s => { s.hp = s.hpMax; s.stam = s.stamMax; Game.toast("❤️ ⚡ restored"); },
+        next: "camp_morning" },
+    ]
+  },
+
+  ren_medbay_intro: {
+    sceneClass: "indoor",
+    chapter: "Day 3 — Medbay",
+    speaker: "Ren",
+    text: function(s) {
+      let base = "The medbay is a converted shipping container. Clean linen, antiseptic bite in the air, one lamp hanging low. Ren sits you down, rolls a stool over, and starts on your arm without asking.\n\n\"Worked ER at Old Mercy the first month,\" she says, eyes on the stitch. \"Saw what the fever did to a hallway. Stopped sleeping.\"\n\nA long, steady pull of thread.\n\n\"If my hands shake later — that's why. They work anyway.\"";
+      if (s.companion2 === "Nora") {
+        base += "\n\nNora is curled on the spare cot in the corner, already asleep under a too-big blanket. Ren glances over every few stitches.";
+      }
+      return base;
+    },
+    choices: [
+      { label: "\"Thank you.\"",
+        effect: s => {
+          s.hp = s.hpMax; s.stam = s.stamMax;
+          s.bonds.ren += 1;
+          Game.toast("❤️ ⚡ restored · Ren's trust +1");
+        },
+        next: "camp_morning" },
+      { label: "Sit with her in silence until she finishes.",
+        effect: s => {
+          s.hp = s.hpMax; s.stam = s.stamMax;
+          s.bonds.ren += 2;
+          Game.toast("❤️ ⚡ restored · Ren's trust +2");
+        },
         next: "camp_morning" },
     ]
   },
@@ -466,7 +497,14 @@ window.Story = {
     sceneClass: "indoor",
     chapter: "Day 4 — Medbay",
     speaker: "Ren",
-    text: "Ren's medbay is a converted shipping container. Antiseptic, clean linen, a guitar in the corner.\n\n\"Hold this. Hands steady.\" You're stitching a cut on a kid's knee. Ren watches you work. \"You've done this before.\"\n\n\"Paramedic. East side.\"\n\n\"Then you know how it gets — losing them.\" A long beat. \"Tell me one you saved.\"",
+    text: function(s) {
+      let base = "Ren's medbay is a converted shipping container. Antiseptic, clean linen, a guitar in the corner.\n\n";
+      if (s.companion2 === "Nora") {
+        base += "Nora is tucked cross-legged on the spare cot, drawing something on the back of a pill-label leaflet. Ren keeps one eye on her between stitches, like she's already decided.\n\n";
+      }
+      base += "\"Hold this. Hands steady.\" You're stitching a cut on a kid's knee. Ren watches you work. \"You've done this before.\"\n\n\"Paramedic. East side.\"\n\n\"Then you know how it gets — losing them.\" A long beat. \"Tell me one you saved.\"";
+      return base;
+    },
     choices: [
       { label: "Tell them about the boy in the subway fire",
         effect: s => { s.bonds.ren += 2; Game.toast("Ren's trust +2"); },
@@ -508,9 +546,12 @@ window.Story = {
   chore_done: {
     scene: function(s) {
       const c = s.flags && s.flags.choreChosen;
-      if (c === "medbay")    return "chore_done_medbay";
-      if (c === "perimeter") return "chore_done_perimeter";
-      if (c === "kitchen")   return "chore_done_kitchen";
+      // Variant images depict Maya in the corner or across the table;
+      // only use them when Maya's actually at camp. Otherwise the art
+      // contradicts the text for solo runs.
+      if (c === "medbay" && s.flags.maya)    return "chore_done_medbay";
+      if (c === "perimeter")                  return "chore_done_perimeter";
+      if (c === "kitchen" && s.flags.maya)    return "chore_done_kitchen";
       return "chore_done";
     },
     sceneClass: "indoor",
@@ -618,7 +659,13 @@ window.Story = {
       if (s.romance === "ren" && s.flags.lovedRen) {
         return "Ren is already at work — bandaging, splinting, refusing to look at the bodies on the fence. When you reach her she doesn't speak. She just buries her face in your shoulder and stays there for a long time.";
       }
-      return "The horde is a still field. The fence holds. Someone is laughing through tears. A child finds your hand.";
+      let base = "The horde is a still field. The fence holds. Someone is laughing through tears.";
+      // Camp medic survived — acknowledge her even without romance.
+      base += "\n\nRen is at the wall, stitching a graze on a man's scalp with steady hands. She glances up at you as you pass, nods once — you did. We did.";
+      if (s.companion2 === "Nora") {
+        base += "\n\nA child finds your hand.";
+      }
+      return base;
     },
     choices: [
       { label: "— THE END —", next: function(s) {
@@ -638,7 +685,9 @@ window.Story = {
       if (s.romance === "ren" && s.flags.lovedRen) {
         return "Ren sings the song. The one her grandmother taught her. She sings it the whole way through, and then again, and then once more.\n\nYou hear all three.";
       }
-      return "They'll say you held the line longer than any one person should. They'll carve your name beside the others.";
+      // Ren is the camp medic — if nobody else is with the dying hero,
+      // she is. No romance, just presence.
+      return "They'll say you held the line longer than any one person should.\n\nRen stays with you in the medbay when the others can't. She doesn't try to fix you — she knows. She just keeps one hand on yours and hums something low, a song from before.\n\nThey'll carve your name beside the others.";
     },
     choices: [
       { label: "— THE END —", next: function(s) {
@@ -694,6 +743,7 @@ window.Story = {
         }
       } else if (s.flags.missionPartner === "ren") {
         base = "Ren keeps pace beside you. She hums, low — a song you almost recognise.\n\n\"My grandmother used to sing it,\" she says when she catches you listening. \"It's the only thing of hers I have left.\"";
+        base += "\n\nThe humming stops as the hospital squats into view.\n\n\"Worked Mercy's ER the first month,\" she says quietly, like it explains something. \"If my hands shake later — that's why.\"\n\nShe starts humming again.";
       } else {
         base = "You walk alone. Every shadow is a question. Every step is loud.";
       }
@@ -879,7 +929,7 @@ window.Story = {
     chapter: "Day 4 — South Fence",
     text: function(s) {
       if (s.flags.toldVega) {
-        return "It's over. He's smaller now. Calder again, almost.\n\nVega lowers her rifle and spits into the grass. \"Whole camp hears about this before sunrise,\" she says, already turning toward the bell.";
+        return "It's over. He's smaller now. Calder again, almost.\n\nVega lowers her rifle and spits into the grass. \"Whole camp hears about this before sunrise,\" she says, already turning toward the bell.\n\nRen is already at the fence by the time the bell starts. She catches your eye once — gratitude, quick as a blink — then kneels beside the body with a clean sheet.";
       }
       return "It's over. He's smaller now. Calder again, almost.\n\nYou stand in the dark with the weight of it — and the choice still yours.";
     },

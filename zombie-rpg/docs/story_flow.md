@@ -33,6 +33,7 @@ One section per story node, in definition order. Function-branching fields (text
 - [`greenbelt_gate`](#greenbelt_gate) — Day 3 — Greenbelt
 - [`greenbelt_gate_hero`](#greenbelt_gate_hero) — Day 3 — Greenbelt
 - [`greenbelt_in`](#greenbelt_in) — Day 3 — Greenbelt Camp
+- [`ren_medbay_intro`](#ren_medbay_intro) — Day 3 — Medbay
 - [`camp_morning`](#camp_morning) — Day 4 — Greenbelt
 - [`chore_medbay`](#chore_medbay) — Day 4 — Medbay
 - [`chore_perimeter`](#chore_perimeter) — Day 4 — Perimeter
@@ -633,8 +634,52 @@ One section per story node, in definition order. Function-branching fields (text
 
 **Choices:**
 
-1. **Sleep. Tomorrow is another day.**
+1. **Let Ren patch you up properly before bed.** `BOND`
+   - → `ren_medbay_intro`
+2. **Sleep now. Tomorrow is another day.**
    - _effect:_ `s => { s.hp = s.hpMax; s.stam = s.stamMax; Game.toast("❤️ ⚡ restored"); }`
+   - → `camp_morning`
+
+---
+
+## <a id="ren_medbay_intro"></a>`ren_medbay_intro`
+**Chapter:** Day 3 — Medbay  
+**Scene art:** (no explicit scene — uses node id)  
+**Speaker:** Ren  
+
+<details><summary>Variant: default / with Maya companion / mission partner = maya / mission partner = ren / solo mission / rested in car / told Vega / chore: medbay / chore: perimeter / chore: kitchen / exposed traitor / killed traitor / romance Maya / romance Ren</summary>
+
+> The medbay is a converted shipping container. Clean linen, antiseptic bite in the air, one lamp hanging low. Ren sits you down, rolls a stool over, and starts on your arm without asking.
+> 
+> "Worked ER at Old Mercy the first month," she says, eyes on the stitch. "Saw what the fever did to a hallway. Stopped sleeping."
+> 
+> A long, steady pull of thread.
+> 
+> "If my hands shake later — that's why. They work anyway."
+
+</details>
+
+<details><summary>Variant: saved Nora / bring Nora on mission</summary>
+
+> The medbay is a converted shipping container. Clean linen, antiseptic bite in the air, one lamp hanging low. Ren sits you down, rolls a stool over, and starts on your arm without asking.
+> 
+> "Worked ER at Old Mercy the first month," she says, eyes on the stitch. "Saw what the fever did to a hallway. Stopped sleeping."
+> 
+> A long, steady pull of thread.
+> 
+> "If my hands shake later — that's why. They work anyway."
+> 
+> Nora is curled on the spare cot in the corner, already asleep under a too-big blanket. Ren glances over every few stitches.
+
+</details>
+
+**Choices:**
+
+1. **"Thank you."**
+   - _effect:_ `s => { s.hp = s.hpMax; s.stam = s.stamMax; s.bonds.ren += 1; Game.toast("❤️ ⚡ restored · Ren's trust +1"); }`
+   - → `camp_morning`
+2. **Sit with her in silence until she finishes.**
+   - _effect:_ `s => { s.hp = s.hpMax; s.stam = s.stamMax; s.bonds.ren += 2; Game.toast("❤️ ⚡ restored · Ren's trust +2"); }`
    - → `camp_morning`
 
 ---
@@ -667,6 +712,8 @@ One section per story node, in definition order. Function-branching fields (text
 **Scene art:** `medbay`  
 **Speaker:** Ren  
 
+<details><summary>Variant: default / with Maya companion / mission partner = maya / mission partner = ren / solo mission / rested in car / told Vega / chore: medbay / chore: perimeter / chore: kitchen / exposed traitor / killed traitor / romance Maya / romance Ren</summary>
+
 > Ren's medbay is a converted shipping container. Antiseptic, clean linen, a guitar in the corner.
 > 
 > "Hold this. Hands steady." You're stitching a cut on a kid's knee. Ren watches you work. "You've done this before."
@@ -674,6 +721,22 @@ One section per story node, in definition order. Function-branching fields (text
 > "Paramedic. East side."
 > 
 > "Then you know how it gets — losing them." A long beat. "Tell me one you saved."
+
+</details>
+
+<details><summary>Variant: saved Nora / bring Nora on mission</summary>
+
+> Ren's medbay is a converted shipping container. Antiseptic, clean linen, a guitar in the corner.
+> 
+> Nora is tucked cross-legged on the spare cot, drawing something on the back of a pill-label leaflet. Ren keeps one eye on her between stitches, like she's already decided.
+> 
+> "Hold this. Hands steady." You're stitching a cut on a kid's knee. Ren watches you work. "You've done this before."
+> 
+> "Paramedic. East side."
+> 
+> "Then you know how it gets — losing them." A long beat. "Tell me one you saved."
+
+</details>
 
 **Choices:**
 
@@ -895,9 +958,21 @@ One section per story node, in definition order. Function-branching fields (text
 **Chapter:** Sunrise — After  
 **Scene art:** `ending_dawn`  
 
-<details><summary>Variant: default / with Maya companion / mission partner = maya / mission partner = ren / solo mission / saved Nora / bring Nora on mission / rested in car / told Vega / chore: medbay / chore: perimeter / chore: kitchen / exposed traitor / killed traitor</summary>
+<details><summary>Variant: default / with Maya companion / mission partner = maya / mission partner = ren / solo mission / rested in car / told Vega / chore: medbay / chore: perimeter / chore: kitchen / exposed traitor / killed traitor</summary>
 
-> The horde is a still field. The fence holds. Someone is laughing through tears. A child finds your hand.
+> The horde is a still field. The fence holds. Someone is laughing through tears.
+> 
+> Ren is at the wall, stitching a graze on a man's scalp with steady hands. She glances up at you as you pass, nods once — you did. We did.
+
+</details>
+
+<details><summary>Variant: saved Nora / bring Nora on mission</summary>
+
+> The horde is a still field. The fence holds. Someone is laughing through tears.
+> 
+> Ren is at the wall, stitching a graze on a man's scalp with steady hands. She glances up at you as you pass, nods once — you did. We did.
+> 
+> A child finds your hand.
 
 </details>
 
@@ -926,7 +1001,11 @@ One section per story node, in definition order. Function-branching fields (text
 
 <details><summary>Variant: default / with Maya companion / mission partner = maya / mission partner = ren / solo mission / saved Nora / bring Nora on mission / rested in car / told Vega / chore: medbay / chore: perimeter / chore: kitchen / exposed traitor / killed traitor</summary>
 
-> They'll say you held the line longer than any one person should. They'll carve your name beside the others.
+> They'll say you held the line longer than any one person should.
+> 
+> Ren stays with you in the medbay when the others can't. She doesn't try to fix you — she knows. She just keeps one hand on yours and hums something low, a song from before.
+> 
+> They'll carve your name beside the others.
 
 </details>
 
@@ -1011,6 +1090,12 @@ One section per story node, in definition order. Function-branching fields (text
 > Ren keeps pace beside you. She hums, low — a song you almost recognise.
 > 
 > "My grandmother used to sing it," she says when she catches you listening. "It's the only thing of hers I have left."
+> 
+> The humming stops as the hospital squats into view.
+> 
+> "Worked Mercy's ER the first month," she says quietly, like it explains something. "If my hands shake later — that's why."
+> 
+> She starts humming again.
 
 </details>
 
@@ -1225,6 +1310,8 @@ One section per story node, in definition order. Function-branching fields (text
 > It's over. He's smaller now. Calder again, almost.
 > 
 > Vega lowers her rifle and spits into the grass. "Whole camp hears about this before sunrise," she says, already turning toward the bell.
+> 
+> Ren is already at the fence by the time the bell starts. She catches your eye once — gratitude, quick as a blink — then kneels beside the body with a clean sheet.
 
 </details>
 
