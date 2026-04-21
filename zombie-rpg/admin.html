@@ -282,39 +282,77 @@
     .reader {
       max-width: 520px;
       margin: 0 auto;
-      padding: 18px;
+      padding: 0;
       display: flex; flex-direction: column;
       gap: 0;
       background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      overflow: hidden;
     }
-    .reader-hud {
+    /* ---- Game-accurate classes copied from zombie-rpg/css/style.css ---- */
+    .reader .hud {
       background: linear-gradient(180deg, #14190f, #0e130a);
       border-bottom: 1px solid var(--border);
-      padding: 8px 12px;
-      display: flex; align-items: center; justify-content: space-between;
-      font-size: 12px;
+      padding: 10px 14px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      flex-shrink: 0;
     }
-    .reader-hud .name {
-      font-weight: 700; color: var(--accent-2); letter-spacing: 1px;
-      font-size: 13px;
+    .reader .hud-name {
+      font-weight: 700;
+      font-size: 14px;
+      color: var(--accent-2);
+      letter-spacing: 1px;
     }
-    .reader-hud .stats { display: flex; gap: 10px; color: var(--text); }
-    .reader-hud .stat {
+    .reader .hud-stats { display: flex; gap: 10px; font-size: 13px; }
+    .reader .stat {
       background: var(--panel);
-      padding: 3px 7px;
-      border-radius: 5px;
+      padding: 4px 8px;
+      border-radius: 6px;
       border: 1px solid var(--border);
+      white-space: nowrap;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
     }
-    .reader-scene {
-      position: relative;
-      width: 100%; aspect-ratio: 3 / 2;
-      background: #000;
+    .reader .stat b { color: var(--text); font-weight: 700; }
+    .reader .stat-bar-track {
+      display: inline-block;
+      width: 44px; height: 6px;
+      background: #2a0a0a;
+      border: 1px solid var(--border);
+      border-radius: 3px;
       overflow: hidden;
+    }
+    .reader .stat-bar-fill {
+      display: block; height: 100%;
+      background: linear-gradient(90deg, #c7464a, #8a2c30);
+      width: 100%;
+    }
+    .reader .stat-bar-fill.stam {
+      background: linear-gradient(90deg, #d9a441, #a8762b);
+    }
+
+    .reader .scene {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 3 / 2;
+      background: linear-gradient(180deg, #0e1509 0%, #1a2213 50%, #0a0e06 100%);
       border-bottom: 1px solid var(--border);
+      overflow: hidden;
+      flex-shrink: 0;
       cursor: pointer;
     }
-    .reader-scene img { width: 100%; height: 100%; object-fit: cover; display: block; }
-    .reader-scene.img-missing::after {
+    .reader .scene-art {
+      position: absolute; inset: 0;
+    }
+    .reader .scene-art img {
+      width: 100%; height: 100%; object-fit: cover; display: block;
+    }
+    .reader .scene.img-missing .scene-art::after {
       content: "click to upload scene art";
       position: absolute; inset: 0;
       display: flex; align-items: center; justify-content: center;
@@ -322,8 +360,8 @@
       background: repeating-linear-gradient(45deg, #0a0d08 0 8px, #11140d 8px 16px);
       pointer-events: none;
     }
-    .reader-scene::before {
-      content: "✎ click to swap";
+    .reader .scene::before {
+      content: "✎ click to swap art";
       position: absolute; inset: 0;
       display: flex; align-items: center; justify-content: center;
       color: #fff; font-size: 12px; letter-spacing: 2px;
@@ -331,94 +369,127 @@
       opacity: 0;
       transition: opacity 120ms ease;
       pointer-events: none;
+      z-index: 3;
     }
-    .reader-scene:hover::before { opacity: 1; }
-    .reader-scene .reader-chapter-overlay {
-      position: absolute; left: 10px; top: 8px;
+    .reader .scene:hover::before { opacity: 1; }
+    .reader .scene .reader-badge {
+      position: absolute; top: 8px; right: 8px;
       background: rgba(0,0,0,0.7); color: var(--accent-2);
       font-size: 10px; padding: 3px 7px; border-radius: 4px;
-      letter-spacing: 1px; text-transform: uppercase;
+      letter-spacing: 1px; z-index: 2;
     }
-    .reader-scene .reader-badge {
-      position: absolute; right: 6px; top: 6px;
-      background: rgba(0,0,0,0.7); color: var(--accent-2);
-      font-size: 9px; padding: 2px 6px; border-radius: 4px;
-      letter-spacing: 1px;
+    .reader .scene.replaced .reader-badge { background: var(--warn); color: #0b0f0a; }
+    .reader .scene.replaced.committed .reader-badge { background: var(--accent); color: #0b0f0a; }
+    .reader .scene-chapter {
+      position: absolute; top: 8px; left: 10px;
+      font-family: ui-monospace, "SF Mono", Menlo, monospace;
+      font-size: 10px; letter-spacing: 2px; text-transform: uppercase;
+      color: var(--accent-2);
+      background: rgba(0,0,0,0.7);
+      padding: 3px 7px;
+      border-radius: 4px;
+      z-index: 2;
     }
-    .reader-scene.replaced .reader-badge { background: var(--warn); color: #0b0f0a; }
-    .reader-scene.replaced.committed .reader-badge { background: var(--accent); color: #0b0f0a; }
 
-    .reader-narrative {
-      padding: 14px 16px 8px;
+    .reader .narrative {
+      overflow-y: auto;
+      padding: 14px 16px;
       background: var(--bg);
-      min-height: 80px;
+      line-height: 1.55;
+      font-size: 15px;
     }
-    .reader-narrative .speaker {
-      font-size: 12px; color: var(--warn); font-style: italic;
-      letter-spacing: 0.5px; margin-bottom: 6px;
+    .reader .speaker {
+      font-weight: 700;
+      color: var(--accent-2);
+      margin-bottom: 6px;
+      letter-spacing: 1px;
+      font-size: 13px;
+      text-transform: uppercase;
     }
-    .reader-narrative .text {
-      font-size: 14px; line-height: 1.55; color: var(--text);
+    .reader .speaker:empty { display: none; }
+    .reader .text {
+      color: var(--text);
       white-space: pre-wrap;
     }
 
-    .reader-choices {
-      padding: 10px 16px 16px;
-      display: flex; flex-direction: column; gap: 8px;
+    .reader .choices {
+      padding: 8px 14px 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
       background: var(--bg);
+      border-top: 1px solid var(--border);
     }
-    .reader-btn {
+    .reader .choice-btn {
       background: var(--panel);
       color: var(--text);
       border: 1px solid var(--border);
-      border-radius: 10px;
+      border-radius: 8px;
       padding: 12px 14px;
-      font-family: inherit;
+      text-align: left;
       font-size: 14px;
-      text-align: center;
       cursor: pointer;
-      transition: transform 0.08s ease, background 0.2s ease;
+      font-family: inherit;
+      line-height: 1.35;
+      transition: background 0.15s ease;
     }
-    .reader-btn:hover:not(:disabled) { background: var(--panel-2); }
-    .reader-btn:active { transform: translateY(1px); }
-    .reader-btn.primary {
-      background: linear-gradient(180deg, #6d9a33, #557824);
+    .reader .choice-btn:hover:not(:disabled) { background: var(--panel-2); }
+    .reader .choice-btn .tag {
+      display: inline-block;
+      font-size: 10px;
+      padding: 2px 6px;
+      border-radius: 4px;
+      margin-left: 6px;
+      background: var(--accent);
       color: #0b0f0a;
-      border-color: #7fa644;
-      font-weight: 600;
-      box-shadow: 0 2px 0 #3e5a1a, 0 6px 14px rgba(0,0,0,0.4);
+      font-weight: 700;
+      letter-spacing: 1px;
     }
-    .reader-btn.primary:hover { background: linear-gradient(180deg, #7fa83d, #63872a); }
-    .reader-btn.danger { border-color: #5a2323; }
-    .reader-btn[disabled] { opacity: 0.35; cursor: not-allowed; }
-    .reader-btn .tag {
-      display: inline-block; padding: 1px 6px; border-radius: 3px;
-      font-size: 9px; letter-spacing: 1px; text-transform: uppercase;
-      margin-left: 8px;
-      vertical-align: 1px;
+    .reader .choice-btn .tag.danger { background: var(--danger); color: #fff; }
+    .reader .choice-btn .tag.warn { background: var(--warn); color: #0b0f0a; }
+    .reader .choice-btn .tag.item { background: #6b8cbb; color: #0b0f0a; }
+    .reader .choice-btn[disabled] {
+      opacity: 0.45;
+      cursor: not-allowed;
     }
-    .reader-btn .tag.warn { background: var(--warn); color: #0b0f0a; }
-    .reader-btn .tag.danger { background: var(--danger); color: #fff; }
-    .reader-btn.gated {
-      border-style: dashed;
-      opacity: 0.55;
+    .reader .footer-controls {
+      padding: 10px 14px;
+      display: flex;
+      gap: 8px;
+      justify-content: space-around;
+      border-top: 1px solid var(--border);
+      background: var(--bg);
+      color: var(--text-muted);
+      font-size: 18px;
+      flex-shrink: 0;
+      opacity: 0.6;
     }
-    .reader-btn.combat {
-      /* Combat choice — preview the enemy + branching destinations. */
-      display: flex; flex-direction: column; gap: 4px;
-    }
-    .reader-btn.combat .combat-meta {
-      display: flex; gap: 8px; justify-content: center;
-      font-size: 10px; color: var(--text-muted);
+    /* Dev-only extras inside the game frame — win/lose combat pills and
+       the function-next enumeration, shown when dev toggle is on. */
+    body.view-flow:not(.dev) .reader .combat-meta,
+    body.view-flow:not(.dev) .reader .next-fn-targets { display: none; }
+    .reader .combat-meta,
+    .reader .next-fn-targets {
+      margin-top: 6px;
+      display: flex; gap: 6px; flex-wrap: wrap;
+      font-size: 10px;
       font-family: ui-monospace, "SF Mono", Menlo, monospace;
+      color: var(--text-muted);
     }
-    .reader-btn.combat .combat-meta .pill {
-      padding: 1px 7px; border-radius: 3px;
-      background: var(--panel-2); border: 1px solid var(--border);
+    .reader .combat-meta .pill,
+    .reader .next-fn-targets .pill {
+      padding: 2px 7px; border-radius: 3px;
+      background: var(--panel-2);
+      border: 1px solid var(--border);
       cursor: pointer;
+      color: var(--accent-2);
+      text-decoration: none;
     }
-    .reader-btn.combat .combat-meta .pill:hover { background: var(--accent); color: #0b0f0a; border-color: var(--accent); }
-    .reader-btn.combat .combat-meta .pill.lose { border-style: dashed; }
+    .reader .combat-meta .pill:hover,
+    .reader .next-fn-targets .pill:hover {
+      background: var(--accent); color: #0b0f0a; border-color: var(--accent);
+    }
+    .reader .combat-meta .pill.lose { border-style: dashed; color: var(--danger); border-color: var(--danger); }
 
     /* Dev toggle surfaces variants / effect / require blocks. */
     .reader-devpanel {
@@ -827,12 +898,12 @@
   </footer>
 
   <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
-  <script src="js/overrides.js?v=121"></script>
-  <script src="js/scenes.js?v=121"></script>
+  <script src="js/overrides.js?v=122"></script>
+  <script src="js/scenes.js?v=122"></script>
   <!-- story.js is read-only here: we pull chapters / text / choices
        to annotate each scene card so the flow is legible without
        having to play through. -->
-  <script src="js/story.js?v=121"></script>
+  <script src="js/story.js?v=122"></script>
   <script>
     (async function () {
       const PROMPTS = (window.Scenes && window.Scenes.PROMPTS) || {};
@@ -1454,41 +1525,52 @@
           if (!c) return "";
           const gated = typeof c.require === "function" && !callFn(c.require, fakeState);
           const tag = c.tag
-            ? `<span class="tag ${c.tagClass || ""}">${escapeText(c.tag)}</span>`
+            ? ` <span class="tag ${c.tagClass || ""}">${escapeText(c.tag)}</span>`
             : "";
-          const primary = idx === 0 && !gated ? " primary" : "";
           const label = `${escapeText(c.label || "")}${tag}`;
           if (c.combat) {
             const cfg = typeof c.combat === "function" ? callFn(c.combat, fakeState) : c.combat;
             const enemy = cfg && cfg.enemy ? cfg.enemy : "?";
             const winId = cfg && cfg.onWin ? cfg.onWin : "";
             const loseId = cfg && cfg.onLose ? cfg.onLose : "";
-            const metaBits = [];
-            metaBits.push(`⚔ ${escapeText(enemy)}`);
-            if (winId)  metaBits.push(`<span class="pill" data-jump="${escapeText(winId)}">win → ${escapeText(winId)}</span>`);
-            if (loseId && loseId !== winId) metaBits.push(`<span class="pill lose" data-jump="${escapeText(loseId)}">lose → ${escapeText(loseId)}</span>`);
-            return `<button class="reader-btn combat${primary ? " primary" : ""}${gated ? " gated" : ""}" ${gated ? "disabled" : ""}>` +
-              `<span>${label}</span>` +
-              `<span class="combat-meta">${metaBits.join("")}</span>` +
+            const meta = [];
+            meta.push(`<span class="muted">⚔ ${escapeText(enemy)}</span>`);
+            if (winId)  meta.push(`<a class="pill" data-jump="${escapeText(winId)}">win → ${escapeText(winId)}</a>`);
+            if (loseId && loseId !== winId) meta.push(`<a class="pill lose" data-jump="${escapeText(loseId)}">lose → ${escapeText(loseId)}</a>`);
+            return `<button class="choice-btn"` +
+              (winId ? ` data-jump="${escapeText(winId)}"` : " disabled") +
+              (gated ? " disabled" : "") +
+              `>${label}` +
+              `<div class="combat-meta">${meta.join("")}</div>` +
               `</button>`;
           }
-          // Regular choice: click the button to navigate.
           let jumpTarget = "";
           if (typeof c.next === "function") {
             const targets = enumerateNextTargets(c);
             jumpTarget = targets[0] || "";
-          } else if (c.next) {
-            jumpTarget = c.next;
+            const metaHtml = targets.length > 1
+              ? `<div class="next-fn-targets">` +
+                targets.map(t =>
+                  `<a class="pill" data-jump="${escapeText(t)}">→ ${escapeText(t)}</a>`
+                ).join("") +
+                `</div>`
+              : "";
+            return `<button class="choice-btn"` +
+              (jumpTarget ? ` data-jump="${escapeText(jumpTarget)}"` : " disabled") +
+              (gated ? " disabled" : "") +
+              `>${label}${metaHtml}</button>`;
           }
-          return `<button class="reader-btn${primary}${gated ? " gated" : ""}" ` +
-            (jumpTarget ? `data-jump="${escapeText(jumpTarget)}"` : "disabled") +
-            ` ${gated ? "disabled" : ""}>${label}</button>`;
+          if (c.next) jumpTarget = c.next;
+          return `<button class="choice-btn"` +
+            (jumpTarget ? ` data-jump="${escapeText(jumpTarget)}"` : " disabled") +
+            (gated ? " disabled" : "") +
+            `>${label}</button>`;
         }).join("");
         const noChoices = !choices.length
-          ? `<button class="reader-btn gated" disabled>(dead end — back to title / restart)</button>`
+          ? `<button class="choice-btn" disabled>(dead end — Try again · Back to title)</button>`
           : "";
 
-        // --- dev panel: variants + effect/require sources ---
+        // Dev panel: text variants, effect/require sources, function-next enumeration.
         let devPanelHtml = "";
         if (isTextFn) {
           const variants = enumerateTextVariants(node) || [];
@@ -1510,10 +1592,6 @@
           if (typeof c.effect === "function") {
             bits.push(`<div><b>effect:</b><pre>${escapeText(c.effect.toString())}</pre></div>`);
           }
-          if (typeof c.next === "function") {
-            const targets = enumerateNextTargets(c);
-            bits.push(`<div><b>next fn → targets:</b> ${escapeText(targets.join(", ") || "(none resolved)")}</div>`);
-          }
           if (bits.length) {
             devPanelHtml += `<div class="v-row"><span class="k">choice ${idx + 1}: ${escapeText(c.label || "")}</span>` + bits.join("") + `</div>`;
           }
@@ -1529,26 +1607,37 @@
             `<button class="reader-start" title="Jump to intro">⟲</button>` +
             `<span class="crumbs">${crumbs}</span>` +
             `<select class="reader-jump">${jumpOptions}</select>` +
-            `<button class="reader-devtoggle" title="Show branch internals">⋮ dev</button>` +
+            `<button class="reader-devtoggle" title="Toggle dev info (variants + effect/require sources)">⋮ dev</button>` +
             (imgSourceId ? `<button class="commit-btn" disabled title="Upload an image first">🚀</button>` : "") +
           `</div>` +
           `<div class="reader">` +
+            // Fake HUD — matches game layout so the preview reads like play.
+            `<div class="hud">` +
+              `<div class="hud-name">Ellis</div>` +
+              `<div class="hud-stats">` +
+                `<span class="stat" title="Health">❤️ <span class="stat-bar-track"><span class="stat-bar-fill"></span></span><b>10</b>/10</span>` +
+                `<span class="stat" title="Stamina">⚡ <span class="stat-bar-track"><span class="stat-bar-fill stam"></span></span><b>5</b>/5</span>` +
+                `<span class="stat" title="Ammo">🔫 <b>3</b></span>` +
+              `</div>` +
+            `</div>` +
             (imgSourceId
-              ? `<div class="reader-scene" data-flow-id="${escapeText(imgSourceId)}">
-                   <img alt="${escapeText(imgSourceId)}" />
-                   ${chapter ? `<span class="reader-chapter-overlay">${escapeText(chapter)}</span>` : ""}
-                   <span class="reader-badge">${escapeText(badge)}</span>
-                   <input type="file" accept="image/*" hidden />
-                 </div>`
-              : `<div class="reader-scene img-missing">
-                   ${chapter ? `<span class="reader-chapter-overlay">${escapeText(chapter)}</span>` : ""}
-                   <span class="reader-badge">no card</span>
-                 </div>`) +
-            `<div class="reader-narrative">` +
-              (speaker ? `<div class="speaker">${escapeText(speaker)}</div>` : "") +
+              ? `<div class="scene" data-flow-id="${escapeText(imgSourceId)}">` +
+                  (chapter ? `<div class="scene-chapter">${escapeText(chapter)}</div>` : "") +
+                  `<div class="scene-art"><img alt="${escapeText(imgSourceId)}" /></div>` +
+                  `<span class="reader-badge">${escapeText(badge)}</span>` +
+                  `<input type="file" accept="image/*" hidden />` +
+                `</div>`
+              : `<div class="scene img-missing">` +
+                  (chapter ? `<div class="scene-chapter">${escapeText(chapter)}</div>` : "") +
+                  `<div class="scene-art"></div>` +
+                  `<span class="reader-badge">no card</span>` +
+                `</div>`) +
+            `<div class="narrative">` +
+              `<div class="speaker">${escapeText(speaker || "")}</div>` +
               `<div class="text">${escapeText(textStr || "(no text)")}</div>` +
             `</div>` +
-            `<div class="reader-choices">${choiceHtml}${noChoices}</div>` +
+            `<div class="choices">${choiceHtml}${noChoices}</div>` +
+            `<div class="footer-controls"><span>🎒</span><span>💾</span><span>🔊</span><span>🚪</span></div>` +
             devPanel +
           `</div>`;
 
@@ -1582,20 +1671,21 @@
             devToggle.classList.toggle("active", document.body.classList.contains("dev"));
           });
         }
-        // Clicking a choice button (including combat meta pills) navigates.
-        flowEl.querySelectorAll(".reader-btn[data-jump]").forEach(btn => {
+        // Clicking a choice button navigates; inner combat / next-fn pills
+        // navigate to their specific target and stop bubbling.
+        flowEl.querySelectorAll(".choice-btn[data-jump]").forEach(btn => {
           btn.addEventListener("click", () => readerGoTo(btn.dataset.jump));
         });
-        flowEl.querySelectorAll(".reader-btn .combat-meta .pill[data-jump]").forEach(pill => {
+        flowEl.querySelectorAll(".choice-btn .combat-meta .pill[data-jump], .choice-btn .next-fn-targets .pill[data-jump]").forEach(pill => {
           pill.addEventListener("click", (e) => {
             e.stopPropagation();
             readerGoTo(pill.dataset.jump);
           });
         });
         if (!imgSourceId) return;
-        const scene = flowEl.querySelector(".reader-scene[data-flow-id]");
+        const scene = flowEl.querySelector(".scene[data-flow-id]");
         if (scene) {
-          const img = scene.querySelector("img");
+          const img = scene.querySelector(".scene-art img");
           const badge = scene.querySelector(".reader-badge");
           const fileInput = scene.querySelector('input[type="file"]');
           const refresh = () => {
@@ -1613,7 +1703,7 @@
               badge.textContent = "live";
             }
           };
-          img.addEventListener("error", () => {
+          if (img) img.addEventListener("error", () => {
             if (!scene.classList.contains("replaced")) {
               scene.classList.add("img-missing");
               img.removeAttribute("src");
