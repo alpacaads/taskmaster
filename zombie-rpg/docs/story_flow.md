@@ -1202,7 +1202,7 @@ One section per story node, in definition order. Function-branching fields (text
 
 ## <a id="hospital_arrive"></a>`hospital_arrive`
 **Chapter:** Day 4 — Old Mercy  
-**Scene art:** `hospital_ext`  
+**Scene art:** fn → `hospital_arrive_solo` _(default, with Maya companion, solo mission, saved Nora, rested in car, told Vega, chore: medbay, chore: perimeter, chore: kitchen, exposed traitor, killed traitor, romance Maya, romance Ren)_, `hospital_arrive_maya` _(mission partner = maya, bring Nora on mission)_, `hospital_arrive_ren` _(mission partner = ren)_  
 
 <details><summary>Variant: default / with Maya companion / mission partner = maya / mission partner = ren / solo mission / saved Nora / rested in car / told Vega / chore: medbay / chore: perimeter / chore: kitchen / exposed traitor / killed traitor / romance Maya / romance Ren</summary>
 

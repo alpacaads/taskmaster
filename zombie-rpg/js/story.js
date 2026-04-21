@@ -863,7 +863,12 @@ window.Story = {
   },
 
   hospital_arrive: {
-    scene: "hospital_ext",
+    scene: function(s) {
+      const p = s.flags && s.flags.missionPartner;
+      if (p === "maya") return "hospital_arrive_maya";
+      if (p === "ren")  return "hospital_arrive_ren";
+      return "hospital_arrive_solo";
+    },
     sceneClass: "city",
     chapter: "Day 4 — Old Mercy",
     text: function(s) {

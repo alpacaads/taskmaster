@@ -738,7 +738,7 @@ window.Scenes = (function () {
   // fresh image URLs automatically, so a commit on one device (PC)
   // shows up on another (phone) as soon as Pages rebuilds, without
   // relying on localStorage which is per-device.
-  const BUILD = "130";
+  const BUILD = "131";
 
   // Smart cache-bust: per-scene timestamp from the admin takes priority
   // (committer sees their upload immediately), then a device-wide global
@@ -805,6 +805,9 @@ window.Scenes = (function () {
     mission_journey_ren:  "desolate countryside service road at dusk between rusting abandoned cars, Ren — a gentle dark-haired woman in a grey medic top under a worn olive jacket with a medkit slung across her chest — walks beside the survivor, her head turned to him mid-sentence as if softly humming, warm dramatic sunset light filtering through pines, quiet intimate tone, cinematic wide shot",
     mission_journey_solo: "lone survivor walking down a desolate countryside service road at dusk between rusting abandoned cars, hand near a holstered pistol, every shadow a threat, warm dramatic sunset light filtering through pines, oppressive silence, isolated and vulnerable, cinematic wide shot",
     hospital_arrive:     "ruined hospital exterior at dusk, large red faded medical cross above the entrance, broken windows, wreckage in the parking lot, smoke in the air, two cautious survivors approaching with weapons drawn, oppressive atmosphere",
+    hospital_arrive_maya: "ruined hospital exterior at dusk, faded red medical cross above the entrance, broken windows, wreckage in the parking lot, smoke in the air — Maya (a tough red-haired woman in a faded olive army jacket) walks point with her rifle shouldered and ready, the survivor a half step behind scanning the upper floors, wide cinematic shot, oppressive atmosphere, in the style of The Last of Us",
+    hospital_arrive_ren:  "ruined hospital exterior at dusk, faded red medical cross above the entrance, broken windows, wreckage in the parking lot, smoke in the air — Ren (a dark-haired young medic in a grey scrub top under a worn olive jacket, medkit across her chest) stands close at the survivor's side, looking up at the cross with a quiet grief, soft warm side light, cinematic, painterly",
+    hospital_arrive_solo: "ruined hospital exterior at dusk, faded red medical cross above the entrance, broken windows, wreckage in the parking lot, smoke in the air — a single lone survivor at the edge of the parking lot, hand near a holstered pistol, shoulders set, no one else in frame, wide cinematic shot, oppressive silence, isolated and vulnerable, in the style of The Last of Us",
     pharmacy_combat:     "dark abandoned hospital pharmacy at night, scattered pill bottles on the floor, two zombies lurching out of the shadows between toppled shelves, single flashlight beam, blood smears, intense horror combat moment",
     hospital_lobby:      "dim abandoned hospital lobby at night, two survivors sitting beside each other on a row of cracked plastic waiting chairs, exhausted, faint moonlight through broken windows, vending machine glow, tender quiet moment after violence",
     hospital_lobby_maya: "dim abandoned hospital lobby at night, the survivor and Maya — a red-haired woman in an army jacket — sit side by side on a row of cracked plastic waiting chairs, not touching but close, her rifle across her knees, her eyes on him, dim humming streetlight outside, broken windows, vending machine flickering, tense electric quiet moment after violence, cinematic",
