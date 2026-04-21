@@ -227,14 +227,15 @@
     .token-status.ok { background: #1a3010; color: var(--accent-2); }
     .token-status.missing { background: #3a1a1a; color: #e0a0a0; }
 
-    /* Flow outline view — clean linear story read. One row per scene,
-       grouped under chapter headers, with choice destinations rendered
-       as clickable pills that scroll to the target node. */
+    /* Flow tree view — top-down story tree with collapsible branches.
+       Each node is a card placed on an absolute-position canvas; SVG
+       draws elbow connectors from parent to child. */
     #flow {
       background: #06080a;
       color: var(--text);
       display: none;
       min-height: calc(100vh - 80px);
+      overflow: auto;
     }
     body.view-flow #grid { display: none; }
     body.view-flow #flow { display: block; }
@@ -388,6 +389,145 @@
       font-size: 11px;
     }
 
+    /* Tree canvas */
+    .flow-tree-wrap {
+      padding: 18px;
+      overflow: auto;
+    }
+    .flow-tree {
+      position: relative;
+      margin: 0 auto;
+    }
+    .flow-tree svg.flow-edges {
+      position: absolute; top: 0; left: 0;
+      pointer-events: none;
+    }
+    .flow-tree svg.flow-edges path {
+      fill: none;
+      stroke: var(--accent);
+      stroke-width: 1.5;
+      opacity: 0.55;
+    }
+    .flow-tree svg.flow-edges path.combat { stroke: var(--danger); }
+    .flow-tree svg.flow-edges path.combat-lose { stroke: var(--danger); stroke-dasharray: 4 3; opacity: 0.4; }
+
+    .flow-card {
+      position: absolute;
+      width: 160px;
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-top: 3px solid var(--accent);
+      border-radius: 6px;
+      padding: 6px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+      display: flex; flex-direction: column; gap: 4px;
+      cursor: default;
+      transition: background 220ms ease, border-color 220ms ease, transform 120ms ease;
+    }
+    .flow-card.combat { border-top-color: var(--danger); }
+    .flow-card.ending { border-top-color: var(--warn); }
+    .flow-card.flash { background: #1a2418; border-color: var(--accent-2); }
+
+    .flow-card .flow-thumb {
+      position: relative;
+      width: 100%; aspect-ratio: 3 / 2;
+      background: #000;
+      border-radius: 4px;
+      overflow: hidden;
+      cursor: pointer;
+    }
+    .flow-card .flow-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .flow-card .flow-thumb.img-missing::after {
+      content: "click to upload";
+      position: absolute; inset: 0;
+      display: flex; align-items: center; justify-content: center;
+      color: var(--text-muted); font-size: 9px; letter-spacing: 1px;
+      background: repeating-linear-gradient(45deg, #0a0d08 0 8px, #11140d 8px 16px);
+      pointer-events: none;
+    }
+    .flow-card .flow-thumb::before {
+      content: "✎ swap";
+      position: absolute; inset: 0;
+      display: flex; align-items: center; justify-content: center;
+      color: #fff; font-size: 10px; letter-spacing: 2px;
+      background: rgba(0,0,0,0.55);
+      opacity: 0;
+      transition: opacity 120ms ease;
+      pointer-events: none;
+      z-index: 2;
+    }
+    .flow-card .flow-thumb:hover::before { opacity: 1; }
+    .flow-card .flow-thumb .flow-badge {
+      position: absolute; top: 2px; right: 2px;
+      background: rgba(0,0,0,0.7); color: var(--accent-2);
+      font-size: 9px; padding: 2px 5px; border-radius: 3px;
+      letter-spacing: 0.5px; z-index: 3;
+    }
+    .flow-card .flow-thumb.replaced .flow-badge { background: var(--warn); color: #0b0f0a; }
+    .flow-card .flow-thumb.replaced.committed .flow-badge { background: var(--accent); color: #0b0f0a; }
+
+    .flow-card .flow-meta {
+      display: flex; align-items: center; gap: 6px;
+    }
+    .flow-card .flow-id {
+      font-family: ui-monospace, "SF Mono", Menlo, monospace;
+      font-size: 11px; color: var(--accent-2); font-weight: 700;
+      word-break: break-all; flex: 1 1 auto;
+    }
+    .flow-card .flow-toggle {
+      background: var(--panel-2);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      color: var(--accent-2);
+      font-size: 10px; font-family: ui-monospace, "SF Mono", Menlo, monospace;
+      padding: 1px 6px;
+      cursor: pointer;
+      min-width: 26px;
+      text-align: center;
+    }
+    .flow-card .flow-toggle:hover { background: var(--accent); color: #0b0f0a; }
+    .flow-card .flow-chapter {
+      font-size: 9px; color: var(--text-muted);
+      letter-spacing: 1px; text-transform: uppercase;
+    }
+    .flow-card .flow-commit {
+      background: var(--panel-2); color: var(--text);
+      border: 1px solid var(--border); border-radius: 4px;
+      padding: 2px 6px; font-size: 10px; letter-spacing: 0.5px;
+      cursor: pointer; font-family: inherit;
+    }
+    .flow-card .flow-commit:hover:not(:disabled) { background: #2c3920; }
+    .flow-card .flow-commit:disabled { opacity: 0.35; cursor: not-allowed; }
+    .flow-card .flow-commit.needs-token { color: var(--warn); border-color: var(--warn); opacity: 1; }
+    .flow-card .flow-refs {
+      display: flex; flex-wrap: wrap; gap: 3px;
+    }
+    .flow-card .flow-refs a {
+      font-size: 9px; color: var(--text-muted);
+      background: #0a0d08; border: 1px solid var(--border);
+      padding: 1px 5px; border-radius: 3px;
+      font-family: ui-monospace, "SF Mono", Menlo, monospace;
+      text-decoration: none; cursor: pointer;
+    }
+    .flow-card .flow-refs a:hover { color: var(--accent); border-color: var(--accent); }
+
+    /* Leaf ref — for __title__ / __restart__ / convergent repeats that
+       show up as a terminal tile rather than a full card. */
+    .flow-stub {
+      position: absolute;
+      width: 160px;
+      background: var(--panel-2);
+      border: 1px dashed var(--border);
+      border-radius: 4px;
+      padding: 8px 10px;
+      font-family: ui-monospace, "SF Mono", Menlo, monospace;
+      font-size: 11px;
+      color: var(--text-muted);
+      text-align: center;
+      cursor: pointer;
+    }
+    .flow-stub:hover { border-color: var(--accent); color: var(--accent); }
+
     /* Toast */
     #toast {
       position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%);
@@ -470,12 +610,12 @@
   </footer>
 
   <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
-  <script src="js/overrides.js?v=117"></script>
-  <script src="js/scenes.js?v=117"></script>
+  <script src="js/overrides.js?v=118"></script>
+  <script src="js/scenes.js?v=118"></script>
   <!-- story.js is read-only here: we pull chapters / text / choices
        to annotate each scene card so the flow is legible without
        having to play through. -->
-  <script src="js/story.js?v=117"></script>
+  <script src="js/story.js?v=118"></script>
   <script>
     (async function () {
       const PROMPTS = (window.Scenes && window.Scenes.PROMPTS) || {};
@@ -1013,14 +1153,93 @@
         return { nodes, edges, byDepth };
       }
 
-      // Group nodes by chapter for the linear outline. Chapter order
-       // follows first-seen order in the BFS traversal so the game's
-       // narrative pacing drives the outline's order.
+      // Chapter key (kept for reference / shown under each card).
       function chapterKey(node) {
         const ch = (node && node.chapter) || "";
-        // Trim down to the 'Day N' / 'Ending' / 'Sunrise' primary label.
         const m = ch.match(/^(Day \d+|Dawn|Sunrise|Sunset|Ending|You Died)/i);
-        return m ? m[0] : (ch || "Other");
+        return m ? m[0] : (ch || "");
+      }
+
+      // Collapsed-node state persists in localStorage so your folded
+      // branches survive reload.
+      const FLOW_COLLAPSED_KEY = "flow_collapsed_ids";
+      function readCollapsed() {
+        try { return new Set(JSON.parse(localStorage.getItem(FLOW_COLLAPSED_KEY) || "[]")); }
+        catch (e) { return new Set(); }
+      }
+      function writeCollapsed(set) {
+        try { localStorage.setItem(FLOW_COLLAPSED_KEY, JSON.stringify([...set])); }
+        catch (e) {}
+      }
+      const flowCollapsed = readCollapsed();
+
+      // ---------- Tree layout ----------
+      // Classic tidy-tree: each subtree's width is the sum of its
+      // children's widths (or the node's own width if leaf/collapsed);
+      // the parent sits centered over its children. A BFS primary-parent
+      // pass dedupes convergent nodes so each node shows up in exactly
+      // one place; other parents render a ↗ ref chip instead.
+      const TREE_CARD_W = 160;
+      const TREE_CARD_H = 175; // thumbnail + meta + commit
+      const TREE_STUB_H = 44;
+      const TREE_H_GAP = 28;
+      const TREE_V_GAP = 60;
+
+      // Build the primary-parent tree from the BFS graph. Each node
+      // except intro has exactly one primary parent (first to reach it).
+      // outgoing: src -> [{ dst, kind, label }]
+      // childrenByPrimary: primaryParent -> [dst, dst, ...] in outgoing order.
+      function buildFlowTree() {
+        const Story = window.Story || {};
+        const outgoing = new Map();
+        const primaryParent = new Map();
+        const order = [];
+        const seen = new Set();
+        const queue = ["intro"];
+        seen.add("intro");
+        while (queue.length) {
+          const id = queue.shift();
+          order.push(id);
+          const n = Story[id];
+          if (!outgoing.has(id)) outgoing.set(id, []);
+          if (!n) continue;
+          const choices = Array.isArray(n.choices) ? n.choices : [];
+          choices.forEach(c => {
+            if (!c) return;
+            const pushEdge = (dst, kind, label) => {
+              if (!dst) return;
+              outgoing.get(id).push({ dst, kind, label });
+              if (!seen.has(dst)) {
+                seen.add(dst);
+                primaryParent.set(dst, id);
+                queue.push(dst);
+              }
+            };
+            if (c.combat) {
+              const cfg = typeof c.combat === "function" ? null : c.combat;
+              const enemy = cfg && cfg.enemy ? cfg.enemy : "?";
+              if (cfg && cfg.onWin)  pushEdge(cfg.onWin, "combat",      (c.label || "") + " · ⚔ " + enemy + " win");
+              if (cfg && cfg.onLose && cfg.onLose !== cfg.onWin)
+                pushEdge(cfg.onLose, "combat-lose", (c.label || "") + " · ⚔ " + enemy + " lose");
+            } else if (typeof c.next === "function") {
+              // Branches on state — no static child.
+            } else if (c.next) {
+              pushEdge(c.next, "next", c.label || "");
+            }
+          });
+        }
+        // childrenByPrimary: for each parent, the children whose primary
+        // parent is them, in outgoing-edge order.
+        const childrenByPrimary = new Map();
+        outgoing.forEach((edges, src) => {
+          edges.forEach(e => {
+            if (primaryParent.get(e.dst) === src) {
+              if (!childrenByPrimary.has(src)) childrenByPrimary.set(src, []);
+              childrenByPrimary.get(src).push(e.dst);
+            }
+          });
+        });
+        return { outgoing, primaryParent, childrenByPrimary, order };
       }
 
       function renderFlow() {
@@ -1029,119 +1248,161 @@
           flowEl.innerHTML = `<div style="padding:18px;color:#777">Story not loaded.</div>`;
           return;
         }
-        const { nodes } = buildFlowGraph();
+        const tree = buildFlowTree();
 
-        // Walk nodes in BFS insertion order (the Map preserves it).
-        // Group into chapter buckets, preserving first-seen order.
-        const chapterOrder = [];
-        const chapterBuckets = new Map();
-        nodes.forEach(meta => {
-          if (meta.kind === "ref") return; // skip __title__ / __restart__ as top-level rows
-          const key = chapterKey(meta.node);
-          if (!chapterBuckets.has(key)) {
-            chapterBuckets.set(key, []);
-            chapterOrder.push(key);
-          }
-          chapterBuckets.get(key).push(meta);
+        // Recursive widths (unit = card width + gap).
+        const subtreeW = new Map();
+        function widthOf(id) {
+          if (subtreeW.has(id)) return subtreeW.get(id);
+          const selfW = TREE_CARD_W + TREE_H_GAP;
+          if (flowCollapsed.has(id)) { subtreeW.set(id, selfW); return selfW; }
+          const kids = tree.childrenByPrimary.get(id) || [];
+          if (!kids.length) { subtreeW.set(id, selfW); return selfW; }
+          let w = 0;
+          kids.forEach(k => { w += widthOf(k); });
+          const result = Math.max(selfW, w);
+          subtreeW.set(id, result);
+          return result;
+        }
+        widthOf("intro");
+
+        // Recursive positions.
+        const pos = new Map(); // id -> { x, y, w, h }
+        function layout(id, left, depth) {
+          const w = subtreeW.get(id);
+          const cx = left + w / 2;
+          const y = depth * (TREE_CARD_H + TREE_V_GAP);
+          const isStub = !Story[id] || id === "__title__" || id === "__restart__";
+          const h = isStub ? TREE_STUB_H : TREE_CARD_H;
+          pos.set(id, { x: cx - TREE_CARD_W / 2, y, w: TREE_CARD_W, h });
+          if (flowCollapsed.has(id)) return;
+          const kids = tree.childrenByPrimary.get(id) || [];
+          if (!kids.length) return;
+          let cursor = left;
+          kids.forEach(k => {
+            layout(k, cursor, depth + 1);
+            cursor += subtreeW.get(k);
+          });
+        }
+        layout("intro", 0, 0);
+
+        // Compute canvas size.
+        let maxX = 0, maxY = 0;
+        pos.forEach(p => {
+          maxX = Math.max(maxX, p.x + p.w);
+          maxY = Math.max(maxY, p.y + p.h);
         });
+        const pad = 20;
+        const canvasW = maxX + pad;
+        const canvasH = maxY + pad;
 
-        const toc = chapterOrder.map((ch, i) =>
-          `<a href="#flow-ch-${i}">${escapeText(ch)}</a>`
-        ).join("");
+        // Build wrapper + tree container.
+        const wrap = document.createElement("div");
+        wrap.className = "flow-tree-wrap";
+        const tree2 = document.createElement("div");
+        tree2.className = "flow-tree";
+        tree2.style.width = canvasW + "px";
+        tree2.style.height = canvasH + "px";
 
-        const listItems = [];
-        chapterOrder.forEach((ch, i) => {
-          listItems.push(
-            `<div class="flow-chapter-head" id="flow-ch-${i}">${escapeText(ch)}</div>`
-          );
-          chapterBuckets.get(ch).forEach(meta => {
-            listItems.push(renderFlowRow(meta));
+        // SVG edges (parent -> child elbow, plus non-primary cross-refs drawn faintly).
+        const svgNS = "http://www.w3.org/2000/svg";
+        const svg = document.createElementNS(svgNS, "svg");
+        svg.classList.add("flow-edges");
+        svg.setAttribute("width", canvasW);
+        svg.setAttribute("height", canvasH);
+        pos.forEach((p, id) => {
+          if (flowCollapsed.has(id)) return;
+          const kids = tree.childrenByPrimary.get(id) || [];
+          if (!kids.length) return;
+          const parentEdges = tree.outgoing.get(id) || [];
+          kids.forEach(kid => {
+            const kp = pos.get(kid);
+            if (!kp) return;
+            const x1 = p.x + p.w / 2;
+            const y1 = p.y + p.h;
+            const x2 = kp.x + kp.w / 2;
+            const y2 = kp.y;
+            const midY = (y1 + y2) / 2;
+            // Elbow: down, across, down.
+            const d = `M ${x1} ${y1} L ${x1} ${midY} L ${x2} ${midY} L ${x2} ${y2}`;
+            const path = document.createElementNS(svgNS, "path");
+            path.setAttribute("d", d);
+            const edge = parentEdges.find(e => e.dst === kid);
+            if (edge && edge.kind === "combat") path.setAttribute("class", "combat");
+            else if (edge && edge.kind === "combat-lose") path.setAttribute("class", "combat-lose");
+            svg.appendChild(path);
           });
         });
+        tree2.appendChild(svg);
 
-        flowEl.innerHTML =
-          `<div class="flow-toc">${toc}</div>` +
-          `<div class="flow-list">${listItems.join("")}</div>`;
-        wireFlowControls();
-      }
-
-      function renderFlowRow(meta) {
-        const node = meta.node;
-        const id = meta.id;
-        const isEnding = /^ending_final_|^death$/.test(id);
-        const isCombat = node && (node.choices || []).some(c => c && c.combat);
-        const cls = ["flow-row"];
-        if (isEnding) cls.push("ending");
-        else if (isCombat) cls.push("combat");
-        const hasCard = !!PROMPTS[id];
-        const speaker = typeof node?.speaker === "string" ? node.speaker : "";
-        const isTextFn = typeof node?.text === "function";
-        const textHtml = isTextFn
-          ? `<div class="flow-text branch">(text branches on state)</div>`
-          : node?.text
-            ? `<div class="flow-text">${escapeText(snippet(node.text, 240))}</div>`
+        // Build cards.
+        pos.forEach((p, id) => {
+          const node = Story[id];
+          if (id === "__title__" || id === "__restart__" || !node) {
+            const stub = document.createElement("div");
+            stub.className = "flow-stub";
+            stub.style.left = p.x + "px";
+            stub.style.top = p.y + "px";
+            stub.textContent = id === "__title__" ? "↻ back to title"
+                             : id === "__restart__" ? "↻ restart"
+                             : id;
+            tree2.appendChild(stub);
+            return;
+          }
+          const isEnding = /^ending_final_|^death$/.test(id);
+          const isCombat = (node.choices || []).some(c => c && c.combat);
+          const cls = ["flow-card"];
+          if (isEnding) cls.push("ending");
+          else if (isCombat) cls.push("combat");
+          const hasCard = !!PROMPTS[id];
+          // Cross-ref chips: outgoing edges whose destination has a
+          // different primary parent (i.e. shown elsewhere).
+          const outEdges = tree.outgoing.get(id) || [];
+          const refs = outEdges
+            .filter(e => tree.primaryParent.get(e.dst) !== id)
+            .map(e => `<a class="flow-ref" data-jump="${escapeText(e.dst)}">↗ ${escapeText(e.dst)}</a>`)
+            .join("");
+          const kidCount = (tree.childrenByPrimary.get(id) || []).length;
+          const isCollapsed = flowCollapsed.has(id);
+          const toggle = kidCount
+            ? `<button class="flow-toggle" data-toggle="${escapeText(id)}" title="${isCollapsed ? "Expand" : "Collapse"} ${kidCount} child${kidCount === 1 ? "" : "ren"}">${isCollapsed ? `+${kidCount}` : "−"}</button>`
             : "";
-        const choices = Array.isArray(node?.choices) ? node.choices : [];
-        const choiceItems = choices.map(c => {
-          const label = escapeText(c.label || "(unlabeled)");
-          if (c.combat) {
-            const cfg = typeof c.combat === "function" ? null : c.combat;
-            const enemy = cfg && cfg.enemy ? cfg.enemy : "(branches)";
-            const onWin = cfg && cfg.onWin ? cfg.onWin : null;
-            const onLose = cfg && cfg.onLose ? cfg.onLose : null;
-            const parts = [
-              `<span class="label">${label}</span>`,
-              `<span class="arrow">⚔ ${escapeText(enemy)}</span>`,
-            ];
-            if (onWin) parts.push(
-              `<span class="arrow">win →</span>` +
-              `<a class="jump" data-jump="${escapeText(onWin)}">${escapeText(onWin)}</a>`
-            );
-            if (onLose && onLose !== onWin) parts.push(
-              `<span class="arrow">lose →</span>` +
-              `<a class="jump lose" data-jump="${escapeText(onLose)}">${escapeText(onLose)}</a>`
-            );
-            return `<li class="combat">${parts.join("")}</li>`;
-          }
-          if (typeof c.next === "function") {
-            return `<li><span class="label">${label}</span>` +
-              `<span class="arrow">→</span><span class="jump" title="branches on state">(branches)</span></li>`;
-          }
-          if (c.next) {
-            return `<li><span class="label">${label}</span>` +
-              `<span class="arrow">→</span>` +
-              `<a class="jump" data-jump="${escapeText(c.next)}">${escapeText(c.next)}</a></li>`;
-          }
-          return `<li><span class="label">${label}</span></li>`;
-        }).join("");
-        const choicesHtml = choiceItems
-          ? `<ul class="flow-choices">${choiceItems}</ul>`
-          : `<ul class="flow-choices"><li><span class="arrow">(no choices — dead end)</span></li></ul>`;
+          const ch = chapterKey(node);
+          const thumbHtml = hasCard
+            ? `<div class="flow-thumb" data-flow-id="${escapeText(id)}">
+                 <img alt="${escapeText(id)}" />
+                 <span class="flow-badge">live</span>
+                 <input type="file" accept="image/*" hidden />
+               </div>`
+            : `<div class="flow-thumb" aria-hidden="true">
+                 <span class="flow-badge" style="background:var(--panel-2);color:var(--text-muted)">no card</span>
+               </div>`;
+          const commitBtn = hasCard
+            ? `<button class="flow-commit" disabled title="Upload an image first">🚀 Commit</button>`
+            : "";
 
-        const thumbHtml = hasCard
-          ? `<div class="flow-thumb" data-flow-id="${escapeText(id)}">
-               <img alt="${escapeText(id)}" />
-               <span class="flow-badge">live</span>
-               <input type="file" accept="image/*" hidden />
-             </div>`
-          : `<div class="flow-thumb" aria-hidden="true">
-               <span class="flow-badge" style="background:var(--panel-2);color:var(--text-muted)">no card</span>
-             </div>`;
-        const commitBtn = hasCard
-          ? `<button class="flow-commit" disabled title="Upload an image first">🚀 Commit</button>`
-          : "";
-        const idRow =
-          `<div class="flow-id-row">
-             <span class="flow-id">${escapeText(id)}</span>` +
-          (speaker ? `<span class="flow-speaker">${escapeText(speaker)}</span>` : "") +
-          (commitBtn) +
-          `</div>`;
-        return (
-          `<div class="${cls.join(" ")}" id="flow-node-${escapeText(id)}" data-flow-id="${escapeText(id)}">` +
+          const card = document.createElement("div");
+          card.className = cls.join(" ");
+          card.style.left = p.x + "px";
+          card.style.top = p.y + "px";
+          card.id = "flow-node-" + id;
+          card.dataset.flowId = id;
+          card.innerHTML =
             thumbHtml +
-            `<div class="flow-body">${idRow}${textHtml}${choicesHtml}</div>` +
-          `</div>`
-        );
+            `<div class="flow-meta">
+               <span class="flow-id">${escapeText(id)}</span>
+               ${toggle}
+             </div>` +
+            (ch ? `<div class="flow-chapter">${escapeText(ch)}</div>` : "") +
+            (refs ? `<div class="flow-refs">${refs}</div>` : "") +
+            commitBtn;
+          tree2.appendChild(card);
+        });
+
+        wrap.appendChild(tree2);
+        flowEl.innerHTML = "";
+        flowEl.appendChild(wrap);
+        wireFlowControls();
       }
 
       // Hook every flow-chart thumbnail/commit button to the same
@@ -1196,8 +1457,8 @@
           });
           refresh();
         });
-        flowEl.querySelectorAll(".flow-row[data-flow-id] .flow-commit").forEach(btn => {
-          const id = btn.closest(".flow-row").dataset.flowId;
+        flowEl.querySelectorAll(".flow-card[data-flow-id] .flow-commit").forEach(btn => {
+          const id = btn.closest(".flow-card").dataset.flowId;
           const setCommitState = () => {
             const hasOverride = !!(window.__OVERRIDES || {})[id];
             btn.disabled = !hasOverride;
@@ -1236,6 +1497,37 @@
             row.classList.add("flash");
             setTimeout(() => row.classList.remove("flash"), 1400);
           });
+        });
+        // Expand / collapse branch toggles.
+        flowEl.querySelectorAll(".flow-toggle[data-toggle]").forEach(btn => {
+          btn.addEventListener("click", (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            const id = btn.dataset.toggle;
+            if (flowCollapsed.has(id)) flowCollapsed.delete(id);
+            else flowCollapsed.add(id);
+            writeCollapsed(flowCollapsed);
+            renderFlow();
+          });
+        });
+        // Cross-reference chips (↗ target_id): scroll and flash the
+        // primary card.
+        flowEl.querySelectorAll(".flow-ref[data-jump]").forEach(a => {
+          a.addEventListener("click", (e) => {
+            e.preventDefault();
+            const target = a.dataset.jump;
+            const card = document.getElementById("flow-node-" + target);
+            if (!card) return;
+            card.scrollIntoView({ behavior: "smooth", block: "center" });
+            card.classList.remove("flash");
+            void card.offsetWidth;
+            card.classList.add("flash");
+            setTimeout(() => card.classList.remove("flash"), 1400);
+          });
+        });
+        // Stub clicks (__title__ / __restart__): just scroll to top.
+        flowEl.querySelectorAll(".flow-stub").forEach(el => {
+          el.addEventListener("click", () => flowEl.scrollTo({ top: 0, behavior: "smooth" }));
         });
       }
 
