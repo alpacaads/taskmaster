@@ -227,15 +227,13 @@
     .token-status.ok { background: #1a3010; color: var(--accent-2); }
     .token-status.missing { background: #3a1a1a; color: #e0a0a0; }
 
-    /* Flow chart view */
+    /* Flow outline view — clean linear story read. One row per scene,
+       grouped under chapter headers, with choice destinations rendered
+       as clickable pills that scroll to the target node. */
     #flow {
-      position: relative;
-      overflow: auto;
       background: #06080a;
-      padding: 24px;
       color: var(--text);
       display: none;
-      /* Let the chart inside size itself beyond the viewport. */
       min-height: calc(100vh - 80px);
     }
     body.view-flow #grid { display: none; }
@@ -248,53 +246,67 @@
       font-weight: 700;
     }
 
-    .flow-chart {
-      position: relative;
-      /* JS sets width/height based on computed layout. */
+    .flow-toc {
+      position: sticky; top: 0; z-index: 10;
+      background: #0b0f0a;
+      border-bottom: 1px solid var(--border);
+      padding: 10px 18px;
+      display: flex; flex-wrap: wrap; gap: 6px;
     }
-    .flow-chart svg {
-      position: absolute; top: 0; left: 0;
-      pointer-events: none;
-      overflow: visible;
+    .flow-toc a {
+      font-size: 11px; letter-spacing: 1px; text-transform: uppercase;
+      color: var(--text-dim);
+      text-decoration: none;
+      padding: 4px 10px;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      background: var(--panel);
+      white-space: nowrap;
     }
-    .flow-chart svg path {
-      fill: none;
-      stroke: var(--accent);
-      stroke-width: 1.5;
-      opacity: 0.55;
-    }
-    .flow-chart svg path.combat { stroke: var(--danger); }
-    .flow-chart svg path.combat-lose { stroke: var(--danger); stroke-dasharray: 4 3; opacity: 0.45; }
+    .flow-toc a:hover { color: var(--accent-2); border-color: var(--accent); }
 
-    .flow-box {
-      position: absolute;
-      width: 180px;
+    .flow-list {
+      max-width: 920px;
+      margin: 0 auto;
+      padding: 18px;
+      display: flex; flex-direction: column; gap: 8px;
+    }
+    .flow-chapter-head {
+      margin: 20px 0 4px;
+      padding: 8px 0;
+      border-bottom: 1px solid var(--border);
+      color: var(--accent-2);
+      font-size: 13px; letter-spacing: 3px; text-transform: uppercase;
+      font-weight: 700;
+    }
+    .flow-chapter-head:first-child { margin-top: 0; }
+
+    .flow-row {
+      display: grid;
+      grid-template-columns: 140px 1fr;
+      gap: 14px;
+      padding: 10px;
       background: var(--panel);
       border: 1px solid var(--border);
-      border-top: 3px solid var(--accent);
+      border-left: 3px solid var(--accent);
       border-radius: 6px;
-      padding: 6px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.4);
-      display: flex; flex-direction: column; gap: 4px;
-      transition: transform 120ms ease, box-shadow 120ms ease;
+      scroll-margin-top: 80px;
+      transition: background 240ms ease, border-color 240ms ease;
     }
-    .flow-box.combat { border-top-color: var(--danger); }
-    .flow-box.ending { border-top-color: var(--warn); }
-    .flow-box.ref { opacity: 0.55; border-top-style: dashed; }
-    .flow-box:hover { transform: translateY(-1px); box-shadow: 0 6px 18px rgba(0,0,0,0.6); }
+    .flow-row.combat { border-left-color: var(--danger); }
+    .flow-row.ending { border-left-color: var(--warn); }
+    .flow-row.flash { background: #1a2418; border-color: var(--accent-2); }
 
-    .flow-thumb {
+    .flow-row .flow-thumb {
       position: relative;
-      width: 100%; aspect-ratio: 3 / 2;
+      width: 140px; aspect-ratio: 3 / 2;
       background: #000;
       border-radius: 4px;
       overflow: hidden;
       cursor: pointer;
     }
-    .flow-thumb img {
-      width: 100%; height: 100%; object-fit: cover; display: block;
-    }
-    .flow-thumb.img-missing::after {
+    .flow-row .flow-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .flow-row .flow-thumb.img-missing::after {
       content: "click to upload";
       position: absolute; inset: 0;
       display: flex; align-items: center; justify-content: center;
@@ -302,8 +314,7 @@
       background: repeating-linear-gradient(45deg, #0a0d08 0 8px, #11140d 8px 16px);
       pointer-events: none;
     }
-    .flow-thumb::before {
-      /* Hover hint overlay. */
+    .flow-row .flow-thumb::before {
       content: "✎ swap";
       position: absolute; inset: 0;
       display: flex; align-items: center; justify-content: center;
@@ -314,54 +325,67 @@
       pointer-events: none;
       z-index: 2;
     }
-    .flow-thumb:hover::before { opacity: 1; }
-    .flow-thumb .flow-badge {
+    .flow-row .flow-thumb:hover::before { opacity: 1; }
+    .flow-row .flow-thumb .flow-badge {
       position: absolute; top: 3px; right: 3px;
       background: rgba(0,0,0,0.7); color: var(--accent-2);
       font-size: 9px; padding: 2px 5px; border-radius: 3px;
-      letter-spacing: 0.5px;
-      z-index: 3;
+      letter-spacing: 0.5px; z-index: 3;
     }
-    .flow-thumb.replaced .flow-badge { background: var(--warn); color: #0b0f0a; }
-    .flow-thumb.replaced.committed .flow-badge { background: var(--accent); color: #0b0f0a; }
+    .flow-row .flow-thumb.replaced .flow-badge { background: var(--warn); color: #0b0f0a; }
+    .flow-row .flow-thumb.replaced.committed .flow-badge { background: var(--accent); color: #0b0f0a; }
 
-    .flow-box .flow-id {
+    .flow-row .flow-body { min-width: 0; display: flex; flex-direction: column; gap: 6px; }
+    .flow-row .flow-id-row {
+      display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+    }
+    .flow-row .flow-id {
       font-family: ui-monospace, "SF Mono", Menlo, monospace;
-      font-size: 11px; color: var(--accent-2); font-weight: 700;
-      word-break: break-all;
+      font-size: 12px; color: var(--accent-2); font-weight: 700;
     }
-    .flow-box .flow-chapter {
-      font-size: 9px; color: var(--text-muted);
-      letter-spacing: 1px; text-transform: uppercase;
-    }
-    .flow-box .flow-commit {
+    .flow-row .flow-speaker { font-size: 11px; color: var(--warn); font-style: italic; }
+    .flow-row .flow-commit {
       background: var(--panel-2); color: var(--text);
       border: 1px solid var(--border); border-radius: 4px;
-      padding: 3px 6px; font-size: 10px; letter-spacing: 0.5px;
-      cursor: pointer; font-family: inherit; width: 100%;
+      padding: 3px 8px; font-size: 10px; letter-spacing: 0.5px;
+      cursor: pointer; font-family: inherit; margin-left: auto;
     }
-    .flow-box .flow-commit:hover:not(:disabled) { background: #2c3920; }
-    .flow-box .flow-commit:disabled { opacity: 0.35; cursor: not-allowed; }
-    .flow-box .flow-commit.needs-token { color: var(--warn); border-color: var(--warn); opacity: 1; }
+    .flow-row .flow-commit:hover:not(:disabled) { background: #2c3920; }
+    .flow-row .flow-commit:disabled { opacity: 0.35; cursor: not-allowed; }
+    .flow-row .flow-commit.needs-token { color: var(--warn); border-color: var(--warn); opacity: 1; }
 
-    .flow-stub {
-      /* Non-scene refs: __title__, __restart__, missing, etc. */
-      position: absolute;
+    .flow-row .flow-text { font-size: 12px; line-height: 1.45; color: var(--text-dim); }
+    .flow-row .flow-text.branch { color: var(--text-muted); font-style: italic; }
+
+    .flow-row ul.flow-choices {
+      list-style: none; margin: 2px 0 0; padding: 0;
+      display: flex; flex-direction: column; gap: 3px;
+    }
+    .flow-row ul.flow-choices li {
+      font-size: 12px; color: var(--text);
+      display: flex; flex-wrap: wrap; align-items: center; gap: 6px;
+    }
+    .flow-row ul.flow-choices li .label { flex: 0 1 auto; }
+    .flow-row ul.flow-choices li .jump {
+      color: var(--accent-2);
       background: var(--panel-2);
-      border: 1px dashed var(--border);
-      border-radius: 4px;
-      padding: 6px 10px;
+      border: 1px solid var(--border);
+      padding: 1px 7px;
+      border-radius: 3px;
       font-family: ui-monospace, "SF Mono", Menlo, monospace;
       font-size: 11px;
-      color: var(--text-muted);
-      width: 180px;
-      text-align: center;
+      text-decoration: none;
+      cursor: pointer;
     }
-    .flow-chart .flow-hint {
-      position: sticky; top: 0;
-      font-size: 11px; color: var(--text-muted);
-      letter-spacing: 1px; text-transform: uppercase;
-      padding: 4px 0 10px; z-index: 5;
+    .flow-row ul.flow-choices li .jump:hover {
+      background: var(--accent); color: #0b0f0a; border-color: var(--accent);
+    }
+    .flow-row ul.flow-choices li.combat .jump { color: var(--danger); border-color: var(--danger); }
+    .flow-row ul.flow-choices li.combat .jump.lose { border-style: dashed; }
+    .flow-row ul.flow-choices li .arrow {
+      color: var(--text-muted);
+      font-family: ui-monospace, "SF Mono", Menlo, monospace;
+      font-size: 11px;
     }
 
     /* Toast */
@@ -446,12 +470,12 @@
   </footer>
 
   <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
-  <script src="js/overrides.js?v=116"></script>
-  <script src="js/scenes.js?v=116"></script>
+  <script src="js/overrides.js?v=117"></script>
+  <script src="js/scenes.js?v=117"></script>
   <!-- story.js is read-only here: we pull chapters / text / choices
        to annotate each scene card so the flow is legible without
        having to play through. -->
-  <script src="js/story.js?v=116"></script>
+  <script src="js/story.js?v=117"></script>
   <script>
     (async function () {
       const PROMPTS = (window.Scenes && window.Scenes.PROMPTS) || {};
@@ -989,113 +1013,135 @@
         return { nodes, edges, byDepth };
       }
 
+      // Group nodes by chapter for the linear outline. Chapter order
+       // follows first-seen order in the BFS traversal so the game's
+       // narrative pacing drives the outline's order.
+      function chapterKey(node) {
+        const ch = (node && node.chapter) || "";
+        // Trim down to the 'Day N' / 'Ending' / 'Sunrise' primary label.
+        const m = ch.match(/^(Day \d+|Dawn|Sunrise|Sunset|Ending|You Died)/i);
+        return m ? m[0] : (ch || "Other");
+      }
+
       function renderFlow() {
         const Story = window.Story || {};
         if (!Story.intro) {
           flowEl.innerHTML = `<div style="padding:18px;color:#777">Story not loaded.</div>`;
           return;
         }
-        const { nodes, edges, byDepth } = buildFlowGraph();
-        const maxRows = Math.max(...Array.from(byDepth.values(), a => a.length));
-        const maxDepth = Math.max(...nodes.values()
-          ? [...Array.from(nodes.values()).map(m => m.depth)]
-          : [0]);
+        const { nodes } = buildFlowGraph();
 
-        // Layout: depth = column, row = y position. Story boxes are taller
-        // than stub boxes, so pick a uniform row height and let each node
-        // center vertically within it.
-        const rowH = FLOW_BOX_H + FLOW_ROW_GAP;
-        const colW = FLOW_BOX_W + FLOW_COL_GAP;
-        const width = (maxDepth + 1) * colW + 40;
-        const height = maxRows * rowH + 40;
-
-        // Position lookup: id -> {x, y, w, h}
-        const pos = new Map();
+        // Walk nodes in BFS insertion order (the Map preserves it).
+        // Group into chapter buckets, preserving first-seen order.
+        const chapterOrder = [];
+        const chapterBuckets = new Map();
         nodes.forEach(meta => {
-          const x = 20 + meta.depth * colW;
-          const y = 20 + meta.row * rowH;
-          const isStub = meta.kind === "ref" || !PROMPTS[meta.id];
-          pos.set(meta.id, {
-            x, y,
-            w: FLOW_BOX_W,
-            h: isStub ? FLOW_STUB_H : FLOW_BOX_H,
+          if (meta.kind === "ref") return; // skip __title__ / __restart__ as top-level rows
+          const key = chapterKey(meta.node);
+          if (!chapterBuckets.has(key)) {
+            chapterBuckets.set(key, []);
+            chapterOrder.push(key);
+          }
+          chapterBuckets.get(key).push(meta);
+        });
+
+        const toc = chapterOrder.map((ch, i) =>
+          `<a href="#flow-ch-${i}">${escapeText(ch)}</a>`
+        ).join("");
+
+        const listItems = [];
+        chapterOrder.forEach((ch, i) => {
+          listItems.push(
+            `<div class="flow-chapter-head" id="flow-ch-${i}">${escapeText(ch)}</div>`
+          );
+          chapterBuckets.get(ch).forEach(meta => {
+            listItems.push(renderFlowRow(meta));
           });
         });
 
-        // Build DOM.
-        const chart = document.createElement("div");
-        chart.className = "flow-chart";
-        chart.style.width = width + "px";
-        chart.style.height = height + "px";
-        chart.innerHTML = `<div class="flow-hint">→ horizontal = next node · ⚔ red = combat · dashed = combat loss</div>`;
-
-        // SVG layer for arrows (drawn first so boxes sit on top).
-        const svgNS = "http://www.w3.org/2000/svg";
-        const svg = document.createElementNS(svgNS, "svg");
-        svg.setAttribute("width", width);
-        svg.setAttribute("height", height);
-        svg.style.width = width + "px";
-        svg.style.height = height + "px";
-        edges.forEach(e => {
-          const a = pos.get(e.src);
-          const b = pos.get(e.dst);
-          if (!a || !b) return;
-          // Arrow from right-middle of src to left-middle of dst.
-          const x1 = a.x + a.w;
-          const y1 = a.y + a.h / 2;
-          const x2 = b.x;
-          const y2 = b.y + b.h / 2;
-          const midX = (x1 + x2) / 2;
-          const d = `M ${x1} ${y1} C ${midX} ${y1}, ${midX} ${y2}, ${x2} ${y2}`;
-          const path = document.createElementNS(svgNS, "path");
-          path.setAttribute("d", d);
-          if (e.kind === "combat") path.setAttribute("class", "combat");
-          else if (e.kind === "combat-lose") path.setAttribute("class", "combat-lose");
-          svg.appendChild(path);
-        });
-        chart.appendChild(svg);
-
-        // Boxes.
-        nodes.forEach(meta => {
-          const p = pos.get(meta.id);
-          const isStub = meta.kind === "ref" || !PROMPTS[meta.id];
-          if (isStub) {
-            const stub = document.createElement("div");
-            stub.className = "flow-stub";
-            stub.style.left = p.x + "px";
-            stub.style.top = (p.y + (FLOW_BOX_H - FLOW_STUB_H) / 2) + "px";
-            const label = meta.id === "__title__" ? "↻ back to title"
-                        : meta.id === "__restart__" ? "↻ restart"
-                        : meta.id;
-            stub.textContent = label;
-            chart.appendChild(stub);
-            return;
-          }
-          const box = document.createElement("div");
-          const kindClass = /^ending_final_|^death$/.test(meta.id) ? "ending"
-                         : (meta.node && (meta.node.choices || []).some(c => c && c.combat)) ? "combat"
-                         : "";
-          box.className = "flow-box " + kindClass;
-          box.style.left = p.x + "px";
-          box.style.top = p.y + "px";
-          box.dataset.flowId = meta.id;
-          const chapter = meta.node && meta.node.chapter ? meta.node.chapter : "";
-          box.innerHTML = `
-            <div class="flow-thumb" data-flow-id="${escapeText(meta.id)}">
-              <img alt="${escapeText(meta.id)}" />
-              <span class="flow-badge">live</span>
-              <input type="file" accept="image/*" hidden />
-            </div>
-            <div class="flow-id">${escapeText(meta.id)}</div>
-            ${chapter ? `<div class="flow-chapter">${escapeText(chapter)}</div>` : ""}
-            <button class="flow-commit" disabled title="Upload an image first">🚀 Commit</button>
-          `;
-          chart.appendChild(box);
-        });
-
-        flowEl.innerHTML = "";
-        flowEl.appendChild(chart);
+        flowEl.innerHTML =
+          `<div class="flow-toc">${toc}</div>` +
+          `<div class="flow-list">${listItems.join("")}</div>`;
         wireFlowControls();
+      }
+
+      function renderFlowRow(meta) {
+        const node = meta.node;
+        const id = meta.id;
+        const isEnding = /^ending_final_|^death$/.test(id);
+        const isCombat = node && (node.choices || []).some(c => c && c.combat);
+        const cls = ["flow-row"];
+        if (isEnding) cls.push("ending");
+        else if (isCombat) cls.push("combat");
+        const hasCard = !!PROMPTS[id];
+        const speaker = typeof node?.speaker === "string" ? node.speaker : "";
+        const isTextFn = typeof node?.text === "function";
+        const textHtml = isTextFn
+          ? `<div class="flow-text branch">(text branches on state)</div>`
+          : node?.text
+            ? `<div class="flow-text">${escapeText(snippet(node.text, 240))}</div>`
+            : "";
+        const choices = Array.isArray(node?.choices) ? node.choices : [];
+        const choiceItems = choices.map(c => {
+          const label = escapeText(c.label || "(unlabeled)");
+          if (c.combat) {
+            const cfg = typeof c.combat === "function" ? null : c.combat;
+            const enemy = cfg && cfg.enemy ? cfg.enemy : "(branches)";
+            const onWin = cfg && cfg.onWin ? cfg.onWin : null;
+            const onLose = cfg && cfg.onLose ? cfg.onLose : null;
+            const parts = [
+              `<span class="label">${label}</span>`,
+              `<span class="arrow">⚔ ${escapeText(enemy)}</span>`,
+            ];
+            if (onWin) parts.push(
+              `<span class="arrow">win →</span>` +
+              `<a class="jump" data-jump="${escapeText(onWin)}">${escapeText(onWin)}</a>`
+            );
+            if (onLose && onLose !== onWin) parts.push(
+              `<span class="arrow">lose →</span>` +
+              `<a class="jump lose" data-jump="${escapeText(onLose)}">${escapeText(onLose)}</a>`
+            );
+            return `<li class="combat">${parts.join("")}</li>`;
+          }
+          if (typeof c.next === "function") {
+            return `<li><span class="label">${label}</span>` +
+              `<span class="arrow">→</span><span class="jump" title="branches on state">(branches)</span></li>`;
+          }
+          if (c.next) {
+            return `<li><span class="label">${label}</span>` +
+              `<span class="arrow">→</span>` +
+              `<a class="jump" data-jump="${escapeText(c.next)}">${escapeText(c.next)}</a></li>`;
+          }
+          return `<li><span class="label">${label}</span></li>`;
+        }).join("");
+        const choicesHtml = choiceItems
+          ? `<ul class="flow-choices">${choiceItems}</ul>`
+          : `<ul class="flow-choices"><li><span class="arrow">(no choices — dead end)</span></li></ul>`;
+
+        const thumbHtml = hasCard
+          ? `<div class="flow-thumb" data-flow-id="${escapeText(id)}">
+               <img alt="${escapeText(id)}" />
+               <span class="flow-badge">live</span>
+               <input type="file" accept="image/*" hidden />
+             </div>`
+          : `<div class="flow-thumb" aria-hidden="true">
+               <span class="flow-badge" style="background:var(--panel-2);color:var(--text-muted)">no card</span>
+             </div>`;
+        const commitBtn = hasCard
+          ? `<button class="flow-commit" disabled title="Upload an image first">🚀 Commit</button>`
+          : "";
+        const idRow =
+          `<div class="flow-id-row">
+             <span class="flow-id">${escapeText(id)}</span>` +
+          (speaker ? `<span class="flow-speaker">${escapeText(speaker)}</span>` : "") +
+          (commitBtn) +
+          `</div>`;
+        return (
+          `<div class="${cls.join(" ")}" id="flow-node-${escapeText(id)}" data-flow-id="${escapeText(id)}">` +
+            thumbHtml +
+            `<div class="flow-body">${idRow}${textHtml}${choicesHtml}</div>` +
+          `</div>`
+        );
       }
 
       // Hook every flow-chart thumbnail/commit button to the same
@@ -1150,8 +1196,8 @@
           });
           refresh();
         });
-        flowEl.querySelectorAll(".flow-box[data-flow-id] .flow-commit").forEach(btn => {
-          const id = btn.closest(".flow-box").dataset.flowId;
+        flowEl.querySelectorAll(".flow-row[data-flow-id] .flow-commit").forEach(btn => {
+          const id = btn.closest(".flow-row").dataset.flowId;
           const setCommitState = () => {
             const hasOverride = !!(window.__OVERRIDES || {})[id];
             btn.disabled = !hasOverride;
@@ -1175,6 +1221,20 @@
               renderFlow();
             } catch (e) {}
             finally { btn.textContent = prev; }
+          });
+        });
+        // Jump pills: scroll to the target node and briefly flash it.
+        flowEl.querySelectorAll(".flow-choices a.jump[data-jump]").forEach(a => {
+          a.addEventListener("click", (e) => {
+            e.preventDefault();
+            const target = a.dataset.jump;
+            const row = document.getElementById("flow-node-" + target);
+            if (!row) return;
+            row.scrollIntoView({ behavior: "smooth", block: "center" });
+            row.classList.remove("flash");
+            void row.offsetWidth;
+            row.classList.add("flash");
+            setTimeout(() => row.classList.remove("flash"), 1400);
           });
         });
       }
