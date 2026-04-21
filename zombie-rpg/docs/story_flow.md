@@ -1321,12 +1321,12 @@ One section per story node, in definition order. Function-branching fields (text
 **Choices:**
 
 1. **Lean closer. Let Maya see you see her.** _require:_ `s => s.flags.missionPartner === "maya"`
-   - _effect:_ `s => { s.bonds.maya += 2; Game.toast("Maya's trust +2"); }`
+   - _effect:_ `s => { s.bonds.maya += 2; // Explicit 'I'm into you' — locks Ren's bonfire option out. s.flags.committedMaya = true; Game.toast("Maya's trust +2"); }`
    - → `mission_return`
 2. **Keep it professional. Stand up.** _require:_ `s => s.flags.missionPartner === "maya"`
    - → `mission_return`
 3. **Take Ren's hand. Say nothing.** _require:_ `s => s.flags.missionPartner === "ren"`
-   - _effect:_ `s => { s.bonds.ren += 2; Game.toast("Ren's trust +2"); }`
+   - _effect:_ `s => { s.bonds.ren += 2; s.flags.committedRen = true; Game.toast("Ren's trust +2"); }`
    - → `mission_return`
 4. **Give Ren space. Pack the bag.** _require:_ `s => s.flags.missionPartner === "ren"`
    - → `mission_return`
@@ -1516,48 +1516,44 @@ One section per story node, in definition order. Function-branching fields (text
 
 <details><summary>Variant: default / with Maya companion / mission partner = maya / mission partner = ren / solo mission / saved Nora / bring Nora on mission / rested in car / told Vega / chore: medbay / chore: perimeter / chore: kitchen / killed traitor</summary>
 
-> The fire burns low. Most of the camp has turned in. Two figures linger.
+> The fire burns low. Most of the camp has turned in.
 > 
 > You sit alone with the dying flames.
-> 
 
 </details>
 
 <details><summary>Variant: exposed traitor</summary>
 
-> The fire burns low. Most of the camp has turned in. Two figures linger.
+> The fire burns low. Most of the camp has turned in.
 > 
 > Ren is across the fire. When your eyes meet she gives you a small, grave nod. She knows.
 > 
 > You sit alone with the dying flames.
-> 
 
 </details>
 
 <details><summary>Variant: romance Maya</summary>
 
-> The fire burns low. Most of the camp has turned in. Two figures linger.
+> The fire burns low. Most of the camp has turned in.
 > 
 > Maya catches your eye and tilts her head — toward her tent.
-> 
 
 </details>
 
 <details><summary>Variant: romance Ren</summary>
 
-> The fire burns low. Most of the camp has turned in. Two figures linger.
+> The fire burns low. Most of the camp has turned in.
 > 
 > Ren leaves her guitar against the log when she stands. She waits, looking at you.
-> 
 
 </details>
 
 **Choices:**
 
-1. **Follow Maya** `ROMANCE` _require:_ `s => s.flags.maya && s.bonds.maya >= 5`
+1. **Follow Maya** `ROMANCE` _require:_ `s => s.flags.maya && s.bonds.maya >= 5 && !s.flags.committedRen`
    - _effect:_ `s => { s.romance = "maya"; }`
    - → `romance_maya`
-2. **Follow Ren** `ROMANCE` _require:_ `s => s.bonds.ren >= 3`
+2. **Follow Ren** `ROMANCE` _require:_ `s => s.bonds.ren >= 3 && !s.flags.committedMaya`
    - _effect:_ `s => { s.romance = "ren"; }`
    - → `romance_ren`
 3. **Sit with the fire. Sleep alone.**

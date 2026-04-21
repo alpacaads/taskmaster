@@ -971,14 +971,23 @@ window.Story = {
     choices: [
       { label: "Lean closer. Let Maya see you see her.",
         require: s => s.flags.missionPartner === "maya",
-        effect: s => { s.bonds.maya += 2; Game.toast("Maya's trust +2"); },
+        effect: s => {
+          s.bonds.maya += 2;
+          // Explicit 'I'm into you' — locks Ren's bonfire option out.
+          s.flags.committedMaya = true;
+          Game.toast("Maya's trust +2");
+        },
         next: "mission_return" },
       { label: "Keep it professional. Stand up.",
         require: s => s.flags.missionPartner === "maya",
         next: "mission_return" },
       { label: "Take Ren's hand. Say nothing.",
         require: s => s.flags.missionPartner === "ren",
-        effect: s => { s.bonds.ren += 2; Game.toast("Ren's trust +2"); },
+        effect: s => {
+          s.bonds.ren += 2;
+          s.flags.committedRen = true;
+          Game.toast("Ren's trust +2");
+        },
         next: "mission_return" },
       { label: "Give Ren space. Pack the bag.",
         require: s => s.flags.missionPartner === "ren",
@@ -1166,23 +1175,35 @@ window.Story = {
     chapter: "Day 4 — Bonfire",
     text: function(s) {
       const m = s.bonds.maya, r = s.bonds.ren;
-      let lines = "The fire burns low. Most of the camp has turned in. Two figures linger.\n\n";
+      const mayaSignal = !!(s.flags.maya && m >= 5) && !s.flags.committedRen;
+      const renSignal  = r >= 3 && !s.flags.committedMaya;
+      let lines = "The fire burns low. Most of the camp has turned in.\n\n";
       if (s.flags.exposedTraitor && !s.flags.toldVega) {
         // Solo 'Tell Vega' path — Ren wasn't at the fence but she heard.
         lines += "Ren is across the fire. When your eyes meet she gives you a small, grave nod. She knows.\n\n";
       }
-      if (s.flags.maya && m >= 5) lines += "Maya catches your eye and tilts her head — toward her tent.\n";
-      if (r >= 3) lines += "Ren leaves her guitar against the log when she stands. She waits, looking at you.\n";
-      if ((!s.flags.maya || m < 5) && r < 3) lines += "You sit alone with the dying flames.\n";
+      if (mayaSignal && renSignal) {
+        // Crossroads: both earned, neither committed. Weigh it.
+        lines += "Two figures linger.\n\n" +
+          "Maya catches your eye and tilts her head — toward her tent. A breath later, across the fire, Ren leaves her guitar leaned against the log and stands too, waiting.\n\n" +
+          "They don't look at each other. They look at you.\n\n" +
+          "You can't be in two places tonight.";
+      } else if (mayaSignal) {
+        lines += "Maya catches your eye and tilts her head — toward her tent.";
+      } else if (renSignal) {
+        lines += "Ren leaves her guitar against the log when she stands. She waits, looking at you.";
+      } else {
+        lines += "You sit alone with the dying flames.";
+      }
       return lines;
     },
     choices: [
       { label: "Follow Maya", tag: "ROMANCE", tagClass: "warn",
-        require: s => s.flags.maya && s.bonds.maya >= 5,
+        require: s => s.flags.maya && s.bonds.maya >= 5 && !s.flags.committedRen,
         effect: s => { s.romance = "maya"; },
         next: "romance_maya" },
       { label: "Follow Ren", tag: "ROMANCE", tagClass: "warn",
-        require: s => s.bonds.ren >= 3,
+        require: s => s.bonds.ren >= 3 && !s.flags.committedMaya,
         effect: s => { s.romance = "ren"; },
         next: "romance_ren" },
       { label: "Sit with the fire. Sleep alone.",
