@@ -58,7 +58,21 @@
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
       gap: 16px;
-      padding: 18px;
+      padding: 0 18px 18px;
+    }
+    .section-header {
+      grid-column: 1 / -1;
+      padding: 18px 0 6px;
+      margin: 8px 0 0;
+      border-bottom: 1px solid var(--border);
+      display: flex; align-items: baseline; gap: 10px;
+    }
+    .section-header h2 {
+      margin: 0; font-size: 14px; letter-spacing: 2px;
+      color: var(--accent-2); text-transform: uppercase;
+    }
+    .section-header .count {
+      color: var(--text-muted); font-size: 11px;
     }
     .card {
       background: var(--panel);
@@ -111,6 +125,37 @@
     .card-prompt {
       font-size: 12px; color: var(--text-dim); line-height: 1.45;
       max-height: 5.5em; overflow: auto;
+    }
+    .card-meta {
+      background: var(--panel-2);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 8px 10px;
+      display: flex; flex-direction: column; gap: 4px;
+      font-size: 11px; line-height: 1.4;
+    }
+    .card-meta .chapter {
+      color: var(--accent-2); font-weight: 700; letter-spacing: 1px;
+      text-transform: uppercase;
+    }
+    .card-meta .speaker { color: var(--warn); font-style: italic; }
+    .card-meta .text { color: var(--text); }
+    .card-meta .text.dim { color: var(--text-dim); }
+    .card-meta ul.choices {
+      margin: 4px 0 0; padding: 0; list-style: none;
+      display: flex; flex-direction: column; gap: 2px;
+    }
+    .card-meta ul.choices li {
+      color: var(--text-dim);
+      padding-left: 12px;
+      text-indent: -12px;
+    }
+    .card-meta ul.choices li::before {
+      content: "→ ";
+      color: var(--accent);
+    }
+    .card-meta ul.choices li .arrow {
+      color: var(--text-muted); font-family: ui-monospace, "SF Mono", Menlo, monospace;
     }
     .card-actions {
       display: flex; flex-wrap: wrap; gap: 6px; padding-top: 4px;
@@ -261,8 +306,12 @@
   </footer>
 
   <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
-  <script src="js/overrides.js?v=112"></script>
-  <script src="js/scenes.js?v=112"></script>
+  <script src="js/overrides.js?v=113"></script>
+  <script src="js/scenes.js?v=113"></script>
+  <!-- story.js is read-only here: we pull chapters / text / choices
+       to annotate each scene card so the flow is legible without
+       having to play through. -->
+  <script src="js/story.js?v=113"></script>
   <script>
     (async function () {
       const PROMPTS = (window.Scenes && window.Scenes.PROMPTS) || {};
@@ -514,10 +563,7 @@
       async function refreshAllCards() {
         // Re-render every card so badges/thumbs reflect the latest state.
         await Overrides.loadAll();
-        const existing = Array.from(grid.children);
-        existing.forEach(c => c.remove());
-        const allIds = Object.keys(PROMPTS);
-        allIds.forEach(id => grid.appendChild(buildCard(id)));
+        renderGrid(Object.keys(PROMPTS));
       }
 
       // ---------- Commit helpers ----------
@@ -586,10 +632,8 @@
         await Overrides.loadAll();
         // Bump the cache-bust so the *game* re-fetches every image too.
         bumpGameCacheBust();
-        const existing = Array.from(grid.children);
-        existing.forEach(c => c.remove());
         const allIds = Object.keys(PROMPTS);
-        allIds.forEach(id => grid.appendChild(buildCard(id)));
+        renderGrid(allIds);
         toast("Refreshed " + allIds.length + " thumbnails. Game will re-fetch on next load.", "ok");
       });
 
@@ -611,11 +655,143 @@
         return (bytes / 1024 / 1024).toFixed(1) + " MB";
       }
 
+      // ---------- Section & story-flow annotation ----------
+      // Group every scene id into a human-readable section. Sections
+      // render in this order; within each section cards keep their
+      // PROMPTS definition order (which is already roughly narrative).
+      const SECTION_ORDER = [
+        "Title",
+        "Party Portraits",
+        "Day 1 — The Outbreak",
+        "Day 2 — The Road",
+        "Day 3 — Greenbelt",
+        "Day 4 — Morning & Mission",
+        "Day 4 — Night",
+        "Day 4 — Romance",
+        "Day 5 — Horde",
+        "Endings",
+        "Combat Backdrops",
+        "Other",
+      ];
+      function sectionFor(id) {
+        if (id === "title") return "Title";
+        if (/^portrait_/.test(id)) return "Party Portraits";
+        if (/^combat_/.test(id)) return "Combat Backdrops";
+        if (/^ending_final_/.test(id)) return "Endings";
+        if (/^romance_|^morning_after_|^bonfire_/.test(id)) return "Day 4 — Romance";
+        if (/^post_horde_|^horde_/.test(id)) return "Day 5 — Horde";
+        if (/^investigate_traitor|^confront_traitor|^traitor_aftermath/.test(id))
+          return "Day 4 — Night";
+        // Use the story node's chapter if available.
+        const node = (window.Story || {})[id];
+        if (node && typeof node.chapter === "string") {
+          if (/Day 1/.test(node.chapter)) return "Day 1 — The Outbreak";
+          if (/Day 2/.test(node.chapter)) return "Day 2 — The Road";
+          if (/Day 3/.test(node.chapter)) return "Day 3 — Greenbelt";
+          if (/Day 4/.test(node.chapter)) return "Day 4 — Morning & Mission";
+          if (/Day 5/.test(node.chapter)) return "Day 5 — Horde";
+          if (/Ending/.test(node.chapter)) return "Endings";
+        }
+        // Fall back on prefix heuristics for nodes without a resolvable
+        // chapter (variant scenes etc.).
+        if (/^(intro|apt_|neighbour_|cho_loot|stairwell|meet_maya|alone_|street_|grocery_|freezer)/.test(id))
+          return "Day 1 — The Outbreak";
+        if (/^(road_out|ambush|sacrifice|after_ambush|greenbelt_gate)/.test(id))
+          return "Day 2 — The Road";
+        if (/^(greenbelt_in|camp_morning|chore_medbay|chore_perimeter|chore_kitchen)/.test(id))
+          return "Day 3 — Greenbelt";
+        if (/^(chore_done|mission_|hospital_|pharmacy_|nora_asks)/.test(id))
+          return "Day 4 — Morning & Mission";
+        if (id === "death") return "Endings";
+        return "Other";
+      }
+
+      // Derive a short story blurb (chapter · speaker · text snippet ·
+      // choices) from the story node so each card reads like a flow
+      // summary without launching the game.
+      function storyNode(id) { return (window.Story || {})[id] || null; }
+      function storyBlurbText(id) {
+        const n = storyNode(id);
+        if (!n) return "";
+        const text = typeof n.text === "function" ? "" : (n.text || "");
+        return (n.chapter || "") + " " + text;
+      }
+      function snippet(s, n) {
+        s = String(s || "").replace(/\s+/g, " ").trim();
+        if (s.length <= n) return s;
+        return s.slice(0, n - 1).trimEnd() + "…";
+      }
+      function escapeText(s) {
+        return String(s || "")
+          .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+      }
+      function storyMetaHtml(id) {
+        const n = storyNode(id);
+        if (!n) return "";
+        const parts = [];
+        if (n.chapter) parts.push(`<div class="chapter">${escapeText(n.chapter)}</div>`);
+        // speaker can be a function of state — skip those; show static speakers.
+        if (typeof n.speaker === "string" && n.speaker) {
+          parts.push(`<div class="speaker">${escapeText(n.speaker)}</div>`);
+        }
+        // Text can be a function (branching). Show a placeholder instead of
+        // trying to evaluate it without a state.
+        const isTextFn = typeof n.text === "function";
+        if (isTextFn) {
+          parts.push(`<div class="text dim">(branches on state — plays different text per path)</div>`);
+        } else if (n.text) {
+          parts.push(`<div class="text">${escapeText(snippet(n.text, 160))}</div>`);
+        }
+        // Choices + destinations.
+        const choices = Array.isArray(n.choices) ? n.choices : [];
+        if (choices.length) {
+          const items = choices.map(c => {
+            const label = escapeText(c.label || "(unlabeled)");
+            let nextLabel;
+            if (c.combat) {
+              const cfg = typeof c.combat === "function" ? "?" : c.combat;
+              const enemy = cfg && cfg.enemy ? cfg.enemy : "combat";
+              const onWin = cfg && cfg.onWin ? cfg.onWin : "?";
+              nextLabel = `<span class="arrow">⚔ ${escapeText(enemy)} → ${escapeText(onWin)}</span>`;
+            } else if (typeof c.next === "function") {
+              nextLabel = `<span class="arrow">→ (branches)</span>`;
+            } else if (c.next) {
+              nextLabel = `<span class="arrow">→ ${escapeText(c.next)}</span>`;
+            } else {
+              nextLabel = "";
+            }
+            return `<li>${label} ${nextLabel}</li>`;
+          }).join("");
+          parts.push(`<ul class="choices">${items}</ul>`);
+        }
+        if (!parts.length) return "";
+        return `<div class="card-meta">${parts.join("")}</div>`;
+      }
+
+      // Render grid with section headers.
+      function renderGrid(idsInOrder) {
+        grid.innerHTML = "";
+        const bySection = {};
+        idsInOrder.forEach(id => {
+          const sec = sectionFor(id);
+          (bySection[sec] = bySection[sec] || []).push(id);
+        });
+        SECTION_ORDER.forEach(sec => {
+          const sectionIds = bySection[sec];
+          if (!sectionIds || !sectionIds.length) return;
+          const header = document.createElement("div");
+          header.className = "section-header";
+          header.innerHTML = `<h2>${escapeText(sec)}</h2><span class="count">${sectionIds.length} scene${sectionIds.length === 1 ? "" : "s"}</span>`;
+          grid.appendChild(header);
+          sectionIds.forEach(id => grid.appendChild(buildCard(id)));
+        });
+      }
+
       function buildCard(id) {
         const card = document.createElement("div");
         card.className = "card";
         card.dataset.id = id;
-        card.dataset.search = (id + " " + (PROMPTS[id] || "")).toLowerCase();
+        card.dataset.search = (id + " " + (PROMPTS[id] || "") + " " + storyBlurbText(id)).toLowerCase();
         const idx = Object.keys(PROMPTS).indexOf(id);
         const num = idx >= 0 ? String(idx + 1).padStart(2, "0") : "??";
 
@@ -630,6 +806,7 @@
               <span class="card-id">${id}</span>
               <span class="card-size"></span>
             </div>
+            ${storyMetaHtml(id)}
             <div class="card-prompt">${(PROMPTS[id] || "").replace(/</g, "&lt;")}</div>
             <div class="card-actions">
               <label class="upload">📤 Upload<input type="file" accept="image/*" /></label>
@@ -747,15 +924,28 @@
         return card;
       }
 
-      ids.forEach(id => grid.appendChild(buildCard(id)));
+      renderGrid(ids);
 
       searchEl.addEventListener("input", () => {
         const q = searchEl.value.trim().toLowerCase();
         let shown = 0;
+        // Hide/show cards first, then hide any section header whose
+        // entire section got filtered out.
         grid.querySelectorAll(".card").forEach(card => {
           const match = !q || card.dataset.search.indexOf(q) !== -1;
           card.style.display = match ? "" : "none";
           if (match) shown++;
+        });
+        grid.querySelectorAll(".section-header").forEach(h => {
+          let hasVisibleCard = false;
+          let next = h.nextElementSibling;
+          while (next && !next.classList.contains("section-header")) {
+            if (next.classList.contains("card") && next.style.display !== "none") {
+              hasVisibleCard = true; break;
+            }
+            next = next.nextElementSibling;
+          }
+          h.style.display = hasVisibleCard ? "" : "none";
         });
         countEl.textContent = shown + " / " + ids.length + " scenes";
       });
@@ -799,10 +989,7 @@
         if (!confirm("Remove " + n + " preview override(s)?")) return;
         await Overrides.clear();
         await Overrides.loadAll();
-        // Re-render every card
-        const existing = Array.from(grid.children);
-        existing.forEach(c => c.remove());
-        ids.forEach(id => grid.appendChild(buildCard(id)));
+        renderGrid(ids);
       });
     })();
   </script>
