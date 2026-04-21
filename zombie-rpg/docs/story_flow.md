@@ -906,7 +906,7 @@ One section per story node, in definition order. Function-branching fields (text
 **Choices:**
 
 1. **"Stay close. Do exactly what I say."** `RISKY`
-   - _effect:_ `s => { s.flags.bringNora = true; // Maya thinks kids don't belong in walker fights. You did // it anyway. if (s.flags.missionPartner === "maya") { s.bonds.maya = Math.max(0, (s.bonds.maya || 0) - 1); Game.toast("Nora is coming · Maya's trust -1"); } else { Game.toast("Nora is coming with you"); } }`
+   - _effect:_ `s => { s.flags.bringNora = true; // Maya explicitly warned you with the 'don't' look. Taking // the kid anyway sits with her. if (s.flags.missionPartner === "maya") { s.bonds.maya = Math.max(0, (s.bonds.maya || 0) - 2); Game.toast("Nora is coming · Maya's trust -2"); } else { Game.toast("Nora is coming with you"); } }`
    - → `mission_journey`
 2. **"Not this one, kid. You're safer here."**
    - _effect:_ `s => { s.flags.bringNora = false; // Maya approves the sensible call. if (s.flags.missionPartner === "maya") { s.bonds.maya += 1; Game.toast("Maya's trust +1"); } }`
@@ -1499,7 +1499,7 @@ One section per story node, in definition order. Function-branching fields (text
 **Choices:**
 
 1. **Bury him quietly. The camp will not know.** `HARD` _require:_ `s => !s.flags.toldVega`
-   - _effect:_ `s => { s.flags.killedTraitor = true; // Maya notices. She would've told Vega. if (s.flags.maya && s.bonds) s.bonds.maya = Math.max(0, (s.bonds.maya || 0) - 1); Game.toast("The camp will not know."); }`
+   - _effect:_ `s => { s.flags.killedTraitor = true; // Maya is ex-military — burying this instead of reporting // reads as a command failure to her. Costs her real trust. if (s.flags.maya && s.bonds) { s.bonds.maya = Math.max(0, (s.bonds.maya || 0) - 2); Game.toast("The camp will not know · Maya's trust -2"); } else { Game.toast("The camp will not know."); } }`
    - → `bonfire_invite`
 2. **Tell Vega. They deserve the truth.** _require:_ `s => !s.flags.toldVega`
    - _effect:_ `s => { s.flags.exposedTraitor = true; // Vega opens the armory; camp reinforces the fence overnight. s.ammo += 2; Game.giveRandomItem(); if (s.bonds) { s.bonds.ren = (s.bonds.ren || 0) + 1; // Maya helped put him down. She approves of you owning it. if (s.companion === "Maya") s.bonds.maya = (s.bonds.maya || 0) + 1; } Game.toast(s.companion === "Maya" ? "+2 🔫 · Ren's trust +1 · Maya's trust +1" : "+2 🔫 · Ren's trust +1"); }`
@@ -1554,7 +1554,7 @@ One section per story node, in definition order. Function-branching fields (text
 
 **Choices:**
 
-1. **Follow Maya** `ROMANCE` _require:_ `s => s.flags.maya && s.bonds.maya >= 3`
+1. **Follow Maya** `ROMANCE` _require:_ `s => s.flags.maya && s.bonds.maya >= 5`
    - _effect:_ `s => { s.romance = "maya"; }`
    - → `romance_maya`
 2. **Follow Ren** `ROMANCE` _require:_ `s => s.bonds.ren >= 3`

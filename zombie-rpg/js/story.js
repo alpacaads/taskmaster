@@ -662,11 +662,11 @@ window.Story = {
       { label: "\"Stay close. Do exactly what I say.\"", tag: "RISKY", tagClass: "warn",
         effect: s => {
           s.flags.bringNora = true;
-          // Maya thinks kids don't belong in walker fights. You did
-          // it anyway.
+          // Maya explicitly warned you with the 'don't' look. Taking
+          // the kid anyway sits with her.
           if (s.flags.missionPartner === "maya") {
-            s.bonds.maya = Math.max(0, (s.bonds.maya || 0) - 1);
-            Game.toast("Nora is coming · Maya's trust -1");
+            s.bonds.maya = Math.max(0, (s.bonds.maya || 0) - 2);
+            Game.toast("Nora is coming · Maya's trust -2");
           } else {
             Game.toast("Nora is coming with you");
           }
@@ -1115,9 +1115,14 @@ window.Story = {
         require: s => !s.flags.toldVega,
         effect: s => {
           s.flags.killedTraitor = true;
-          // Maya notices. She would've told Vega.
-          if (s.flags.maya && s.bonds) s.bonds.maya = Math.max(0, (s.bonds.maya || 0) - 1);
-          Game.toast("The camp will not know.");
+          // Maya is ex-military — burying this instead of reporting
+          // reads as a command failure to her. Costs her real trust.
+          if (s.flags.maya && s.bonds) {
+            s.bonds.maya = Math.max(0, (s.bonds.maya || 0) - 2);
+            Game.toast("The camp will not know · Maya's trust -2");
+          } else {
+            Game.toast("The camp will not know.");
+          }
         },
         next: "bonfire_invite" },
       { label: "Tell Vega. They deserve the truth.",
@@ -1166,14 +1171,14 @@ window.Story = {
         // Solo 'Tell Vega' path — Ren wasn't at the fence but she heard.
         lines += "Ren is across the fire. When your eyes meet she gives you a small, grave nod. She knows.\n\n";
       }
-      if (s.flags.maya && m >= 3) lines += "Maya catches your eye and tilts her head — toward her tent.\n";
+      if (s.flags.maya && m >= 5) lines += "Maya catches your eye and tilts her head — toward her tent.\n";
       if (r >= 3) lines += "Ren leaves her guitar against the log when she stands. She waits, looking at you.\n";
-      if ((!s.flags.maya || m < 3) && r < 3) lines += "You sit alone with the dying flames.\n";
+      if ((!s.flags.maya || m < 5) && r < 3) lines += "You sit alone with the dying flames.\n";
       return lines;
     },
     choices: [
       { label: "Follow Maya", tag: "ROMANCE", tagClass: "warn",
-        require: s => s.flags.maya && s.bonds.maya >= 3,
+        require: s => s.flags.maya && s.bonds.maya >= 5,
         effect: s => { s.romance = "maya"; },
         next: "romance_maya" },
       { label: "Follow Ren", tag: "ROMANCE", tagClass: "warn",
