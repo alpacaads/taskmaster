@@ -81,7 +81,11 @@ window.Story = {
     text: "Four floors down. Your flashlight flickers. The dragging sound is louder now — more than one set of feet.\n\nA voice, raspy but alive: \"Hey. Don't scream. You bit?\"",
     choices: [
       { label: "\"I'm clean. Who are you?\"", next: "meet_maya" },
-      { label: "Stay silent. Keep moving.", tag: "RISKY", tagClass: "warn", next: "alone_street" },
+      { label: "Stay silent. Keep moving.", tag: "RISKY", tagClass: "warn",
+        // Silent path is a solo path too. Make the flag consistent so
+        // later scenes (greenbelt_in, post-horde) can acknowledge it.
+        effect: s => { s.flags.solo = true; },
+        next: "alone_street" },
     ]
   },
 
@@ -664,6 +668,9 @@ window.Story = {
       base += "\n\nRen is at the wall, stitching a graze on a man's scalp with steady hands. She glances up at you as you pass, nods once — you did. We did.";
       if (s.companion2 === "Nora") {
         base += "\n\nA child finds your hand.";
+      } else if (s.flags.solo) {
+        // Pay off the 'I work better alone' / silent-stairwell beat.
+        base += "\n\nNo one finds your hand. You made it alone. That was the whole idea.";
       }
       return base;
     },
@@ -710,6 +717,9 @@ window.Story = {
       if (s.companion2 === "Nora") {
         return "Nora's hand is sticky in yours. She doesn't ask where you're going. None of them do. They follow your light.";
       }
+      if (s.flags.solo) {
+        return "You walk point. Nobody walks beside you. The others are back there in the dark, hands in each other's pockets; you picked this gap a long time ago, in a stairwell, in a pine forest, at a gate. You keep walking.";
+      }
       return "The camp burns behind you. You don't know where you're going. You know you'll keep going.";
     },
     choices: [
@@ -745,7 +755,12 @@ window.Story = {
         base = "Ren keeps pace beside you. She hums, low — a song you almost recognise.\n\n\"My grandmother used to sing it,\" she says when she catches you listening. \"It's the only thing of hers I have left.\"";
         base += "\n\nThe humming stops as the hospital squats into view.\n\n\"Worked Mercy's ER the first month,\" she says quietly, like it explains something. \"If my hands shake later — that's why.\"\n\nShe starts humming again.";
       } else {
-        base = "You walk alone. Every shadow is a question. Every step is loud.";
+        base = "You walk alone. Every shadow is a question. Every step is loud.\n\nA mile in, your boot knocks a hubcap and you flinch hard enough to bruise yourself. You stop. Listen. Nothing. Just pines.";
+        if (s.flags.solo) {
+          base += "\n\nA memory tries the door. You don't open it.";
+        } else {
+          base += "\n\nYou catch yourself thinking about the camp behind you. About what you left there.";
+        }
       }
       if (s.flags.bringNora) {
         base += "\n\nNora walks between you, one hand in your jacket. She watches the treeline like it might blink first.";
@@ -774,7 +789,15 @@ window.Story = {
         require: s => s.flags.missionPartner === "ren",
         effect: s => { s.bonds.ren += 1; },
         next: "hospital_arrive" },
-      { label: "Push on alone",
+      { label: "Let yourself remember a face from before. Just for a mile.",
+        require: s => s.flags.solo_mission,
+        effect: s => { Game.toast("You let yourself grieve. Briefly."); },
+        next: "hospital_arrive" },
+      { label: "Don't. Count your steps. Five hundred more, then stop.",
+        require: s => s.flags.solo_mission,
+        effect: s => { s.stam = s.stamMax; Game.toast("⚡ steadied"); },
+        next: "hospital_arrive" },
+      { label: "Push on in silence.",
         require: s => s.flags.solo_mission,
         next: "hospital_arrive" },
     ]
@@ -823,7 +846,7 @@ window.Story = {
       if (s.flags.missionPartner === "ren") {
         return "Ren is shaking. She sits on the floor, back to a vending machine, knees up.\n\n\"I hate this part. After. When my hands remember.\"\n\nYou sit beside her. Her breath slows when you do.";
       }
-      return "You sit alone in the dark. Stuff a backpack with what you came for. The hospital exhales around you — old breath, no life.";
+      return "You sit alone in a row of cracked plastic chairs. Stuff a backpack with what you came for. The hospital exhales around you — old breath, no life.\n\nThe vending machine flickers. A poster on the wall says HAVE YOU WASHED YOUR HANDS. Someone drew a face on it a long time ago.\n\nYou could sit another minute. Or you could go.";
     },
     choices: [
       { label: "Lean closer. Let her see you see her.",
@@ -840,7 +863,15 @@ window.Story = {
       { label: "Give her space. Pack the bag.",
         require: s => s.flags.missionPartner === "ren",
         next: "mission_return" },
-      { label: "Pack and leave",
+      { label: "Sit the extra minute. You've earned it.",
+        require: s => s.flags.solo_mission,
+        effect: s => {
+          s.hp = s.hpMax;
+          s.stam = s.stamMax;
+          Game.toast("❤️ ⚡ restored");
+        },
+        next: "mission_return" },
+      { label: "Pack and go. Don't make yourself a target.",
         require: s => s.flags.solo_mission,
         next: "mission_return" },
     ]

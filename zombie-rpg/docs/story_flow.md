@@ -166,6 +166,7 @@ One section per story node, in definition order. Function-branching fields (text
 1. **"I'm clean. Who are you?"**
    - → `meet_maya`
 2. **Stay silent. Keep moving.** `RISKY`
+   - _effect:_ `s => { s.flags.solo = true; }`
    - → `alone_street`
 
 ---
@@ -1074,6 +1075,10 @@ One section per story node, in definition order. Function-branching fields (text
 <details><summary>Variant: default / with Maya companion / solo mission / saved Nora / rested in car / told Vega / chore: medbay / chore: perimeter / chore: kitchen / exposed traitor / killed traitor / romance Maya / romance Ren</summary>
 
 > You walk alone. Every shadow is a question. Every step is loud.
+> 
+> A mile in, your boot knocks a hubcap and you flinch hard enough to bruise yourself. You stop. Listen. Nothing. Just pines.
+> 
+> You catch yourself thinking about the camp behind you. About what you left there.
 
 </details>
 
@@ -1126,7 +1131,13 @@ One section per story node, in definition order. Function-branching fields (text
 5. **Walk in companionable silence** _require:_ `s => s.flags.missionPartner === "ren"`
    - _effect:_ `s => { s.bonds.ren += 1; }`
    - → `hospital_arrive`
-6. **Push on alone** _require:_ `s => s.flags.solo_mission`
+6. **Let yourself remember a face from before. Just for a mile.** _require:_ `s => s.flags.solo_mission`
+   - _effect:_ `s => { Game.toast("You let yourself grieve. Briefly."); }`
+   - → `hospital_arrive`
+7. **Don't. Count your steps. Five hundred more, then stop.** _require:_ `s => s.flags.solo_mission`
+   - _effect:_ `s => { s.stam = s.stamMax; Game.toast("⚡ steadied"); }`
+   - → `hospital_arrive`
+8. **Push on in silence.** _require:_ `s => s.flags.solo_mission`
    - → `hospital_arrive`
 
 ---
@@ -1166,7 +1177,11 @@ One section per story node, in definition order. Function-branching fields (text
 
 <details><summary>Variant: default / with Maya companion / solo mission / saved Nora / rested in car / told Vega / chore: medbay / chore: perimeter / chore: kitchen / exposed traitor / killed traitor / romance Maya / romance Ren</summary>
 
-> You sit alone in the dark. Stuff a backpack with what you came for. The hospital exhales around you — old breath, no life.
+> You sit alone in a row of cracked plastic chairs. Stuff a backpack with what you came for. The hospital exhales around you — old breath, no life.
+> 
+> The vending machine flickers. A poster on the wall says HAVE YOU WASHED YOUR HANDS. Someone drew a face on it a long time ago.
+> 
+> You could sit another minute. Or you could go.
 
 </details>
 
@@ -1202,7 +1217,10 @@ One section per story node, in definition order. Function-branching fields (text
    - → `mission_return`
 4. **Give her space. Pack the bag.** _require:_ `s => s.flags.missionPartner === "ren"`
    - → `mission_return`
-5. **Pack and leave** _require:_ `s => s.flags.solo_mission`
+5. **Sit the extra minute. You've earned it.** _require:_ `s => s.flags.solo_mission`
+   - _effect:_ `s => { s.hp = s.hpMax; s.stam = s.stamMax; Game.toast("❤️ ⚡ restored"); }`
+   - → `mission_return`
+6. **Pack and go. Don't make yourself a target.** _require:_ `s => s.flags.solo_mission`
    - → `mission_return`
 
 ---
