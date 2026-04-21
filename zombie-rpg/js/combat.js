@@ -488,7 +488,7 @@ window.Combat = (function () {
       if (desperateMelee && total <= 0) {
         line = `You can barely lift your arm. ${weaponPhr} clips its jaw. No give.`;
       } else if (desperateMelee) {
-        line = `You swing on fumes. ${weaponPhr} lands — ${total} damage.`;
+        line = `Muscle memory carries you. ${weaponPhr} lands — ${total} damage.`;
       } else if (crit) {
         line = `${prefix}You drive ${weaponPhr} through its skull. CRITICAL ${total}.`;
       } else {
@@ -530,7 +530,7 @@ window.Combat = (function () {
       // halve the absorb + skip counterReady on a dodge.
       state.desperateBrace = desperateBrace;
       log(desperateBrace
-        ? "You're running on empty — you put yourself between it and nothing else."
+        ? "You're out of good options. You put yourself between it and nothing else."
         : "You plant your feet.",
         "info");
       Sound.play("brace");
@@ -783,7 +783,7 @@ window.Combat = (function () {
       if (state.bracing && !desperate) state.counterReady = true;
       const line = state.bracing
         ? (desperate
-            ? `You plant your feet on fumes — the ${e.name} skims off your guard.`
+            ? `You put yourself where it's going — the ${e.name} skims off your shoulder.`
             : `You plant your feet — the ${e.name} skims off your guard. Counter ready.`)
         : mayaPresent() && Math.random() < 0.5
           ? `Maya's shout — you slip the ${e.name}'s lunge.`
