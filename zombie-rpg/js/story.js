@@ -1344,19 +1344,6 @@ window.Story = {
       const m = s.bonds.maya, r = s.bonds.ren;
       const mayaSignal = !!(s.flags.maya && m >= 5) && !s.flags.committedRen;
       const renSignal  = r >= 3 && !s.flags.committedMaya;
-      // Once-per-visit toast so the player can see why a romance option
-      // did or didn't light up. Gates are Maya >= 5 (+flags.maya) and
-      // Ren >= 3, both additionally blocked by the opposite commit flag.
-      if (!s.flags.__bonfireBondsShown) {
-        s.flags.__bonfireBondsShown = true;
-        if (typeof Game !== "undefined" && Game.toast) {
-          const tags = [];
-          if (s.flags.committedMaya) tags.push("committed→Maya");
-          if (s.flags.committedRen)  tags.push("committed→Ren");
-          const tail = tags.length ? "  · " + tags.join(", ") : "";
-          Game.toast(`Bonds — Maya ${m||0}/5  ·  Ren ${r||0}/3${tail}`);
-        }
-      }
       let lines = "The fire burns low. Most of the camp has turned in.\n\n";
       if (s.flags.exposedTraitor && !s.flags.toldVega) {
         // Solo 'Tell Vega' path — Ren wasn't at the fence but she heard.
@@ -1375,9 +1362,6 @@ window.Story = {
       } else {
         lines += "You sit alone with the dying flames.";
       }
-      // Quiet footer so the player can still read it after the toast
-      // fades. Plain text — story-text is rendered as textContent.
-      lines += `\n\n(Bonds — Maya ${m||0}/5  ·  Ren ${r||0}/3)`;
       return lines;
     },
     choices: [

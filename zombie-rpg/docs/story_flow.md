@@ -1670,8 +1670,6 @@ One section per story node, in definition order. Function-branching fields (text
 > The fire burns low. Most of the camp has turned in.
 > 
 > You sit alone with the dying flames.
-> 
-> (Bonds — Maya 0/5  ·  Ren 0/3)
 
 </details>
 
@@ -1682,8 +1680,6 @@ One section per story node, in definition order. Function-branching fields (text
 > Ren is across the fire. When your eyes meet she gives you a small, grave nod. She knows.
 > 
 > You sit alone with the dying flames.
-> 
-> (Bonds — Maya 0/5  ·  Ren 0/3)
 
 </details>
 
@@ -1692,8 +1688,6 @@ One section per story node, in definition order. Function-branching fields (text
 > The fire burns low. Most of the camp has turned in.
 > 
 > Maya catches your eye and tilts her head — toward her tent.
-> 
-> (Bonds — Maya 5/5  ·  Ren 0/3)
 
 </details>
 
@@ -1702,8 +1696,6 @@ One section per story node, in definition order. Function-branching fields (text
 > The fire burns low. Most of the camp has turned in.
 > 
 > Ren leaves her guitar against the log when she stands. She waits, looking at you.
-> 
-> (Bonds — Maya 0/5  ·  Ren 5/3)
 
 </details>
 
