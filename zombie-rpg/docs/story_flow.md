@@ -362,10 +362,10 @@ One section per story node, in definition order. Function-branching fields (text
 **Choices:**
 
 1. **"It's okay. I'm not going to hurt you."**
-   - _effect:_ `s => { s.companion2 = "Nora"; s.flags.savedNora = true; Game.toast("Nora joined you"); }`
+   - _effect:_ `s => { s.companion2 = "Nora"; s.flags.savedNora = true; // Maya saw you risk yourself for a kid — tracks for her. if (s.companion === "Maya") { s.bonds.maya += 1; Game.toast("Nora joined you · Maya's trust +1"); } else Game.toast("Nora joined you"); }`
    - → `road_out_child`
 2. **Close the door. It's not your problem.**
-   - _effect:_ `s => { s.flags.coward = true; Game.toast("You leave her behind"); }`
+   - _effect:_ `s => { s.flags.coward = true; // Maya saw the opposite — and she does not forgive this one. if (s.companion === "Maya") { s.bonds.maya = Math.max(0, (s.bonds.maya || 0) - 2); Game.toast("You leave her behind · Maya's trust -2"); } else Game.toast("You leave her behind"); }`
    - → `road_out`
 
 ---
@@ -585,14 +585,28 @@ One section per story node, in definition order. Function-branching fields (text
 **Chapter:** Day 3 — Greenbelt  
 **Scene art:** (no explicit scene — uses node id)  
 
+<details><summary>Variant: default / mission partner = maya / mission partner = ren / solo mission / saved Nora / bring Nora on mission / rested in car / told Vega / chore: medbay / chore: perimeter / chore: kitchen / exposed traitor / killed traitor / romance Ren</summary>
+
 > Afterwards you call her out from behind the mossy log. She comes slow, eyes enormous. She doesn't say anything about the blood. She walks the first half-mile and then her legs stop working and you carry her the rest.
 > 
 > By the time the gate slides open she's asleep on your shoulder. The guards look at you — bloodied, limping, small weight against your neck — and lower their rifles.
 
+</details>
+
+<details><summary>Variant: with Maya companion / romance Maya</summary>
+
+> Afterwards you call her out from behind the mossy log. She comes slow, eyes enormous. She doesn't say anything about the blood. She walks the first half-mile and then her legs stop working and you carry her the rest.
+> 
+> Maya walks three steps behind you the whole way, checking the treeline. She doesn't offer to carry the girl. She doesn't have to say it: this was the right call.
+> 
+> By the time the gate slides open she's asleep on your shoulder. The guards look at you — bloodied, limping, small weight against your neck — and lower their rifles.
+
+</details>
+
 **Choices:**
 
 1. **"She needs food. Please."**
-   - _effect:_ `s => { s.flags.goodwill = true; }`
+   - _effect:_ `s => { s.flags.goodwill = true; // Maya fought beside you for this kid. It lands. if (s.companion === "Maya") { s.bonds.maya += 2; Game.toast("Maya's trust +2"); } }`
    - → `greenbelt_in`
 
 ---
@@ -778,9 +792,23 @@ One section per story node, in definition order. Function-branching fields (text
 **Chapter:** Day 4 — Kitchen  
 **Scene art:** `camp_kitchen`  
 
+<details><summary>Variant: default / with Maya companion / mission partner = maya / mission partner = ren / solo mission / rested in car / told Vega / chore: medbay / chore: perimeter / chore: kitchen / exposed traitor / killed traitor / romance Maya / romance Ren</summary>
+
 > You spend the morning peeling potatoes and listening to camp gossip. Three meals out of one rabbit. Magic.
 > 
 > Vega slaps your shoulder on her way past. "You'll do."
+
+</details>
+
+<details><summary>Variant: saved Nora / bring Nora on mission</summary>
+
+> You spend the morning peeling potatoes and listening to camp gossip. Three meals out of one rabbit. Magic.
+> 
+> Nora sits cross-legged by the fire stripping peas from a pod, tongue poking out in concentration. She steals one. Then another. You pretend not to notice.
+> 
+> Vega slaps your shoulder on her way past. "You'll do."
+
+</details>
 
 **Choices:**
 
@@ -852,19 +880,35 @@ One section per story node, in definition order. Function-branching fields (text
 **Scene art:** (no explicit scene — uses node id)  
 **Speaker:** Nora  
 
+<details><summary>Variant: default / with Maya companion / mission partner = ren / solo mission / saved Nora / rested in car / told Vega / chore: medbay / chore: perimeter / chore: kitchen / exposed traitor / killed traitor / romance Maya / romance Ren</summary>
+
 > You're tightening a strap when small boots hit the dirt behind you. Nora — breathless, already wearing her little pack.
 > 
 > "Take me. I watch for things grown-ups miss. I'm quiet. I won't slow you down."
 > 
 > She's too small for what's out there. Her eyes are too big for what she already is.
 
+</details>
+
+<details><summary>Variant: mission partner = maya / bring Nora on mission</summary>
+
+> You're tightening a strap when small boots hit the dirt behind you. Nora — breathless, already wearing her little pack.
+> 
+> "Take me. I watch for things grown-ups miss. I'm quiet. I won't slow you down."
+> 
+> She's too small for what's out there. Her eyes are too big for what she already is.
+> 
+> Maya watches from ten feet off, rifle slung. She catches your eye once — you can read it: *don't.* Then looks away.
+
+</details>
+
 **Choices:**
 
 1. **"Stay close. Do exactly what I say."** `RISKY`
-   - _effect:_ `s => { s.flags.bringNora = true; Game.toast("Nora is coming with you"); }`
+   - _effect:_ `s => { s.flags.bringNora = true; // Maya thinks kids don't belong in walker fights. You did // it anyway. if (s.flags.missionPartner === "maya") { s.bonds.maya = Math.max(0, (s.bonds.maya || 0) - 1); Game.toast("Nora is coming · Maya's trust -1"); } else { Game.toast("Nora is coming with you"); } }`
    - → `mission_journey`
 2. **"Not this one, kid. You're safer here."**
-   - _effect:_ `s => { s.flags.bringNora = false; }`
+   - _effect:_ `s => { s.flags.bringNora = false; // Maya approves the sensible call. if (s.flags.missionPartner === "maya") { s.bonds.maya += 1; Game.toast("Maya's trust +1"); } }`
    - → `mission_journey`
 
 ---
@@ -1463,6 +1507,8 @@ One section per story node, in definition order. Function-branching fields (text
 **Scene art:** `intimate_bedroom`  
 **Speaker:** Maya  
 
+<details><summary>Variant: default / with Maya companion / mission partner = maya / mission partner = ren / solo mission / rested in car / told Vega / chore: medbay / chore: perimeter / chore: kitchen / exposed traitor / killed traitor / romance Maya / romance Ren</summary>
+
 > Inside, she stops you with a hand on your chest. Not pushing. Just feeling.
 > 
 > "I'm not — I don't do soft. Not anymore. But I want this." Her voice is rougher than you've heard it. "Tell me you do too."
@@ -1472,6 +1518,24 @@ One section per story node, in definition order. Function-branching fields (text
 > She pulls you in, and the rest of the world goes quiet — the camp, the fence, the dead in the dark. Just her hands, your mouth, the small breath she lets out when you find the place at her throat where the muscle softens.
 > 
 > *Later, the lantern out, her head on your shoulder.*
+
+</details>
+
+<details><summary>Variant: saved Nora / bring Nora on mission</summary>
+
+> Inside, she stops you with a hand on your chest. Not pushing. Just feeling.
+> 
+> "I'm not — I don't do soft. Not anymore. But I want this." Her voice is rougher than you've heard it. "Tell me you do too."
+> 
+> You tell her.
+> 
+> (Nora is two tents over, asleep against Ren's shoulder — they've been inseparable since you got back. You checked, twice, before coming here.)
+> 
+> She pulls you in, and the rest of the world goes quiet — the camp, the fence, the dead in the dark. Just her hands, your mouth, the small breath she lets out when you find the place at her throat where the muscle softens.
+> 
+> *Later, the lantern out, her head on your shoulder.*
+
+</details>
 
 **Choices:**
 
@@ -1489,6 +1553,8 @@ One section per story node, in definition order. Function-branching fields (text
 **Scene art:** `intimate_bedroom`  
 **Speaker:** Ren  
 
+<details><summary>Variant: default / with Maya companion / mission partner = maya / mission partner = ren / solo mission / rested in car / told Vega / chore: medbay / chore: perimeter / chore: kitchen / exposed traitor / killed traitor / romance Maya / romance Ren</summary>
+
 > She lights a single candle. Her hands shake — not from fear. From wanting.
 > 
 > "I haven't — since. I wasn't sure I still could." A small, embarrassed laugh. "Be patient with me."
@@ -1498,6 +1564,24 @@ One section per story node, in definition order. Function-branching fields (text
 > What happens next is slow. Slow as snow. Her mouth on yours, your fingers in her hair, both of you learning how to be this human again. After, she cries a little. She laughs through it. She thanks you, which breaks something in you in a good way.
 > 
 > *The candle gutters. Her breathing evens out against your ribs.*
+
+</details>
+
+<details><summary>Variant: saved Nora / bring Nora on mission</summary>
+
+> She lights a single candle. Her hands shake — not from fear. From wanting.
+> 
+> "She's with Captain Vega tonight," Ren says quietly, without having to name who. "I asked. Vega said of course."
+> 
+> "I haven't — since. I wasn't sure I still could." A small, embarrassed laugh. "Be patient with me."
+> 
+> You take her hand and lay it flat against your chest, over your heart. Let her feel it.
+> 
+> What happens next is slow. Slow as snow. Her mouth on yours, your fingers in her hair, both of you learning how to be this human again. After, she cries a little. She laughs through it. She thanks you, which breaks something in you in a good way.
+> 
+> *The candle gutters. Her breathing evens out against your ribs.*
+
+</details>
 
 **Choices:**
 
@@ -1515,11 +1599,27 @@ One section per story node, in definition order. Function-branching fields (text
 **Scene art:** `greenbelt_morning`  
 **Speaker:** Maya  
 
+<details><summary>Variant: default / with Maya companion / mission partner = maya / mission partner = ren / solo mission / rested in car / told Vega / chore: medbay / chore: perimeter / chore: kitchen / exposed traitor / killed traitor / romance Maya / romance Ren</summary>
+
 > She's already dressed when you wake. Rifle slung. She kisses the corner of your mouth like it's the most natural thing in the world.
 > 
 > "Whatever happens today," she says, "I'm glad I met you in that stairwell."
 > 
 > The siren starts.
+
+</details>
+
+<details><summary>Variant: saved Nora / bring Nora on mission</summary>
+
+> She's already dressed when you wake. Rifle slung. She kisses the corner of your mouth like it's the most natural thing in the world.
+> 
+> "Whatever happens today," she says, "I'm glad I met you in that stairwell."
+> 
+> Outside, Nora is perched on an ammo crate eating dry cereal from a mug. She doesn't ask where you spent the night. Kids know things.
+> 
+> The siren starts.
+
+</details>
 
 **Choices:**
 
@@ -1533,11 +1633,27 @@ One section per story node, in definition order. Function-branching fields (text
 **Scene art:** `greenbelt_morning`  
 **Speaker:** Ren  
 
+<details><summary>Variant: default / with Maya companion / mission partner = maya / mission partner = ren / solo mission / rested in car / told Vega / chore: medbay / chore: perimeter / chore: kitchen / exposed traitor / killed traitor / romance Maya / romance Ren</summary>
+
 > She wakes you with coffee. Her hair is doing something unholy. She looks at you like you're a small impossible thing.
 > 
 > "Don't die today," she says. "I just got you."
 > 
 > The siren starts.
+
+</details>
+
+<details><summary>Variant: saved Nora / bring Nora on mission</summary>
+
+> She wakes you with coffee. Her hair is doing something unholy. She looks at you like you're a small impossible thing.
+> 
+> "Don't die today," she says. "I just got you."
+> 
+> There's a small paper crown on the rolling tray beside the cot. Crayon on a pill-label leaflet. Nora must have left it sometime before dawn. Neither of you put it on, but Ren touches one of the points with her thumb and smiles.
+> 
+> The siren starts.
+
+</details>
 
 **Choices:**
 

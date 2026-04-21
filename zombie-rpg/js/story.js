@@ -247,10 +247,20 @@ window.Story = {
     },
     choices: [
       { label: "\"It's okay. I'm not going to hurt you.\"",
-        effect: s => { s.companion2 = "Nora"; s.flags.savedNora = true; Game.toast("Nora joined you"); },
+        effect: s => {
+          s.companion2 = "Nora"; s.flags.savedNora = true;
+          // Maya saw you risk yourself for a kid — tracks for her.
+          if (s.companion === "Maya") { s.bonds.maya += 1; Game.toast("Nora joined you · Maya's trust +1"); }
+          else Game.toast("Nora joined you");
+        },
         next: "road_out_child" },
       { label: "Close the door. It's not your problem.",
-        effect: s => { s.flags.coward = true; Game.toast("You leave her behind"); },
+        effect: s => {
+          s.flags.coward = true;
+          // Maya saw the opposite — and she does not forgive this one.
+          if (s.companion === "Maya") { s.bonds.maya = Math.max(0, (s.bonds.maya || 0) - 2); Game.toast("You leave her behind · Maya's trust -2"); }
+          else Game.toast("You leave her behind");
+        },
         next: "road_out" },
     ]
   },
@@ -411,10 +421,21 @@ window.Story = {
     art: "🚧🛡️⛺",
     sceneClass: "forest",
     chapter: "Day 3 — Greenbelt",
-    text: "Afterwards you call her out from behind the mossy log. She comes slow, eyes enormous. She doesn't say anything about the blood. She walks the first half-mile and then her legs stop working and you carry her the rest.\n\nBy the time the gate slides open she's asleep on your shoulder. The guards look at you — bloodied, limping, small weight against your neck — and lower their rifles.",
+    text: function(s) {
+      let base = "Afterwards you call her out from behind the mossy log. She comes slow, eyes enormous. She doesn't say anything about the blood. She walks the first half-mile and then her legs stop working and you carry her the rest.";
+      if (s.companion === "Maya") {
+        base += "\n\nMaya walks three steps behind you the whole way, checking the treeline. She doesn't offer to carry the girl. She doesn't have to say it: this was the right call.";
+      }
+      base += "\n\nBy the time the gate slides open she's asleep on your shoulder. The guards look at you — bloodied, limping, small weight against your neck — and lower their rifles.";
+      return base;
+    },
     choices: [
       { label: "\"She needs food. Please.\"",
-        effect: s => { s.flags.goodwill = true; },
+        effect: s => {
+          s.flags.goodwill = true;
+          // Maya fought beside you for this kid. It lands.
+          if (s.companion === "Maya") { s.bonds.maya += 2; Game.toast("Maya's trust +2"); }
+        },
         next: "greenbelt_in" },
     ]
   },
@@ -544,7 +565,14 @@ window.Story = {
     scene: "camp_kitchen",
     sceneClass: "forest",
     chapter: "Day 4 — Kitchen",
-    text: "You spend the morning peeling potatoes and listening to camp gossip. Three meals out of one rabbit. Magic.\n\nVega slaps your shoulder on her way past. \"You'll do.\"",
+    text: function(s) {
+      let base = "You spend the morning peeling potatoes and listening to camp gossip. Three meals out of one rabbit. Magic.";
+      if (s.companion2 === "Nora") {
+        base += "\n\nNora sits cross-legged by the fire stripping peas from a pod, tongue poking out in concentration. She steals one. Then another. You pretend not to notice.";
+      }
+      base += "\n\nVega slaps your shoulder on her way past. \"You'll do.\"";
+      return base;
+    },
     choices: [
       { label: "Wash up and report in",
         effect: s => { Game.giveRandomItem(); Game.giveRandomItem(); },
@@ -599,17 +627,35 @@ window.Story = {
     sceneClass: "forest",
     chapter: "Day 4 — Camp gate",
     speaker: "Nora",
-    text: "You're tightening a strap when small boots hit the dirt behind you. Nora — breathless, already wearing her little pack.\n\n\"Take me. I watch for things grown-ups miss. I'm quiet. I won't slow you down.\"\n\nShe's too small for what's out there. Her eyes are too big for what she already is.",
+    text: function(s) {
+      let base = "You're tightening a strap when small boots hit the dirt behind you. Nora — breathless, already wearing her little pack.\n\n\"Take me. I watch for things grown-ups miss. I'm quiet. I won't slow you down.\"\n\nShe's too small for what's out there. Her eyes are too big for what she already is.";
+      if (s.flags.missionPartner === "maya") {
+        base += "\n\nMaya watches from ten feet off, rifle slung. She catches your eye once — you can read it: *don't.* Then looks away.";
+      }
+      return base;
+    },
     choices: [
       { label: "\"Stay close. Do exactly what I say.\"", tag: "RISKY", tagClass: "warn",
         effect: s => {
           s.flags.bringNora = true;
-          Game.toast("Nora is coming with you");
+          // Maya thinks kids don't belong in walker fights. You did
+          // it anyway.
+          if (s.flags.missionPartner === "maya") {
+            s.bonds.maya = Math.max(0, (s.bonds.maya || 0) - 1);
+            Game.toast("Nora is coming · Maya's trust -1");
+          } else {
+            Game.toast("Nora is coming with you");
+          }
         },
         next: "mission_journey" },
       { label: "\"Not this one, kid. You're safer here.\"",
         effect: s => {
           s.flags.bringNora = false;
+          // Maya approves the sensible call.
+          if (s.flags.missionPartner === "maya") {
+            s.bonds.maya += 1;
+            Game.toast("Maya's trust +1");
+          }
         },
         next: "mission_journey" },
     ]
@@ -1066,7 +1112,14 @@ window.Story = {
     sceneClass: "indoor",
     chapter: "Day 4 — Maya's tent",
     speaker: "Maya",
-    text: "Inside, she stops you with a hand on your chest. Not pushing. Just feeling.\n\n\"I'm not — I don't do soft. Not anymore. But I want this.\" Her voice is rougher than you've heard it. \"Tell me you do too.\"\n\nYou tell her.\n\nShe pulls you in, and the rest of the world goes quiet — the camp, the fence, the dead in the dark. Just her hands, your mouth, the small breath she lets out when you find the place at her throat where the muscle softens.\n\n*Later, the lantern out, her head on your shoulder.*",
+    text: function(s) {
+      let base = "Inside, she stops you with a hand on your chest. Not pushing. Just feeling.\n\n\"I'm not — I don't do soft. Not anymore. But I want this.\" Her voice is rougher than you've heard it. \"Tell me you do too.\"\n\nYou tell her.";
+      if (s.companion2 === "Nora") {
+        base += "\n\n(Nora is two tents over, asleep against Ren's shoulder — they've been inseparable since you got back. You checked, twice, before coming here.)";
+      }
+      base += "\n\nShe pulls you in, and the rest of the world goes quiet — the camp, the fence, the dead in the dark. Just her hands, your mouth, the small breath she lets out when you find the place at her throat where the muscle softens.\n\n*Later, the lantern out, her head on your shoulder.*";
+      return base;
+    },
     choices: [
       { label: "\"Don't disappear in the morning.\"",
         effect: s => { s.bonds.maya += 3; s.flags.lovedMaya = true; },
@@ -1082,7 +1135,14 @@ window.Story = {
     sceneClass: "indoor",
     chapter: "Day 4 — Ren's medbay",
     speaker: "Ren",
-    text: "She lights a single candle. Her hands shake — not from fear. From wanting.\n\n\"I haven't — since. I wasn't sure I still could.\" A small, embarrassed laugh. \"Be patient with me.\"\n\nYou take her hand and lay it flat against your chest, over your heart. Let her feel it.\n\nWhat happens next is slow. Slow as snow. Her mouth on yours, your fingers in her hair, both of you learning how to be this human again. After, she cries a little. She laughs through it. She thanks you, which breaks something in you in a good way.\n\n*The candle gutters. Her breathing evens out against your ribs.*",
+    text: function(s) {
+      let opener = "She lights a single candle. Her hands shake — not from fear. From wanting.";
+      if (s.companion2 === "Nora") {
+        opener += "\n\n\"She's with Captain Vega tonight,\" Ren says quietly, without having to name who. \"I asked. Vega said of course.\"";
+      }
+      opener += "\n\n\"I haven't — since. I wasn't sure I still could.\" A small, embarrassed laugh. \"Be patient with me.\"\n\nYou take her hand and lay it flat against your chest, over your heart. Let her feel it.\n\nWhat happens next is slow. Slow as snow. Her mouth on yours, your fingers in her hair, both of you learning how to be this human again. After, she cries a little. She laughs through it. She thanks you, which breaks something in you in a good way.\n\n*The candle gutters. Her breathing evens out against your ribs.*";
+      return opener;
+    },
     choices: [
       { label: "\"I've got you.\"",
         effect: s => { s.bonds.ren += 3; s.flags.lovedRen = true; },
@@ -1098,7 +1158,14 @@ window.Story = {
     sceneClass: "forest",
     chapter: "Day 5 — Pre-dawn",
     speaker: "Maya",
-    text: "She's already dressed when you wake. Rifle slung. She kisses the corner of your mouth like it's the most natural thing in the world.\n\n\"Whatever happens today,\" she says, \"I'm glad I met you in that stairwell.\"\n\nThe siren starts.",
+    text: function(s) {
+      let base = "She's already dressed when you wake. Rifle slung. She kisses the corner of your mouth like it's the most natural thing in the world.\n\n\"Whatever happens today,\" she says, \"I'm glad I met you in that stairwell.\"";
+      if (s.companion2 === "Nora") {
+        base += "\n\nOutside, Nora is perched on an ammo crate eating dry cereal from a mug. She doesn't ask where you spent the night. Kids know things.";
+      }
+      base += "\n\nThe siren starts.";
+      return base;
+    },
     choices: [
       { label: "\"Together.\"", next: "horde_warning" },
     ]
@@ -1109,7 +1176,14 @@ window.Story = {
     sceneClass: "forest",
     chapter: "Day 5 — Pre-dawn",
     speaker: "Ren",
-    text: "She wakes you with coffee. Her hair is doing something unholy. She looks at you like you're a small impossible thing.\n\n\"Don't die today,\" she says. \"I just got you.\"\n\nThe siren starts.",
+    text: function(s) {
+      let base = "She wakes you with coffee. Her hair is doing something unholy. She looks at you like you're a small impossible thing.\n\n\"Don't die today,\" she says. \"I just got you.\"";
+      if (s.companion2 === "Nora") {
+        base += "\n\nThere's a small paper crown on the rolling tray beside the cot. Crayon on a pill-label leaflet. Nora must have left it sometime before dawn. Neither of you put it on, but Ren touches one of the points with her thumb and smiles.";
+      }
+      base += "\n\nThe siren starts.";
+      return base;
+    },
     choices: [
       { label: "\"You either.\"", next: "horde_warning" },
     ]
