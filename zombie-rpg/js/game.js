@@ -299,11 +299,15 @@ window.Game = (function () {
   }
 
   // Per-action passive effects outside of combat. Nora with you = +1 HP
-  // regen per action (capped at hpMax). Keeps the kid narratively
-  // useful even though she can't fight.
+  // regen per action (capped at hpMax). Stamina recovers +1 per
+  // non-combat scene progression (capped at stamMax) so gunless heroes
+  // aren't stuck at 0 stam for the rest of the game after a tough fight.
   function applyUpkeep() {
     if (noraWithYou() && state.hp < state.hpMax) {
       state.hp = Math.min(state.hpMax, state.hp + 1);
+    }
+    if (state.stam < state.stamMax) {
+      state.stam = Math.min(state.stamMax, state.stam + 1);
     }
   }
 
