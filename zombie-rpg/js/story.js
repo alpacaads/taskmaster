@@ -235,7 +235,12 @@ window.Story = {
     art: "🚪❄️👧",
     sceneClass: "indoor",
     chapter: "Day 1 — Freezer",
-    text: "The thing finally stops moving. You don't want to look at what it used to be.\n\nBreath fogging in the cold. Blood steaming on the floor.\n\nBehind a wall of tipped shelving, small and perfectly still — a girl, maybe ten, a kitchen knife shaking in her hand.\n\n\"Don't. Don't touch me.\"",
+    text: function(s) {
+      if (s.companion === "Maya") {
+        return "The thing finally stops moving. Neither of you want to look at what it used to be.\n\nBreath fogging in the cold. Blood steaming on the floor.\n\nBehind a wall of tipped shelving, small and perfectly still — a girl, maybe ten, a kitchen knife shaking in her hand.\n\nMaya drops into a low crouch, hands wide. \"Hey. Hey, kid. We're not going to hurt you.\"\n\nThe girl's eyes lock on you. \"Don't. Don't touch me.\"";
+      }
+      return "The thing finally stops moving. You don't want to look at what it used to be.\n\nBreath fogging in the cold. Blood steaming on the floor.\n\nBehind a wall of tipped shelving, small and perfectly still — a girl, maybe ten, a kitchen knife shaking in her hand.\n\n\"Don't. Don't touch me.\"";
+    },
     choices: [
       { label: "\"It's okay. I'm not going to hurt you.\"",
         effect: s => { s.companion2 = "Nora"; s.flags.savedNora = true; Game.toast("Nora joined you"); },
@@ -250,7 +255,12 @@ window.Story = {
     art: "🛣️🌅",
     sceneClass: "forest",
     chapter: "Day 2 — The Road",
-    text: "You walk for hours. The highway is a museum of stalled cars. You've heard rumours of a camp — the Greenbelt — in the old state park.\n\nAhead, a hitchhiker sign: GREENBELT 12 MI.",
+    text: function(s) {
+      if (s.companion === "Maya") {
+        return "You and Maya walk for hours. She keeps pace half a step behind you, eyes always on the treeline. The highway is a museum of stalled cars.\n\n\"Heard people talking about a camp,\" she says, not looking at you. \"The Greenbelt. Old state park.\"\n\nAhead, a hitchhiker sign: GREENBELT 12 MI.";
+      }
+      return "You walk for hours. The highway is a museum of stalled cars. You've heard rumours of a camp — the Greenbelt — in the old state park.\n\nAhead, a hitchhiker sign: GREENBELT 12 MI.";
+    },
     choices: [
       { label: "Keep walking. Find the camp.", next: "ambush" },
       { label: "Rest in a station wagon",
@@ -272,7 +282,12 @@ window.Story = {
     sceneClass: "forest",
     chapter: "Day 2 — The Road",
     speaker: "Nora",
-    text: "The girl's name is Nora. She's quiet for hours, then: \"My dad said there's people at the Greenbelt. Soldiers. Good ones.\"\n\nShe slips her hand into yours.",
+    text: function(s) {
+      if (s.companion === "Maya") {
+        return "The girl's name is Nora. She's quiet for hours, keeping pace between you and Maya. When she speaks, it's to Maya — to the rifle across her back.\n\n\"My dad said there's people at the Greenbelt. Soldiers. Good ones.\"\n\nMaya nods without smiling. The girl slips her hand into yours anyway.";
+      }
+      return "The girl's name is Nora. She's quiet for hours, then: \"My dad said there's people at the Greenbelt. Soldiers. Good ones.\"\n\nShe slips her hand into yours.";
+    },
     choices: [
       { label: "\"Then that's where we go.\"", next: "ambush" },
     ]
@@ -284,8 +299,15 @@ window.Story = {
     chapter: "Day 2 — The Pines",
     speaker: "???",
     text: function(s) {
+      const withMaya = s.companion === "Maya";
+      if (s.flags.restedInCar && withMaya) {
+        return "You and Maya clocked their pickup a mile back through the station wagon's rear window — two men, rifles across the seats. When they step out of the pines shouting \"drop the bag,\" the two of you already had a plan.";
+      }
       if (s.flags.restedInCar) {
         return "You clocked their pickup a mile back through the station wagon's rear window — two men, rifles across the seats. When they step out of the pines shouting \"drop the bag,\" you already have a plan.";
+      }
+      if (withMaya) {
+        return "A shotgun racks behind you. Maya's hand closes on your wrist. \"Slow,\" she breathes.\n\nTwo men step out from the pines. Not infected — worse. Bandits.";
       }
       return "A shotgun racks behind you. \"Drop the bag. Slow.\"\n\nTwo men step out from the pines. Not infected — worse. Bandits.";
     },
@@ -335,7 +357,12 @@ window.Story = {
     art: "🌲🩸",
     sceneClass: "forest",
     chapter: "Day 2 — The Pines",
-    text: "It was ugly. It was quick. You take their shotgun, their jerky, and their silence.",
+    text: function(s) {
+      if (s.companion === "Maya") {
+        return "It was ugly. It was quick. Maya wipes her blade on the bigger one's jacket and doesn't look up.\n\n\"We don't talk about this one,\" she says.\n\nYou take their shotgun, their jerky, and their silence between you.";
+      }
+      return "It was ugly. It was quick. You take their shotgun, their jerky, and their silence.";
+    },
     choices: [
       { label: "Loot and move on",
         effect: s => {
@@ -352,7 +379,12 @@ window.Story = {
     sceneClass: "forest",
     chapter: "Day 3 — Greenbelt",
     speaker: "Guard",
-    text: "A chain-link fence topped with razor wire. A woman in tactical gear studies you through the scope of a rifle.\n\n\"State your business. And show me your arms — both sides.\"",
+    text: function(s) {
+      if (s.companion === "Maya") {
+        return "A chain-link fence topped with razor wire. A woman in tactical gear studies you — and Maya — through the scope of a rifle.\n\n\"Both of you. State your business. Show me your arms — both sides.\"\n\nMaya raises her sleeves slow and steady. She's done this before.";
+      }
+      return "A chain-link fence topped with razor wire. A woman in tactical gear studies you through the scope of a rifle.\n\n\"State your business. And show me your arms — both sides.\"";
+    },
     choices: [
       { label: "Show your arms. No bites.", next: "greenbelt_in" },
       { label: "Offer supplies as a gift", require: s => s.ammo >= 2,
@@ -377,7 +409,22 @@ window.Story = {
     art: "⛺🔥🍲",
     sceneClass: "forest",
     chapter: "Day 3 — Greenbelt Camp",
-    text: "Inside: tents, solar lamps, the smell of stew. A radio crackles weather reports.\n\nA young woman with calm hands and a quiet voice bandages your arm. \"You're lucky. Most don't make it this far. I'm Ren.\"\n\nAcross the fire, another woman in tactical kit nods at you — Captain Vega. \"Eat. Sleep. We talk in the morning.\"",
+    text: function(s) {
+      const withMaya = s.companion === "Maya";
+      const withNora = s.companion2 === "Nora";
+      let opener = "Inside: tents, solar lamps, the smell of stew. A radio crackles weather reports.\n\n";
+      if (withMaya) {
+        opener += "Maya drops onto the bench beside you, rifle across her knees, already scanning the camp like she's mapping exits.\n\n";
+      }
+      if (withNora) {
+        opener += "Nora stays close to your leg, eyes enormous. Someone's kid offers her a wooden horse; she doesn't take it, but she doesn't shrink away either.\n\n";
+      }
+      opener += "A young woman with calm hands and a quiet voice bandages your arm. \"You're lucky. Most don't make it this far. I'm Ren.\"\n\n";
+      opener += "Across the fire, another woman in tactical kit nods at ";
+      opener += (withMaya || withNora) ? "all of you" : "you";
+      opener += " — Captain Vega. \"Eat. Sleep. We talk in the morning.\"";
+      return opener;
+    },
     choices: [
       { label: "Sleep. Tomorrow is another day.",
         effect: s => { s.hp = s.hpMax; s.stam = s.stamMax; Game.toast("❤️ ⚡ restored"); },
