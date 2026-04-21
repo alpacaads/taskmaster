@@ -521,15 +521,14 @@ window.Story = {
       { label: "\"Thank you.\"",
         effect: s => {
           s.hp = s.hpMax; s.stam = s.stamMax;
-          s.bonds.ren += 1;
-          Game.toast("❤️ ⚡ restored · Ren's trust +1");
+          Game.toast("❤️ ⚡ restored");
         },
         next: "camp_morning" },
       { label: "Sit with Ren in silence until she finishes.",
         effect: s => {
           s.hp = s.hpMax; s.stam = s.stamMax;
-          s.bonds.ren += 2;
-          Game.toast("❤️ ⚡ restored · Ren's trust +2");
+          s.bonds.ren += 1;
+          Game.toast("❤️ ⚡ restored · Ren's trust +1");
         },
         next: "camp_morning" },
     ]
@@ -571,10 +570,9 @@ window.Story = {
     },
     choices: [
       { label: "Tell Ren about the boy in the subway fire",
-        effect: s => { s.bonds.ren += 2; Game.toast("Ren's trust +2"); },
+        effect: s => { s.bonds.ren += 1; Game.toast("Ren's trust +1"); },
         next: "chore_done" },
       { label: "Change the subject. Some doors stay shut.",
-        effect: s => { s.bonds.ren += 1; },
         next: "chore_done" },
     ]
   },
@@ -1343,7 +1341,7 @@ window.Story = {
     text: function(s) {
       const m = s.bonds.maya, r = s.bonds.ren;
       const mayaSignal = !!(s.flags.maya && m >= 5) && !s.flags.committedRen;
-      const renSignal  = r >= 3 && !s.flags.committedMaya;
+      const renSignal  = r >= 4 && !s.flags.committedMaya;
       let lines = "The fire burns low. Most of the camp has turned in.\n\n";
       if (s.flags.exposedTraitor && !s.flags.toldVega) {
         // Solo 'Tell Vega' path — Ren wasn't at the fence but she heard.
@@ -1366,15 +1364,15 @@ window.Story = {
     },
     choices: [
       { label: "Follow Maya", tag: "ROMANCE", tagClass: "warn",
-        require: s => s.flags.maya && s.bonds.maya >= 5 && !s.flags.committedRen && !(s.bonds.ren >= 3 && !s.flags.committedMaya),
+        require: s => s.flags.maya && s.bonds.maya >= 5 && !s.flags.committedRen && !(s.bonds.ren >= 4 && !s.flags.committedMaya),
         effect: s => { s.romance = "maya"; },
         next: "romance_maya" },
       { label: "Follow Ren", tag: "ROMANCE", tagClass: "warn",
-        require: s => s.bonds.ren >= 3 && !s.flags.committedMaya && !(s.flags.maya && s.bonds.maya >= 5 && !s.flags.committedRen),
+        require: s => s.bonds.ren >= 4 && !s.flags.committedMaya && !(s.flags.maya && s.bonds.maya >= 5 && !s.flags.committedRen),
         effect: s => { s.romance = "ren"; },
         next: "romance_ren" },
       { label: "Walk to the fire's edge. Meet them.", tag: "ROMANCE", tagClass: "warn",
-        require: s => s.flags.maya && s.bonds.maya >= 5 && !s.flags.committedRen && s.bonds.ren >= 3 && !s.flags.committedMaya,
+        require: s => s.flags.maya && s.bonds.maya >= 5 && !s.flags.committedRen && s.bonds.ren >= 4 && !s.flags.committedMaya,
         next: "bonfire_crossroads" },
       { label: "Sit with the fire. Sleep alone.",
         effect: s => { s.hp = s.hpMax; s.stam = s.stamMax; Game.toast("Rested"); },

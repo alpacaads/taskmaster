@@ -700,10 +700,10 @@ One section per story node, in definition order. Function-branching fields (text
 **Choices:**
 
 1. **"Thank you."**
-   - _effect:_ `s => { s.hp = s.hpMax; s.stam = s.stamMax; s.bonds.ren += 1; Game.toast("❤️ ⚡ restored · Ren's trust +1"); }`
+   - _effect:_ `s => { s.hp = s.hpMax; s.stam = s.stamMax; Game.toast("❤️ ⚡ restored"); }`
    - → `camp_morning`
 2. **Sit with Ren in silence until she finishes.**
-   - _effect:_ `s => { s.hp = s.hpMax; s.stam = s.stamMax; s.bonds.ren += 2; Game.toast("❤️ ⚡ restored · Ren's trust +2"); }`
+   - _effect:_ `s => { s.hp = s.hpMax; s.stam = s.stamMax; s.bonds.ren += 1; Game.toast("❤️ ⚡ restored · Ren's trust +1"); }`
    - → `camp_morning`
 
 ---
@@ -765,10 +765,9 @@ One section per story node, in definition order. Function-branching fields (text
 **Choices:**
 
 1. **Tell Ren about the boy in the subway fire**
-   - _effect:_ `s => { s.bonds.ren += 2; Game.toast("Ren's trust +2"); }`
+   - _effect:_ `s => { s.bonds.ren += 1; Game.toast("Ren's trust +1"); }`
    - → `chore_done`
 2. **Change the subject. Some doors stay shut.**
-   - _effect:_ `s => { s.bonds.ren += 1; }`
    - → `chore_done`
 
 ---
@@ -1701,13 +1700,13 @@ One section per story node, in definition order. Function-branching fields (text
 
 **Choices:**
 
-1. **Follow Maya** `ROMANCE` _require:_ `s => s.flags.maya && s.bonds.maya >= 5 && !s.flags.committedRen && !(s.bonds.ren >= 3 && !s.flags.committedMaya)`
+1. **Follow Maya** `ROMANCE` _require:_ `s => s.flags.maya && s.bonds.maya >= 5 && !s.flags.committedRen && !(s.bonds.ren >= 4 && !s.flags.committedMaya)`
    - _effect:_ `s => { s.romance = "maya"; }`
    - → `romance_maya`
-2. **Follow Ren** `ROMANCE` _require:_ `s => s.bonds.ren >= 3 && !s.flags.committedMaya && !(s.flags.maya && s.bonds.maya >= 5 && !s.flags.committedRen)`
+2. **Follow Ren** `ROMANCE` _require:_ `s => s.bonds.ren >= 4 && !s.flags.committedMaya && !(s.flags.maya && s.bonds.maya >= 5 && !s.flags.committedRen)`
    - _effect:_ `s => { s.romance = "ren"; }`
    - → `romance_ren`
-3. **Walk to the fire's edge. Meet them.** `ROMANCE` _require:_ `s => s.flags.maya && s.bonds.maya >= 5 && !s.flags.committedRen && s.bonds.ren >= 3 && !s.flags.committedMaya`
+3. **Walk to the fire's edge. Meet them.** `ROMANCE` _require:_ `s => s.flags.maya && s.bonds.maya >= 5 && !s.flags.committedRen && s.bonds.ren >= 4 && !s.flags.committedMaya`
    - → `bonfire_crossroads`
 4. **Sit with the fire. Sleep alone.**
    - _effect:_ `s => { s.hp = s.hpMax; s.stam = s.stamMax; Game.toast("Rested"); }`
