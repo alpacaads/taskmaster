@@ -709,15 +709,7 @@ window.Story = {
   },
 
   horde_warning: {
-    scene: function(s) {
-      // When Vega is about to hand you her ranger rifle, show the
-      // dedicated armory-door moment instead of the generic horde
-      // vista. Falls back to the default horde charge art otherwise.
-      if ((s.bonds && s.bonds.vega >= 3) && !s.flags.vegaRifleGiven) {
-        return "horde_warning_vega_rifle";
-      }
-      return "horde_warning";
-    },
+    scene: "horde_warning",
     sceneClass: "blood",
     chapter: "Day 5 — Sunrise",
     speaker: "Captain Vega",
@@ -732,10 +724,6 @@ window.Story = {
       rally.push("Vega's already on the wall");
       if (s.flags.savedNora) rally.push("Nora ducks into the medbay sandbags");
       intro += rally.join(", ") + ".\n\n";
-      // Earned enough trust with Vega that she arms you personally.
-      if ((s.bonds.vega || 0) >= 3 && !s.flags.vegaRifleGiven) {
-        intro += "Vega meets you at the armory door before you reach the wall. She shoves her own ranger rifle into your hands, already slinging a spare. \"You earned a good gun. Don't make me regret it.\"\n\n";
-      }
       // Ren notices the Maya romance on her way past. One quiet beat
       // so the love triangle doesn't just hang silent.
       if (s.romance === "maya" && s.flags.lovedMaya) {
@@ -748,7 +736,6 @@ window.Story = {
         effect: s => {
           // Every saved ally is on the wall for this one.
           s.flags.hordeDefense = true;
-          equipVegaRifleOnce(s);
         },
         combat: function (s) {
           // The party is much larger (Maya + Ren + Vega + Nora's spotting),
@@ -764,9 +751,7 @@ window.Story = {
             onLose: "post_horde_lose",
           };
         } },
-      { label: "Get the survivors out the back.",
-        effect: equipVegaRifleOnce,
-        next: "post_horde_flee" },
+      { label: "Get the survivors out the back.", next: "post_horde_flee" },
     ]
   },
 
@@ -1193,7 +1178,7 @@ window.Story = {
             ? "+2 🔫  · Ren's trust +1 · Vega's trust +1 · Maya's trust +1"
             : "+2 🔫  · Ren's trust +1 · Vega's trust +1");
         },
-        next: "bonfire_invite" },
+        next: s => (s.bonds.vega >= 3 && !s.flags.vegaRifleGiven) ? "vega_gift" : "bonfire_invite" },
       { label: "Help Vega rouse the camp. Reinforce the fence tonight.",
         require: s => s.flags.toldVega,
         effect: s => {
@@ -1208,6 +1193,20 @@ window.Story = {
           Game.toast(s.companion === "Maya"
             ? "+2 🔫  · Ren's trust +1 · Vega's trust +1 · Maya's trust +1"
             : "+2 🔫  · Ren's trust +1 · Vega's trust +1");
+        },
+        next: s => (s.bonds.vega >= 3 && !s.flags.vegaRifleGiven) ? "vega_gift" : "bonfire_invite" },
+    ]
+  },
+
+  vega_gift: {
+    sceneClass: "forest",
+    chapter: "Day 4 — Armory, after",
+    speaker: "Captain Vega",
+    text: "Vega finds you outside the medbay. She wasn't looking for you. She's holding her own rifle — not the camp spares, hers — in one hand, already carrying a spare in the other.\n\n\"You didn't have to tell me about Calder. You did it anyway.\"\n\nShe presses the rifle into your hands. Walnut stock. Small scope. Feels older than it is.\n\n\"This was my father's. Feeds you when you feed it. Keep it on you tomorrow.\"\n\nShe's already walking away when you try to thank her.",
+    choices: [
+      { label: "Sling it. Turn toward the fire.",
+        effect: s => {
+          equipVegaRifleOnce(s);
         },
         next: "bonfire_invite" },
     ]

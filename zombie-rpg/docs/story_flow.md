@@ -52,6 +52,7 @@ One section per story node, in definition order. Function-branching fields (text
 - [`investigate_traitor`](#investigate_traitor) — Day 4 — South Fence
 - [`confront_traitor`](#confront_traitor) — Day 4 — South Fence
 - [`traitor_aftermath`](#traitor_aftermath) — Day 4 — South Fence
+- [`vega_gift`](#vega_gift) — Day 4 — Armory, after
 - [`bonfire_invite`](#bonfire_invite) — Day 4 — Bonfire
 - [`romance_maya`](#romance_maya) — Day 4 — Maya's tent
 - [`romance_ren`](#romance_ren) — Day 4 — Ren's medbay
@@ -916,7 +917,7 @@ One section per story node, in definition order. Function-branching fields (text
 
 ## <a id="horde_warning"></a>`horde_warning`
 **Chapter:** Day 5 — Sunrise  
-**Scene art:** fn → `horde_warning` _(default, with Maya companion, mission partner = maya, mission partner = ren, solo mission, saved Nora, bring Nora on mission, rested in car, told Vega, chore: medbay, chore: perimeter, chore: kitchen, exposed traitor, killed traitor, romance Maya, romance Ren)_  
+**Scene art:** `horde_warning`  
 **Speaker:** Captain Vega  
 
 <details><summary>Variant: default / solo mission / rested in car / told Vega / romance Ren</summary>
@@ -1008,11 +1009,10 @@ One section per story node, in definition order. Function-branching fields (text
 **Choices:**
 
 1. **Hold the wall.** `COMBAT`
-   - _effect:_ `s => { // Every saved ally is on the wall for this one. s.flags.hordeDefense = true; equipVegaRifleOnce(s); }`
+   - _effect:_ `s => { // Every saved ally is on the wall for this one. s.flags.hordeDefense = true; }`
    - ⚔ combat _(default, with Maya companion, mission partner = maya, mission partner = ren, solo mission, saved Nora, bring Nora on mission, rested in car, told Vega, chore: medbay, chore: perimeter, chore: kitchen, killed traitor, romance Maya, romance Ren)_: enemy `horde` · risky · hp=46 · atk=[5,8] → win `post_horde_win` / lose `post_horde_lose`
    - ⚔ combat _(exposed traitor)_: enemy `horde` · hp=38 · atk=[4,7] → win `post_horde_win` / lose `post_horde_lose`
 2. **Get the survivors out the back.**
-   - _effect:_ `function equipVegaRifleOnce(s) { if ((s.bonds && s.bonds.vega >= 3) && !s.flags.vegaRifleGiven) { Game.giveWeapon({ name: "Vega's Ranger Rifle", bonus: 3, slot: "ranged" }); s.ammo = (s.ammo || 0) + 8; s.flags.vegaRifleGiven = true; Game.toast("🔫 Vega's Ranger Rifle · +8 rounds"); } }`
    - → `post_horde_flee`
 
 ---
@@ -1504,9 +1504,32 @@ One section per story node, in definition order. Function-branching fields (text
    - → `bonfire_invite`
 2. **Tell Vega. They deserve the truth.** _require:_ `s => !s.flags.toldVega`
    - _effect:_ `s => { s.flags.exposedTraitor = true; // Vega opens the armory; camp reinforces the fence overnight. s.ammo += 2; Game.giveRandomItem(); if (s.bonds) { s.bonds.ren = (s.bonds.ren || 0) + 1; s.bonds.vega = (s.bonds.vega || 0) + 1; // Maya helped put him down. She approves of you owning it. if (s.companion === "Maya") s.bonds.maya = (s.bonds.maya || 0) + 1; } Game.toast(s.companion === "Maya" ? "+2 🔫 · Ren's trust +1 · Vega's trust +1 · Maya's trust +1" : "+2 🔫 · Ren's trust +1 · Vega's trust +1"); }`
-   - → `bonfire_invite`
+   - → function targets: `bonfire_invite`
 3. **Help Vega rouse the camp. Reinforce the fence tonight.** _require:_ `s => s.flags.toldVega`
    - _effect:_ `s => { s.flags.exposedTraitor = true; s.ammo += 2; Game.giveRandomItem(); if (s.bonds) { s.bonds.ren = (s.bonds.ren || 0) + 1; s.bonds.vega = (s.bonds.vega || 0) + 1; if (s.companion === "Maya") s.bonds.maya = (s.bonds.maya || 0) + 1; } Game.toast(s.companion === "Maya" ? "+2 🔫 · Ren's trust +1 · Vega's trust +1 · Maya's trust +1" : "+2 🔫 · Ren's trust +1 · Vega's trust +1"); }`
+   - → function targets: `bonfire_invite`
+
+---
+
+## <a id="vega_gift"></a>`vega_gift`
+**Chapter:** Day 4 — Armory, after  
+**Scene art:** (no explicit scene — uses node id)  
+**Speaker:** Captain Vega  
+
+> Vega finds you outside the medbay. She wasn't looking for you. She's holding her own rifle — not the camp spares, hers — in one hand, already carrying a spare in the other.
+> 
+> "You didn't have to tell me about Calder. You did it anyway."
+> 
+> She presses the rifle into your hands. Walnut stock. Small scope. Feels older than it is.
+> 
+> "This was my father's. Feeds you when you feed it. Keep it on you tomorrow."
+> 
+> She's already walking away when you try to thank her.
+
+**Choices:**
+
+1. **Sling it. Turn toward the fire.**
+   - _effect:_ `s => { equipVegaRifleOnce(s); }`
    - → `bonfire_invite`
 
 ---
