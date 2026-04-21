@@ -1060,7 +1060,7 @@ window.Story = {
         if (withMaya) {
           return "Vega on your left with a blinding rifle flashlight. Maya on your right, rifle up, breath even. You between them. The man crouched at the cut fence spins — a trader from two tents over. Calder. Sleeve pushed up. The bite mark on his forearm is fresh and black.\n\n\"Please. They said if I let them in, they'd let me live. I have a d—\"\n\nHis throat spasms. His eyes fog. The bite has already won — and you're the only clean angle.";
         }
-        return "Vega moves like she's done this before — two rifles and a blinding flashlight at your back. The man crouched at the cut fence spins. A trader from two tents over — Calder. Sleeve pushed up. The bite mark on his forearm is fresh and black.\n\n\"Please. They said if I let them in, they'd let me live. I have a d—\"\n\nHis throat spasms. His eyes fog. The bite has already won — and you're between him and Vega's rifles.";
+        return "Vega moves like she's done this before — rifle shouldered, blinding flashlight cutting the dust at your back. The man crouched at the cut fence spins. A trader from two tents over — Calder. Sleeve pushed up. The bite mark on his forearm is fresh and black.\n\n\"Please. They said if I let them in, they'd let me live. I have a d—\"\n\nHis throat spasms. His eyes fog. The bite has already won — and you're between him and Vega's rifle.";
       }
       if (withMaya) {
         return "You and Maya wait in the brush, motionless. He doesn't see her until after he sees you.\n\nA trader from two tents over — Calder. Sleeve pushed up. The bite mark on his forearm is fresh and black.\n\n\"Please. They said if I let them in, they'd let me live. I have a d—\"\n\nHis throat spasms. His eyes fog. The bite has already won.";
@@ -1119,8 +1119,14 @@ window.Story = {
           // Vega opens the armory; camp reinforces the fence overnight.
           s.ammo += 2;
           Game.giveRandomItem();
-          if (s.bonds) s.bonds.ren = (s.bonds.ren || 0) + 1;
-          Game.toast("+2 🔫  · Ren's trust +1");
+          if (s.bonds) {
+            s.bonds.ren = (s.bonds.ren || 0) + 1;
+            // Maya helped put him down. She approves of you owning it.
+            if (s.companion === "Maya") s.bonds.maya = (s.bonds.maya || 0) + 1;
+          }
+          Game.toast(s.companion === "Maya"
+            ? "+2 🔫  · Ren's trust +1 · Maya's trust +1"
+            : "+2 🔫  · Ren's trust +1");
         },
         next: "bonfire_invite" },
       { label: "Help Vega rouse the camp. Reinforce the fence tonight.",
@@ -1129,8 +1135,13 @@ window.Story = {
           s.flags.exposedTraitor = true;
           s.ammo += 2;
           Game.giveRandomItem();
-          if (s.bonds) s.bonds.ren = (s.bonds.ren || 0) + 1;
-          Game.toast("+2 🔫  · Ren's trust +1");
+          if (s.bonds) {
+            s.bonds.ren = (s.bonds.ren || 0) + 1;
+            if (s.companion === "Maya") s.bonds.maya = (s.bonds.maya || 0) + 1;
+          }
+          Game.toast(s.companion === "Maya"
+            ? "+2 🔫  · Ren's trust +1 · Maya's trust +1"
+            : "+2 🔫  · Ren's trust +1");
         },
         next: "bonfire_invite" },
     ]
@@ -1143,6 +1154,10 @@ window.Story = {
     text: function(s) {
       const m = s.bonds.maya, r = s.bonds.ren;
       let lines = "The fire burns low. Most of the camp has turned in. Two figures linger.\n\n";
+      if (s.flags.exposedTraitor && !s.flags.toldVega) {
+        // Solo 'Tell Vega' path — Ren wasn't at the fence but she heard.
+        lines += "Ren is across the fire. When your eyes meet she gives you a small, grave nod. She knows.\n\n";
+      }
       if (s.flags.maya && m >= 3) lines += "Maya catches your eye and tilts her head — toward her tent.\n";
       if (r >= 3) lines += "Ren leaves her guitar against the log when she stands. She waits, looking at you.\n";
       if ((!s.flags.maya || m < 3) && r < 3) lines += "You sit alone with the dying flames.\n";

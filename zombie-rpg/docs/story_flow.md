@@ -1446,11 +1446,11 @@ One section per story node, in definition order. Function-branching fields (text
 
 <details><summary>Variant: told Vega</summary>
 
-> Vega moves like she's done this before — two rifles and a blinding flashlight at your back. The man crouched at the cut fence spins. A trader from two tents over — Calder. Sleeve pushed up. The bite mark on his forearm is fresh and black.
+> Vega moves like she's done this before — rifle shouldered, blinding flashlight cutting the dust at your back. The man crouched at the cut fence spins. A trader from two tents over — Calder. Sleeve pushed up. The bite mark on his forearm is fresh and black.
 > 
 > "Please. They said if I let them in, they'd let me live. I have a d—"
 > 
-> His throat spasms. His eyes fog. The bite has already won — and you're between him and Vega's rifles.
+> His throat spasms. His eyes fog. The bite has already won — and you're between him and Vega's rifle.
 
 </details>
 
@@ -1502,10 +1502,10 @@ One section per story node, in definition order. Function-branching fields (text
    - _effect:_ `s => { s.flags.killedTraitor = true; // Maya notices. She would've told Vega. if (s.flags.maya && s.bonds) s.bonds.maya = Math.max(0, (s.bonds.maya || 0) - 1); Game.toast("The camp will not know."); }`
    - → `bonfire_invite`
 2. **Tell Vega. They deserve the truth.** _require:_ `s => !s.flags.toldVega`
-   - _effect:_ `s => { s.flags.exposedTraitor = true; // Vega opens the armory; camp reinforces the fence overnight. s.ammo += 2; Game.giveRandomItem(); if (s.bonds) s.bonds.ren = (s.bonds.ren || 0) + 1; Game.toast("+2 🔫 · Ren's trust +1"); }`
+   - _effect:_ `s => { s.flags.exposedTraitor = true; // Vega opens the armory; camp reinforces the fence overnight. s.ammo += 2; Game.giveRandomItem(); if (s.bonds) { s.bonds.ren = (s.bonds.ren || 0) + 1; // Maya helped put him down. She approves of you owning it. if (s.companion === "Maya") s.bonds.maya = (s.bonds.maya || 0) + 1; } Game.toast(s.companion === "Maya" ? "+2 🔫 · Ren's trust +1 · Maya's trust +1" : "+2 🔫 · Ren's trust +1"); }`
    - → `bonfire_invite`
 3. **Help Vega rouse the camp. Reinforce the fence tonight.** _require:_ `s => s.flags.toldVega`
-   - _effect:_ `s => { s.flags.exposedTraitor = true; s.ammo += 2; Game.giveRandomItem(); if (s.bonds) s.bonds.ren = (s.bonds.ren || 0) + 1; Game.toast("+2 🔫 · Ren's trust +1"); }`
+   - _effect:_ `s => { s.flags.exposedTraitor = true; s.ammo += 2; Game.giveRandomItem(); if (s.bonds) { s.bonds.ren = (s.bonds.ren || 0) + 1; if (s.companion === "Maya") s.bonds.maya = (s.bonds.maya || 0) + 1; } Game.toast(s.companion === "Maya" ? "+2 🔫 · Ren's trust +1 · Maya's trust +1" : "+2 🔫 · Ren's trust +1"); }`
    - → `bonfire_invite`
 
 ---
@@ -1514,9 +1514,20 @@ One section per story node, in definition order. Function-branching fields (text
 **Chapter:** Day 4 — Bonfire  
 **Scene art:** `bonfire_night`  
 
-<details><summary>Variant: default / with Maya companion / mission partner = maya / mission partner = ren / solo mission / saved Nora / bring Nora on mission / rested in car / told Vega / chore: medbay / chore: perimeter / chore: kitchen / exposed traitor / killed traitor</summary>
+<details><summary>Variant: default / with Maya companion / mission partner = maya / mission partner = ren / solo mission / saved Nora / bring Nora on mission / rested in car / told Vega / chore: medbay / chore: perimeter / chore: kitchen / killed traitor</summary>
 
 > The fire burns low. Most of the camp has turned in. Two figures linger.
+> 
+> You sit alone with the dying flames.
+> 
+
+</details>
+
+<details><summary>Variant: exposed traitor</summary>
+
+> The fire burns low. Most of the camp has turned in. Two figures linger.
+> 
+> Ren is across the fire. When your eyes meet she gives you a small, grave nod. She knows.
 > 
 > You sit alone with the dying flames.
 > 
