@@ -80,6 +80,15 @@
     .card-art .missing {
       color: var(--text-muted); font-size: 13px; text-align: center; padding: 16px;
     }
+    .card.img-missing .card-art::after {
+      content: "no image yet";
+      position: absolute; inset: 0;
+      display: flex; align-items: center; justify-content: center;
+      color: var(--text-muted); font-size: 12px; letter-spacing: 1px;
+      background: repeating-linear-gradient(45deg, #0a0d08 0 8px, #11140d 8px 16px);
+      pointer-events: none;
+    }
+    .card.replaced.img-missing .card-art::after { display: none; }
     .card-art .badge {
       position: absolute; top: 8px; right: 8px;
       background: rgba(0,0,0,0.7); border: 1px solid var(--border);
@@ -252,8 +261,8 @@
   </footer>
 
   <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
-  <script src="js/overrides.js?v=109"></script>
-  <script src="js/scenes.js?v=109"></script>
+  <script src="js/overrides.js?v=110"></script>
+  <script src="js/scenes.js?v=110"></script>
   <script>
     (async function () {
       const PROMPTS = (window.Scenes && window.Scenes.PROMPTS) || {};
@@ -569,7 +578,12 @@
 
       commitAllBtn.addEventListener("click", commitAll);
 
-      document.getElementById("refresh-thumbs").addEventListener("click", () => {
+      document.getElementById("refresh-thumbs").addEventListener("click", async () => {
+        // Reload the override map first — if you uploaded in another
+        // tab or the object URLs were revoked during a commit, we were
+        // handing buildCard() stale blob references. That's the
+        // 'scene image shows the wrong image' bug.
+        await Overrides.loadAll();
         // Bump the cache-bust so the *game* re-fetches every image too.
         bumpGameCacheBust();
         const existing = Array.from(grid.children);
@@ -635,6 +649,7 @@
         const commitBtn = card.querySelector(".commit");
 
         async function refresh() {
+          card.classList.remove("img-missing");
           const url = overrideMap()[id];
           if (url) {
             img.src = url;
@@ -677,11 +692,12 @@
         });
 
         img.addEventListener("error", () => {
+          // Keep the <img> element in the DOM so subsequent refresh()
+          // calls can re-set src and recover. Show the missing label
+          // as a sibling overlay the card can toggle via CSS.
           if (!card.classList.contains("replaced")) {
-            const ph = document.createElement("div");
-            ph.className = "missing";
-            ph.textContent = "no image at images/" + id + "." + extForId(id);
-            img.replaceWith(ph);
+            card.classList.add("img-missing");
+            img.removeAttribute("src");
           }
         });
 
