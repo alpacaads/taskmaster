@@ -26,36 +26,27 @@ window.Combat = (function () {
   // ---------- Loot tables ----------
   // Each entry rolls independently on a successful kill.
   //   chance   : 0..1 probability
-  //   kind     : "ammo" | "food" | "weapon" | "item"
-  //   n        : count for ammo/food
-  //   pool     : array of {name, bonus, slot:"melee"|"ranged", ammo?}
-  //   name+effect : one-off item with an optional state effect
-  // Loot tables — `kind: "item"` pulls a random consumable from the
-  // global ITEM_POOL (defined in game.js). Entries roll independently.
+  //   kind     : "ammo" | "item"
+  //   n        : count for ammo
+  // NOTE: weapons are not random loot — they come from intentional
+  // story beats (meet_maya Crowbar, cho_loot Service Pistol,
+  // grocery_front_win Riot Vest). Combat only yields ammo + consumables.
   const LOOT = {
     walker:  [
       { chance: 0.35, kind: "ammo", n: 1 },
       { chance: 0.3,  kind: "item" },
     ],
     walker_cho: [
-      // Guaranteed gun from Mrs. Cho's nightstand.
-      { chance: 1.0, kind: "weapon", pool: [
-        { name: "Mrs. Cho's .22 Revolver",   bonus: 1, slot: "ranged", ammo: 3 },
-        { name: "Her Husband's Service Pistol", bonus: 1, slot: "ranged", ammo: 4 },
-        { name: "Pearl-grip Snub Nose",      bonus: 1, slot: "ranged", ammo: 2 },
-      ] },
-      // Plus 2 guaranteed + 1 likely random items from a wide pool so
-      // each playthrough differs.
-      { chance: 1.0, kind: "item" },
-      { chance: 1.0, kind: "item" },
+      // Mrs. Cho's belongings are narrated by the cho_loot scene (her
+      // husband's .38 + 6 rounds). Combat itself drops ammo + a few
+      // consumables scavenged from the apartment.
+      { chance: 1.0,  kind: "item" },
+      { chance: 1.0,  kind: "item" },
       { chance: 0.55, kind: "item" },
     ],
     walker_pair: [
       { chance: 0.55, kind: "ammo", n: 1 },
       { chance: 0.4,  kind: "item" },
-      { chance: 0.15, kind: "weapon", pool: [
-        { name: "Jagged Shard",      bonus: 1, slot: "melee" },
-      ] },
     ],
     runner: [
       { chance: 0.55, kind: "ammo", n: 1 },
@@ -66,27 +57,17 @@ window.Combat = (function () {
       { chance: 0.4,  kind: "ammo", n: 2 },
     ],
     bandit: [
-      { chance: 1.0, kind: "ammo", n: 2 },
-      { chance: 0.35, kind: "weapon", pool: [
-        { name: "Sawed-off Shotgun", bonus: 2, slot: "ranged", ammo: 4 },
-        { name: "Hunting Rifle",     bonus: 2, slot: "ranged", ammo: 3 },
-      ] },
+      // Bandits were armed; you can raid their rounds/kit but the
+      // guns themselves don't automatically become yours.
+      { chance: 1.0,  kind: "ammo", n: 2 },
       { chance: 0.45, kind: "item" },
     ],
     traitor: [
-      { chance: 1.0, kind: "weapon", pool: [
-        { name: "Machete",           bonus: 2, slot: "melee" },
-        { name: "Bowie Knife",       bonus: 2, slot: "melee" },
-      ] },
       { chance: 1.0, kind: "ammo", n: 4 },
       { chance: 1.0, kind: "item" },
       { chance: 1.0, kind: "item" },
     ],
     freezer_abom: [
-      { chance: 1.0, kind: "weapon", pool: [
-        { name: "Butcher's Cleaver",        bonus: 2, slot: "melee" },
-        { name: "Store Manager's Revolver", bonus: 2, slot: "ranged", ammo: 4 },
-      ] },
       { chance: 1.0, kind: "item" },
       { chance: 1.0, kind: "item" },
       { chance: 0.6, kind: "ammo", n: 2 },
@@ -102,13 +83,10 @@ window.Combat = (function () {
       if (d.kind === "ammo") {
         s.ammo += d.n;
         Game.toast(`+${d.n} 🔫`);
-      } else if (d.kind === "weapon") {
-        const pick = d.pool[Math.floor(Math.random() * d.pool.length)];
-        equipWeapon(pick);              // toasts its own 'Equipped X'
-        if (pick.ammo) s.ammo += pick.ammo;
       } else if (d.kind === "item") {
         if (Game.giveRandomItem) Game.giveRandomItem();
       }
+      // NOTE: no kind === 'weapon' — weapons come from story beats only.
     });
   }
 
