@@ -67,6 +67,7 @@ One section per story node, in definition order. Function-branching fields (text
 - [`ending_final_lovers_road`](#ending_final_lovers_road) — Ending F — Lovers, Walking
 - [`ending_final_vega_fell`](#ending_final_vega_fell) — Ending G — Captain Held
 - [`ending_final_maya_fell`](#ending_final_maya_fell) — Ending H — She Stayed
+- [`ending_final_ren_fell`](#ending_final_ren_fell) — Ending I — The Medbay Door
 - [`death`](#death) — You Died
 
 ---
@@ -1025,11 +1026,21 @@ One section per story node, in definition order. Function-branching fields (text
 **Scene art:** `flee_rearguard`  
 **Speaker:** Captain Vega  
 
-<details><summary>Variant: default / with Maya companion / mission partner = maya / mission partner = ren / solo mission / saved Nora / bring Nora on mission / rested in car / told Vega / chore: medbay / chore: perimeter / chore: kitchen / exposed traitor / killed traitor / romance Ren</summary>
+<details><summary>Variant: default / with Maya companion / mission partner = maya / mission partner = ren / solo mission / rested in car / told Vega / chore: medbay / chore: perimeter / chore: kitchen / exposed traitor / killed traitor</summary>
 
 > The back gate is a bottleneck. Twenty survivors, one path, and the horde already beginning to wrap the wall. Whoever goes last buys the minutes the rest need.
 > 
 > Vega racks her rifle. "I'm the one with the most rounds and the least family. I stay. I slow them."
+> 
+> The first of them are at the inner fence.
+
+</details>
+
+<details><summary>Variant: saved Nora / bring Nora on mission</summary>
+
+> The back gate is a bottleneck. Twenty survivors, one path, and the horde already beginning to wrap the wall. Whoever goes last buys the minutes the rest need.
+> 
+> Vega racks her rifle. Her eyes flick once to Nora clinging to your sleeve, then away. "I'm the one with the most rounds and the least family. I stay. I slow them. Get the kid out."
 > 
 > The first of them are at the inner fence.
 
@@ -1047,6 +1058,18 @@ One section per story node, in definition order. Function-branching fields (text
 
 </details>
 
+<details><summary>Variant: romance Ren</summary>
+
+> The back gate is a bottleneck. Twenty survivors, one path, and the horde already beginning to wrap the wall. Whoever goes last buys the minutes the rest need.
+> 
+> Vega racks her rifle. "I'm the one with the most rounds and the least family. I stay. I slow them."
+> 
+> Ren's voice is quiet beside you. "There are three in the medbay who can't walk. If I stay with them, the column moves twice as fast." She isn't asking.
+> 
+> The first of them are at the inner fence.
+
+</details>
+
 **Choices:**
 
 1. **"No. We all go. Together."**
@@ -1057,6 +1080,9 @@ One section per story node, in definition order. Function-branching fields (text
    - → `post_horde_flee`
 3. **"Maya. Come back to me."** _require:_ `s => (s.companion === "Maya" || s.flags.maya) && s.romance === "maya" && s.flags.lovedMaya`
    - _effect:_ `s => { s.flags.mayaSacrificed = true; s.flags.vegaSaved = true; }`
+   - → `post_horde_flee`
+4. **"Ren. Stay with them. I'll find you."** _require:_ `s => s.romance === "ren" && s.flags.lovedRen`
+   - _effect:_ `s => { s.flags.renSacrificed = true; s.flags.vegaSaved = true; }`
    - → `post_horde_flee`
 
 ---
@@ -1884,9 +1910,21 @@ One section per story node, in definition order. Function-branching fields (text
 **Chapter:** Ending G — Captain Held  
 **Scene art:** `ending_final_vega_fell`  
 
+<details><summary>Variant: default / with Maya companion / mission partner = maya / mission partner = ren / solo mission / rested in car / told Vega / chore: medbay / chore: perimeter / chore: kitchen / exposed traitor / killed traitor / romance Maya / romance Ren</summary>
+
 > She held the gate. She held it long enough.
 > 
 > Thanks for playing Dead Light.
+
+</details>
+
+<details><summary>Variant: saved Nora / bring Nora on mission</summary>
+
+> She held the gate. Long enough for a kid to see another dawn.
+> 
+> Thanks for playing Dead Light.
+
+</details>
 
 **Choices:**
 
@@ -1900,6 +1938,21 @@ One section per story node, in definition order. Function-branching fields (text
 **Scene art:** `ending_final_maya_fell`  
 
 > She stayed so you could walk. You keep walking.
+> 
+> Thanks for playing Dead Light.
+
+**Choices:**
+
+1. **Back to title**
+   - → `__title__`
+
+---
+
+## <a id="ending_final_ren_fell"></a>`ending_final_ren_fell`
+**Chapter:** Ending I — The Medbay Door  
+**Scene art:** `ending_final_ren_fell`  
+
+> She stayed with the ones who couldn't walk. You carry her song with you.
 > 
 > Thanks for playing Dead Light.
 

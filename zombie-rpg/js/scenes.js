@@ -738,7 +738,7 @@ window.Scenes = (function () {
   // fresh image URLs automatically, so a commit on one device (PC)
   // shows up on another (phone) as soon as Pages rebuilds, without
   // relying on localStorage which is per-device.
-  const BUILD = "146";
+  const BUILD = "147";
 
   // Smart cache-bust: per-scene timestamp from the admin takes priority
   // (committer sees their upload immediately), then a device-wide global
@@ -847,6 +847,7 @@ window.Scenes = (function () {
     ending_final_lovers_road_ren:  "the survivor and Ren — a dark-haired young medic in a grey scrub top and worn olive jacket with a medkit slung across her chest — walking hand in hand at the front of a small group of survivors on a misty highway at dawn, she's softly humming to the kid beside her, hopeful new beginning together, cinematic wide shot",
     ending_final_vega_fell:   "blood-red dawn over a battered fortified camp gate overrun behind a wall of zombies, Captain Vega's abandoned rifle propped against a burned signpost in the foreground, a folded captain's patch resting on the stock, distant column of survivors walking away through pine mist, somber and reverent, cinematic wide shot, painterly, in the style of The Last of Us",
     ending_final_maya_fell:   "blood-red dawn at a burned back gate of a fortified camp, a faded olive army jacket hanging on the chainlink fence in the foreground, a single empty rifle shell standing upright in the mud below it, distant column of survivors walking away through pine mist, deep grief, quiet reverence, cinematic wide shot, painterly, in the style of The Last of Us",
+    ending_final_ren_fell:    "blood-red dawn at a small fortified camp medbay, a closed wooden medbay door in the foreground with a small silver stethoscope hung on the handle, a sprig of wildflowers tied with a gauze strip tucked beside it, distant column of survivors walking away through pine mist behind, deep grief, quiet reverence, cinematic wide shot, painterly, in the style of The Last of Us",
     death:               "dark blood-red haze, faint silhouette of a fallen body on the ground, faint cross marker in the distance, deep grief, oppressive horror finality, painterly cinematic",
 
     nora_asks:           "a small ten-year-old girl with messy copper-brown hair and a ragged little backpack, standing at the open wooden gate of a fortified survivor camp at sunrise, looking up pleadingly at a lone survivor tightening rucksack straps, pine forest and watchtower in the background, warm dawn light, tender quiet moment before a dangerous mission, cinematic",
