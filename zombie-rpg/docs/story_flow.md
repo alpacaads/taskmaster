@@ -55,6 +55,7 @@ One section per story node, in definition order. Function-branching fields (text
 - [`traitor_aftermath`](#traitor_aftermath) — Day 4 — South Fence
 - [`vega_gift`](#vega_gift) — Day 4 — Armory, after
 - [`bonfire_invite`](#bonfire_invite) — Day 4 — Bonfire
+- [`bonfire_crossroads`](#bonfire_crossroads) — Day 4 — Bonfire, at the edge
 - [`romance_maya`](#romance_maya) — Day 4 — Maya's tent
 - [`romance_ren`](#romance_ren) — Day 4 — Ren's medbay
 - [`morning_after_maya`](#morning_after_maya) — Day 5 — Pre-dawn
@@ -1700,14 +1701,44 @@ One section per story node, in definition order. Function-branching fields (text
 
 **Choices:**
 
-1. **Follow Maya** `ROMANCE` _require:_ `s => s.flags.maya && s.bonds.maya >= 5 && !s.flags.committedRen`
+1. **Follow Maya** `ROMANCE` _require:_ `s => s.flags.maya && s.bonds.maya >= 5 && !s.flags.committedRen && !(s.bonds.ren >= 3 && !s.flags.committedMaya)`
    - _effect:_ `s => { s.romance = "maya"; }`
    - → `romance_maya`
-2. **Follow Ren** `ROMANCE` _require:_ `s => s.bonds.ren >= 3 && !s.flags.committedMaya`
+2. **Follow Ren** `ROMANCE` _require:_ `s => s.bonds.ren >= 3 && !s.flags.committedMaya && !(s.flags.maya && s.bonds.maya >= 5 && !s.flags.committedRen)`
    - _effect:_ `s => { s.romance = "ren"; }`
    - → `romance_ren`
-3. **Sit with the fire. Sleep alone.**
+3. **Walk to the fire's edge. Meet them.** `ROMANCE` _require:_ `s => s.flags.maya && s.bonds.maya >= 5 && !s.flags.committedRen && s.bonds.ren >= 3 && !s.flags.committedMaya`
+   - → `bonfire_crossroads`
+4. **Sit with the fire. Sleep alone.**
    - _effect:_ `s => { s.hp = s.hpMax; s.stam = s.stamMax; Game.toast("Rested"); }`
+   - → `horde_warning`
+
+---
+
+## <a id="bonfire_crossroads"></a>`bonfire_crossroads`
+**Chapter:** Day 4 — Bonfire, at the edge  
+**Scene art:** `bonfire_crossroads`  
+
+> You stand between them at the fire's edge. Close enough that you can hear each of them breathing.
+> 
+> Maya, arms folded, her jaw set the way it gets when she's not going to ask twice. Her eyes are steady. You know that look — it's the one she gives before she moves.
+> 
+> Ren, hands in her jacket pockets, weight on her heels, not sure where to put her hands. She's smiling, a little, at nothing. She does that when she's trying not to care about the answer.
+> 
+> Neither of them speaks. Neither of them looks at the other.
+> 
+> They're waiting.
+
+**Choices:**
+
+1. **Take Maya's hand.** `ROMANCE`
+   - _effect:_ `s => { s.romance = "maya"; s.flags.committedMaya = true; s.flags.rejectedRen = true; }`
+   - → `romance_maya`
+2. **Take Ren's hand.** `ROMANCE`
+   - _effect:_ `s => { s.romance = "ren"; s.flags.committedRen = true; s.flags.rejectedMaya = true; }`
+   - → `romance_ren`
+3. **"Not tonight. Not like this."**
+   - _effect:_ `s => { s.hp = s.hpMax; s.stam = s.stamMax; // Neither rejected — you didn't pick, you stepped back. Both // notice; neither is owed anything. Game.toast("Rested"); }`
    - → `horde_warning`
 
 ---

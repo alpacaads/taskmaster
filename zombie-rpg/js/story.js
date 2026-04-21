@@ -724,10 +724,22 @@ window.Story = {
       rally.push("Vega's already on the wall");
       if (s.flags.savedNora) rally.push("Nora ducks into the medbay sandbags");
       intro += rally.join(", ") + ".\n\n";
-      // Ren notices the Maya romance on her way past. One quiet beat
-      // so the love triangle doesn't just hang silent.
+      // Love-triangle acknowledgments. If the crossroads made the call
+      // explicit (rejectedRen / rejectedMaya), the beat goes a shade
+      // quieter — still steady, a little more costly.
       if (s.romance === "maya" && s.flags.lovedMaya) {
-        intro += "Ren passes you on her way to the wall, med kit bouncing. She catches your eye. A small, real smile. \"Good,\" she says, and keeps moving.\n\n";
+        if (s.flags.rejectedRen) {
+          intro += "Ren passes you on her way to the wall, med kit bouncing. She doesn't stop. Her hand brushes your shoulder once as she goes by — a medic's hand, not a lover's. Steady. Brief. \"Be careful today,\" she says, and then she's past you.\n\n";
+        } else {
+          intro += "Ren passes you on her way to the wall, med kit bouncing. She catches your eye. A small, real smile. \"Good,\" she says, and keeps moving.\n\n";
+        }
+      } else if (s.romance === "ren" && s.flags.lovedRen && s.flags.maya) {
+        // Mirror beat from Maya's side when you're with Ren.
+        if (s.flags.rejectedMaya) {
+          intro += "Maya is already at the wall, rifle checked, jaw set. She looks down the line at you once — a long look, all the things she isn't saying — and then she's sighting down the road again. \"Don't get yourself killed, paramedic.\"\n\n";
+        } else {
+          intro += "Maya is already at the wall, rifle checked. She catches your eye, jerks her chin at the line. \"Stay on my left,\" she calls over. It's the kindest thing she has time for.\n\n";
+        }
       }
       return intro + "\"We hold, or we run. Choose.\"";
     },
@@ -1354,15 +1366,52 @@ window.Story = {
     },
     choices: [
       { label: "Follow Maya", tag: "ROMANCE", tagClass: "warn",
-        require: s => s.flags.maya && s.bonds.maya >= 5 && !s.flags.committedRen,
+        require: s => s.flags.maya && s.bonds.maya >= 5 && !s.flags.committedRen && !(s.bonds.ren >= 3 && !s.flags.committedMaya),
         effect: s => { s.romance = "maya"; },
         next: "romance_maya" },
       { label: "Follow Ren", tag: "ROMANCE", tagClass: "warn",
-        require: s => s.bonds.ren >= 3 && !s.flags.committedMaya,
+        require: s => s.bonds.ren >= 3 && !s.flags.committedMaya && !(s.flags.maya && s.bonds.maya >= 5 && !s.flags.committedRen),
         effect: s => { s.romance = "ren"; },
         next: "romance_ren" },
+      { label: "Walk to the fire's edge. Meet them.", tag: "ROMANCE", tagClass: "warn",
+        require: s => s.flags.maya && s.bonds.maya >= 5 && !s.flags.committedRen && s.bonds.ren >= 3 && !s.flags.committedMaya,
+        next: "bonfire_crossroads" },
       { label: "Sit with the fire. Sleep alone.",
         effect: s => { s.hp = s.hpMax; s.stam = s.stamMax; Game.toast("Rested"); },
+        next: "horde_warning" },
+    ]
+  },
+
+  // Both earned, neither committed. You can only pick one — and the
+  // other is standing right there. Sets rejectedMaya / rejectedRen so
+  // morning_after and horde_warning can carry the weight of the choice.
+  bonfire_crossroads: {
+    scene: "bonfire_crossroads",
+    sceneClass: "night",
+    chapter: "Day 4 — Bonfire, at the edge",
+    text: "You stand between them at the fire's edge. Close enough that you can hear each of them breathing.\n\nMaya, arms folded, her jaw set the way it gets when she's not going to ask twice. Her eyes are steady. You know that look — it's the one she gives before she moves.\n\nRen, hands in her jacket pockets, weight on her heels, not sure where to put her hands. She's smiling, a little, at nothing. She does that when she's trying not to care about the answer.\n\nNeither of them speaks. Neither of them looks at the other.\n\nThey're waiting.",
+    choices: [
+      { label: "Take Maya's hand.", tag: "ROMANCE", tagClass: "warn",
+        effect: s => {
+          s.romance = "maya";
+          s.flags.committedMaya = true;
+          s.flags.rejectedRen = true;
+        },
+        next: "romance_maya" },
+      { label: "Take Ren's hand.", tag: "ROMANCE", tagClass: "warn",
+        effect: s => {
+          s.romance = "ren";
+          s.flags.committedRen = true;
+          s.flags.rejectedMaya = true;
+        },
+        next: "romance_ren" },
+      { label: "\"Not tonight. Not like this.\"",
+        effect: s => {
+          s.hp = s.hpMax; s.stam = s.stamMax;
+          // Neither rejected — you didn't pick, you stepped back. Both
+          // notice; neither is owed anything.
+          Game.toast("Rested");
+        },
         next: "horde_warning" },
     ]
   },

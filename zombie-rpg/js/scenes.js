@@ -738,7 +738,7 @@ window.Scenes = (function () {
   // fresh image URLs automatically, so a commit on one device (PC)
   // shows up on another (phone) as soon as Pages rebuilds, without
   // relying on localStorage which is per-device.
-  const BUILD = "148";
+  const BUILD = "149";
 
   // Smart cache-bust: per-scene timestamp from the admin takes priority
   // (committer sees their upload immediately), then a device-wide global
@@ -823,6 +823,7 @@ window.Scenes = (function () {
     traitor_aftermath:   "aftermath at a chainlink fence at night, a man's body slumped against the fence, lone survivor standing over him exhaling, distant campfires, moonlight, dust suspended, quiet moral weight",
     traitor_aftermath_vega: "aftermath at a chainlink fence at night, a man's body slumped against the fence, a lone survivor and Captain Vega in tactical fatigues standing over him, Vega already turning toward the camp with her rifle lowered and jaw tight as if walking to ring a bell, distant campfires, moonlight, heavy moral weight, cinematic",
     bonfire_invite:      "intimate bonfire at night inside a survivor camp, two figures lingering near the fading flames, sparks rising into a starry sky, pine trees silhouetted, warm orange glow on faces, quiet romantic tension",
+    bonfire_crossroads:  "intimate low bonfire at night inside a survivor camp, a lone survivor standing at the fire's edge between two women — on one side Maya, a red-haired woman in an army jacket with her arms folded and her jaw set, on the other side Ren, a dark-haired young medic in a grey scrub top and worn olive jacket with her hands in her jacket pockets — neither woman looks at the other, both looking at him, warm orange firelight on their faces, pine trees silhouetted behind, sparks rising into a starry sky, hushed loaded moment, cinematic, painterly, in the style of The Last of Us, gritty, deep emotional tension",
     romance_maya:        "intimate emotional moment in a dimly lit canvas tent at night, a man and a red-haired woman in an army jacket facing each other very close, her hand on his chest, candlelight glow, soft focus, suggestive but tasteful, deep emotional tone",
     romance_ren:         "intimate emotional moment in a small medbay at night, a single candle on a metal table, two figures sitting close on a cot, hands touching tenderly, soft warm candlelight, suggestive but tasteful, deep emotional tone, vulnerable",
     morning_after_maya:  "soft pre-dawn light inside a canvas tent, a red-haired woman in fatigues kissing a man on the corner of his mouth, a rifle slung over her shoulder, gentle warm light, tender quiet moment before danger",
