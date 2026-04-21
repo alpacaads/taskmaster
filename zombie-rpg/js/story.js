@@ -919,7 +919,12 @@ window.Story = {
   },
 
   pharmacy_combat: {
-    scene: "pharmacy_fight",
+    scene: function(s) {
+      const p = s.flags && s.flags.missionPartner;
+      if (p === "maya") return "pharmacy_combat_maya";
+      if (p === "ren")  return "pharmacy_combat_ren";
+      return "pharmacy_combat_solo";
+    },
     sceneClass: "blood",
     chapter: "Day 4 — Pharmacy",
     text: function(s) {

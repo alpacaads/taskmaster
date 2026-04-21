@@ -456,20 +456,27 @@ window.Combat = (function () {
 
     if (action === "shoot" && !s.bestRanged) { Game.toast("No firearm"); Sound.play("drySnap"); return; }
     if (action === "shoot" && s.ammo <= 0) { Game.toast("Out of ammo"); Sound.play("drySnap"); return; }
-    if (action === "melee" && s.stam <= 0) { Game.toast("Too exhausted"); Sound.play("back"); return; }
-    if (action === "brace" && s.stam <= 0) { Game.toast("Too exhausted"); Sound.play("back"); return; }
+    // Melee and Brace used to lock out entirely at 0 stam, which meant a
+    // gunless hero with nothing left could only flee — and flee against
+    // a boss/fast enemy auto-damages you. Keep both actions available;
+    // flag them as 'desperate' so the damage / defense resolution can
+    // downgrade the effect instead of refusing the input.
+    const desperateMelee = action === "melee" && s.stam <= 0;
+    const desperateBrace = action === "brace" && s.stam <= 0;
 
     state.bracing = false;
+    state.desperateBrace = false;
 
     if (action === "melee") {
-      s.stam -= 1;
-      const base = rand(1, 3);
+      if (!desperateMelee) s.stam -= 1;
+      // Desperate swing: low dice, crit impossible, no counter payoff.
+      const base = desperateMelee ? rand(0, 2) : rand(1, 3);
       const weaponBonus = s.bestMelee ? s.bestMelee.bonus : 0;
       // Brace-dodge on the previous turn sets up a counter: guaranteed
       // crit and a flat damage bonus, consumed by this swing.
-      const counter = !!state.counterReady;
+      const counter = !!state.counterReady && !desperateMelee;
       state.counterReady = false;
-      const critChance = counter ? 1 : (0.12 + noraCritBump());
+      const critChance = desperateMelee ? 0 : (counter ? 1 : (0.12 + noraCritBump()));
       const crit = Math.random() < critChance;
       const counterBonus = counter ? 3 : 0;
       const dmg = base + weaponBonus + noraBonus() + counterBonus;
@@ -477,10 +484,17 @@ window.Combat = (function () {
       state.enemy.hp -= total;
       const weaponPhr = weaponPhrase(s.bestMelee ? s.bestMelee.name : "Crowbar");
       const prefix = counter ? "Reading the lunge — " : "";
-      log(crit
-        ? `${prefix}You drive ${weaponPhr} through its skull. CRITICAL ${total}.`
-        : `You swing — ${total} damage.`,
-        crit ? "crit" : "hero");
+      let line;
+      if (desperateMelee && total <= 0) {
+        line = `You can barely lift your arm. ${weaponPhr} clips its jaw. No give.`;
+      } else if (desperateMelee) {
+        line = `You swing on fumes. ${weaponPhr} lands — ${total} damage.`;
+      } else if (crit) {
+        line = `${prefix}You drive ${weaponPhr} through its skull. CRITICAL ${total}.`;
+      } else {
+        line = `You swing — ${total} damage.`;
+      }
+      log(line, crit ? "crit" : "hero");
       Sound.play(crit ? "crit" : "melee");
       floatDamage(total, crit ? "crit" : null);
       hitFlash();
@@ -509,9 +523,16 @@ window.Combat = (function () {
     }
     else if (action === "brace") {
       state.counterReady = false;
-      s.stam -= 1;
+      if (!desperateBrace) s.stam -= 1;
       state.bracing = true;
-      log("You plant your feet.", "info");
+      // Desperate brace: stay standing, absorb but no counter-setup.
+      // The damage math in enemyTurn reads state.desperateBrace to
+      // halve the absorb + skip counterReady on a dodge.
+      state.desperateBrace = desperateBrace;
+      log(desperateBrace
+        ? "You're running on empty — you put yourself between it and nothing else."
+        : "You plant your feet.",
+        "info");
       Sound.play("brace");
     }
     else if (action === "flee") {
@@ -737,23 +758,33 @@ window.Combat = (function () {
     const savage = Math.random() < 0.12;
     if (savage) dmg += 2;
 
-    // Brace absorbs more now: -3 normal, -2 on savage.
-    if (state.bracing) dmg = Math.max(0, dmg - (savage ? 2 : 3));
+    // Brace absorbs more now: -3 normal, -2 on savage. Desperate brace
+    // (stam was 0) still absorbs something but only half as much.
+    const desperate = state.bracing && state.desperateBrace;
+    if (state.bracing) {
+      const absorb = desperate
+        ? (savage ? 1 : 2)
+        : (savage ? 2 : 3);
+      dmg = Math.max(0, dmg - absorb);
+    }
 
     // Misses are rare; you get hit. Maya teaches you to slip hits —
     // her dodge bonus is subtracted from the enemy's hit chance, with
     // a floor so the fight still matters. Brace also adds a flat
-    // dodge bump for the turn you plant your feet.
+    // dodge bump for the turn you plant your feet (reduced when
+    // desperate).
     const baseHit = e.human ? 0.82 : 0.92;
-    const braceDodge = state.bracing ? 0.25 : 0;
+    const braceDodge = state.bracing ? (desperate ? 0.12 : 0.25) : 0;
     const hitChance = Math.max(0.3, baseHit - mayaDodge() - braceDodge);
     const hit = Math.random() < hitChance;
     if (!hit) {
       // Brace-dodge sets up a counter: your next melee is a guaranteed
-      // crit with a flat damage bonus.
-      if (state.bracing) state.counterReady = true;
+      // crit with a flat damage bonus. Desperate brace doesn't arm it.
+      if (state.bracing && !desperate) state.counterReady = true;
       const line = state.bracing
-        ? `You plant your feet — the ${e.name} skims off your guard. Counter ready.`
+        ? (desperate
+            ? `You plant your feet on fumes — the ${e.name} skims off your guard.`
+            : `You plant your feet — the ${e.name} skims off your guard. Counter ready.`)
         : mayaPresent() && Math.random() < 0.5
           ? `Maya's shout — you slip the ${e.name}'s lunge.`
           : `${e.name} lunges — you twist away.`;
@@ -761,9 +792,12 @@ window.Combat = (function () {
       Sound.play("dodge");
     } else if (dmg === 0) {
       // Full absorb through brace also opens a counter — you weathered it.
-      if (state.bracing) state.counterReady = true;
+      // Desperate version doesn't arm the counter either.
+      if (state.bracing && !desperate) state.counterReady = true;
       log(state.bracing
-        ? `${e.name} hits — your guard swallows it. Counter ready.`
+        ? (desperate
+            ? `${e.name} hits — your guard swallows it.`
+            : `${e.name} hits — your guard swallows it. Counter ready.`)
         : `${e.name} hits — you absorb it.`,
         "ally");
       Sound.play("brace");

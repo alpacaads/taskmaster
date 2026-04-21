@@ -738,7 +738,7 @@ window.Scenes = (function () {
   // fresh image URLs automatically, so a commit on one device (PC)
   // shows up on another (phone) as soon as Pages rebuilds, without
   // relying on localStorage which is per-device.
-  const BUILD = "135";
+  const BUILD = "136";
 
   // Smart cache-bust: per-scene timestamp from the admin takes priority
   // (committer sees their upload immediately), then a device-wide global
@@ -809,6 +809,9 @@ window.Scenes = (function () {
     hospital_arrive_ren:  "ruined hospital exterior at dusk, faded red medical cross above the entrance, broken windows, wreckage in the parking lot, smoke in the air — Ren (a dark-haired young medic in a grey scrub top under a worn olive jacket, medkit across her chest) stands close at the survivor's side, looking up at the cross with a quiet grief, soft warm side light, cinematic, painterly",
     hospital_arrive_solo: "ruined hospital exterior at dusk, faded red medical cross above the entrance, broken windows, wreckage in the parking lot, smoke in the air — a single lone survivor at the edge of the parking lot, hand near a holstered pistol, shoulders set, no one else in frame, wide cinematic shot, oppressive silence, isolated and vulnerable, in the style of The Last of Us",
     pharmacy_combat:     "dark abandoned hospital pharmacy at night, scattered pill bottles on the floor, two zombies lurching out of the shadows between toppled shelves, single flashlight beam, blood smears, intense horror combat moment",
+    pharmacy_combat_maya: "dark abandoned hospital pharmacy at night, two zombies lurching out of the shadows between toppled shelves, Maya (a red-haired woman in an army jacket) mid-shot, rifle muzzle flash lighting the aisle, the survivor swinging a crowbar on the flank, scattered pill bottles on the floor, blood smears, intense cinematic horror combat",
+    pharmacy_combat_ren:  "dark abandoned hospital pharmacy at night, two zombies lurching out of the shadows between toppled shelves, the survivor putting himself between them and Ren (a dark-haired young medic in a grey scrub top under an olive jacket) who crouches behind a counter with a medkit clutched tight, single flashlight beam, scattered pill bottles, blood smears, intense cinematic horror",
+    pharmacy_combat_solo: "dark abandoned hospital pharmacy at night, a lone survivor bracing alone between toppled shelves as two zombies lurch out of the shadows, single flashlight beam catching dust, scattered pill bottles on the floor, blood smears, isolated intense cinematic horror",
     hospital_lobby:      "dim abandoned hospital lobby at night, two survivors sitting beside each other on a row of cracked plastic waiting chairs, exhausted, faint moonlight through broken windows, vending machine glow, tender quiet moment after violence",
     hospital_lobby_maya: "dim abandoned hospital lobby at night, the survivor and Maya — a red-haired woman in an army jacket — sit side by side on a row of cracked plastic waiting chairs, not touching but close, her rifle across her knees, her eyes on him, dim humming streetlight outside, broken windows, vending machine flickering, tense electric quiet moment after violence, cinematic",
     hospital_lobby_ren:  "dim abandoned hospital lobby at night, Ren — a dark-haired young medic in a grey scrub top and worn olive jacket with a medkit at her feet — sitting on the floor with her back against a flickering vending machine and her knees pulled up to her chest, visibly shaking, the survivor crouched beside her with a hand hovering to take hers, faint warm emergency lamp glow, broken windows, PTSD post-violence stillness, cinematic",
