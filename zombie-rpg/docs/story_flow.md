@@ -1026,19 +1026,22 @@ One section per story node, in definition order. Function-branching fields (text
 
 **Choices:**
 
-1. **"Coffee. Real coffee."** _require:_ `s => s.flags.missionPartner === "maya"`
+1. **"I should've walked the treeline with you."** _require:_ `s => s.flags.missionPartner === "maya" && s.flags.choreChosen && s.flags.choreChosen !== "perimeter"`
+   - _effect:_ `s => { s.bonds.maya += 1; Game.toast("Maya's trust +1"); }`
+   - → `hospital_arrive`
+2. **"Coffee. Real coffee."** _require:_ `s => s.flags.missionPartner === "maya"`
    - _effect:_ `s => { s.bonds.maya += 1; }`
    - → `hospital_arrive`
-2. **"My sister. She made me feel less alone."** _require:_ `s => s.flags.missionPartner === "maya"`
+3. **"My sister. She made me feel less alone."** _require:_ `s => s.flags.missionPartner === "maya"`
    - _effect:_ `s => { s.bonds.maya += 2; Game.toast("Maya's trust +2"); }`
    - → `hospital_arrive`
-3. **"Sing it for me."** _require:_ `s => s.flags.missionPartner === "ren"`
+4. **"Sing it for me."** _require:_ `s => s.flags.missionPartner === "ren"`
    - _effect:_ `s => { s.bonds.ren += 2; Game.toast("Ren's trust +2"); }`
    - → `hospital_arrive`
-4. **Walk in companionable silence** _require:_ `s => s.flags.missionPartner === "ren"`
+5. **Walk in companionable silence** _require:_ `s => s.flags.missionPartner === "ren"`
    - _effect:_ `s => { s.bonds.ren += 1; }`
    - → `hospital_arrive`
-5. **Push on alone** _require:_ `s => s.flags.solo_mission`
+6. **Push on alone** _require:_ `s => s.flags.solo_mission`
    - → `hospital_arrive`
 
 ---

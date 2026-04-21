@@ -260,11 +260,44 @@ window.Game = (function () {
     }
   }
 
+  // Who's actually standing next to the hero right now? missionPartner
+  // overrides the persistent companion during a mission; bringNora
+  // gates Nora on missions; hordeDefense keeps her on the roster at
+  // camp. Mirrors combat.js presence helpers — single source of truth
+  // for the HUD + per-action upkeep.
+  function currentParty() {
+    const s = state;
+    const out = [];
+    const onMission = s.flags && "missionPartner" in s.flags;
+    if (onMission) {
+      if (s.flags.missionPartner === "maya") out.push("Maya");
+      else if (s.flags.missionPartner === "ren") out.push("Ren");
+    } else if (s.companion) {
+      out.push(s.companion);
+    }
+    if (s.companion2 === "Nora") {
+      if (onMission) {
+        if (s.flags.bringNora === true) out.push("Nora");
+      } else if (s.flags && s.flags.hordeDefense) {
+        out.push("Nora");
+      } else {
+        out.push("Nora");
+      }
+    }
+    return out;
+  }
+  function noraWithYou() {
+    const s = state;
+    if (s.companion2 !== "Nora") return false;
+    if (s.flags && "missionPartner" in s.flags) return s.flags.bringNora === true;
+    return true;
+  }
+
   // Per-action passive effects outside of combat. Nora with you = +1 HP
   // regen per action (capped at hpMax). Keeps the kid narratively
   // useful even though she can't fight.
   function applyUpkeep() {
-    if (state.companion2 === "Nora" && state.hp < state.hpMax) {
+    if (noraWithYou() && state.hp < state.hpMax) {
       state.hp = Math.min(state.hpMax, state.hp + 1);
     }
   }
@@ -294,8 +327,9 @@ window.Game = (function () {
 
   function updateHud() {
     applyPartyBuffs();
-    document.getElementById("hud-name").textContent = state.companion
-      ? `${state.name} + ${state.companion}${state.companion2 ? " + " + state.companion2 : ""}`
+    const party = currentParty();
+    document.getElementById("hud-name").textContent = party.length
+      ? `${state.name} + ${party.join(" + ")}`
       : state.name;
     document.getElementById("stat-hp").textContent = Math.max(0, state.hp);
     document.getElementById("stat-hpmax").textContent = state.hpMax;

@@ -682,7 +682,16 @@ window.Story = {
     text: function(s) {
       let base;
       if (s.flags.missionPartner === "maya") {
-        base = "Maya walks point. Three steps ahead, eyes everywhere. The pines thin into a service road.\n\n\"You ever miss anything from before?\" she asks, not turning around.";
+        const skippedHerChore = s.flags.choreChosen && s.flags.choreChosen !== "perimeter";
+        base = "Maya walks point. Three steps ahead, eyes everywhere. The pines thin into a service road.";
+        if (skippedHerChore) {
+          // She picked you for the mission anyway — but she noticed you
+          // didn't pick her this morning. She's not letting it slide.
+          base += "\n\n\"Ren's good with her hands,\" she says after a while, not turning around. \"I'm not pretending I'm not a little pissed you noticed that first.\"";
+          base += "\n\nA long beat. Gravel under your boots.\n\n\"You ever miss anything from before?\"";
+        } else {
+          base += "\n\n\"You ever miss anything from before?\" she asks, not turning around.";
+        }
       } else if (s.flags.missionPartner === "ren") {
         base = "Ren keeps pace beside you. She hums, low — a song you almost recognise.\n\n\"My grandmother used to sing it,\" she says when she catches you listening. \"It's the only thing of hers I have left.\"";
       } else {
@@ -694,6 +703,11 @@ window.Story = {
       return base;
     },
     choices: [
+      { label: "\"I should've walked the treeline with you.\"",
+        require: s => s.flags.missionPartner === "maya"
+          && s.flags.choreChosen && s.flags.choreChosen !== "perimeter",
+        effect: s => { s.bonds.maya += 1; Game.toast("Maya's trust +1"); },
+        next: "hospital_arrive" },
       { label: "\"Coffee. Real coffee.\"",
         require: s => s.flags.missionPartner === "maya",
         effect: s => { s.bonds.maya += 1; },
