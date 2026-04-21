@@ -336,7 +336,12 @@ window.Story = {
     art: "🧍👧🌲",
     sceneClass: "forest",
     chapter: "Day 2 — The Pines",
-    text: "The older bandit laughs, then stops. Something in your face shuts him up.\n\nHe nods at Nora. \"Go, kid. Run.\"\n\nShe looks at you. You nod.",
+    text: function(s) {
+      if (s.companion === "Maya") {
+        return "Maya's hand is on her knife. You put yours on her shoulder — hold. Not yet.\n\nThe older bandit laughs, then stops. Something in your face shuts him up.\n\nHe nods at Nora. \"Go, kid. Run.\"\n\nShe looks at you. You nod. Maya steps in beside you, not behind you. She's not running either.";
+      }
+      return "The older bandit laughs, then stops. Something in your face shuts him up.\n\nHe nods at Nora. \"Go, kid. Run.\"\n\nShe looks at you. You nod.";
+    },
     choices: [
       { label: "Fight for your life", tag: "COMBAT", tagClass: "danger",
         combat: { enemy: "bandit", onWin: "greenbelt_gate_hero", onLose: "death" } },
@@ -415,6 +420,9 @@ window.Story = {
       let opener = "Inside: tents, solar lamps, the smell of stew. A radio crackles weather reports.\n\n";
       if (withMaya) {
         opener += "Maya drops onto the bench beside you, rifle across her knees, already scanning the camp like she's mapping exits.\n\n";
+      } else if (s.flags.solo) {
+        // Read the 'I work better alone' flag — acknowledge the cost.
+        opener += "The woman from the stairwell isn't here. You don't know if she found another way in. You didn't wait to ask.\n\n";
       }
       if (withNora) {
         opener += "Nora stays close to your leg, eyes enormous. Someone's kid offers her a wooden horse; she doesn't take it, but she doesn't shrink away either.\n\n";

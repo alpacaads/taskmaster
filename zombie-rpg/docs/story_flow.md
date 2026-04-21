@@ -476,11 +476,27 @@ One section per story node, in definition order. Function-branching fields (text
 **Chapter:** Day 2 — The Pines  
 **Scene art:** (no explicit scene — uses node id)  
 
+<details><summary>Variant: default / mission partner = maya / mission partner = ren / solo mission / saved Nora / bring Nora on mission / rested in car / told Vega / chore: medbay / chore: perimeter / chore: kitchen / exposed traitor / killed traitor / romance Ren</summary>
+
 > The older bandit laughs, then stops. Something in your face shuts him up.
 > 
 > He nods at Nora. "Go, kid. Run."
 > 
 > She looks at you. You nod.
+
+</details>
+
+<details><summary>Variant: with Maya companion / romance Maya</summary>
+
+> Maya's hand is on her knife. You put yours on her shoulder — hold. Not yet.
+> 
+> The older bandit laughs, then stops. Something in your face shuts him up.
+> 
+> He nods at Nora. "Go, kid. Run."
+> 
+> She looks at you. You nod. Maya steps in beside you, not behind you. She's not running either.
+
+</details>
 
 **Choices:**
 
