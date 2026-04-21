@@ -751,7 +751,51 @@ window.Story = {
             onLose: "post_horde_lose",
           };
         } },
-      { label: "Get the survivors out the back.", next: "post_horde_flee" },
+      { label: "Get the survivors out the back.", next: "flee_rearguard" },
+    ]
+  },
+
+  // Who buys the column the minutes it needs? One real choice — the
+  // flee route used to be a shrug; now it's a cost. Sets vegaStayedBehind
+  // / vegaSaved / mayaSacrificed, which post_horde_flee and the final
+  // ending branch on.
+  flee_rearguard: {
+    scene: "flee_rearguard",
+    sceneClass: "blood",
+    chapter: "Day 5 — The Back Gate",
+    speaker: "Captain Vega",
+    text: function(s) {
+      let intro = "The back gate is a bottleneck. Twenty survivors, one path, and the horde already beginning to wrap the wall. Whoever goes last buys the minutes the rest need.\n\n";
+      intro += "Vega racks her rifle. \"I'm the one with the most rounds and the least family. I stay. I slow them.\"\n\n";
+      // Maya will offer if she's your partner AND you're committed —
+      // she's not throwing her life at a stranger.
+      const mayaOffer = (s.companion === "Maya" || s.flags.maya) && s.romance === "maya" && s.flags.lovedMaya;
+      if (mayaOffer) {
+        intro += "Maya steps up beside her. She doesn't look at you — she can't. \"I can shoot. I can hold a gate. Let me do it, Ellis.\"\n\n";
+      }
+      intro += "The first of them are at the inner fence.";
+      return intro;
+    },
+    choices: [
+      { label: "\"No. We all go. Together.\"",
+        effect: s => {
+          s.flags.vegaSaved = true;
+          if (s.bonds) s.bonds.vega = (s.bonds.vega || 0) + 1;
+          Game.toast("Vega's trust +1");
+        },
+        next: "post_horde_flee" },
+      { label: "\"Go, Vega. We'll see you on the road.\"",
+        effect: s => {
+          s.flags.vegaStayedBehind = true;
+        },
+        next: "post_horde_flee" },
+      { label: "\"Maya. Come back to me.\"",
+        require: s => (s.companion === "Maya" || s.flags.maya) && s.romance === "maya" && s.flags.lovedMaya,
+        effect: s => {
+          s.flags.mayaSacrificed = true;
+          s.flags.vegaSaved = true;
+        },
+        next: "post_horde_flee" },
     ]
   },
 
@@ -824,22 +868,38 @@ window.Story = {
     sceneClass: "forest",
     chapter: "Dawn — The Long Road",
     text: function(s) {
+      // Rearguard beats come first — they colour everything after.
+      let opener = "";
+      if (s.flags.mayaSacrificed) {
+        opener = "Maya stayed. You didn't argue — you couldn't. The last thing you saw was her profile in the muzzle flash, calm, picking targets. The gate held long enough. Long enough is what she gave you.\n\n";
+      } else if (s.flags.vegaStayedBehind) {
+        opener = "Vega stayed. Somewhere behind you — four minutes back, then five, then gone — her rifle was still working. Then it wasn't. The column kept walking. She'd have wanted that.\n\n";
+      } else if (s.flags.vegaSaved) {
+        opener = "Nobody stayed. Vega walks the column's flank with her rifle low and her jaw tight. Every so often she glances back, checking no one's lagging. Nobody is.\n\n";
+      }
+      if (s.flags.mayaSacrificed) {
+        // Romance-specific close-outs take priority; but Maya-sacrifice
+        // overrides the lover-walking line since she isn't walking.
+        return opener + "You walk point. The pines swallow the light of the burning camp. Twenty people follow you because somebody has to lead. You keep your eyes forward. If you look back, you won't keep going.";
+      }
       if (s.romance === "maya" && s.flags.lovedMaya) {
-        return "Twenty survivors follow your light through the pines. Maya walks beside you, her hand finding yours in the dark. Neither of you lets go.";
+        return opener + "Twenty survivors follow your light through the pines. Maya walks beside you, her hand finding yours in the dark. Neither of you lets go.";
       }
       if (s.romance === "ren" && s.flags.lovedRen) {
-        return "Ren walks at the back, helping the slow ones. When you look over your shoulder, she looks up at you and smiles — small and certain.";
+        return opener + "Ren walks at the back, helping the slow ones. When you look over your shoulder, she looks up at you and smiles — small and certain.";
       }
       if (s.companion2 === "Nora") {
-        return "Nora's hand is sticky in yours. She doesn't ask where you're going. None of them do. They follow your light.";
+        return opener + "Nora's hand is sticky in yours. She doesn't ask where you're going. None of them do. They follow your light.";
       }
       if (s.flags.solo) {
-        return "You walk point. Nobody walks beside you. The others are back there in the dark, hands in each other's pockets; you picked this gap a long time ago, in a stairwell, in a pine forest, at a gate. You keep walking.";
+        return opener + "You walk point. Nobody walks beside you. The others are back there in the dark, hands in each other's pockets; you picked this gap a long time ago, in a stairwell, in a pine forest, at a gate. You keep walking.";
       }
-      return "The camp burns behind you. You don't know where you're going. You know you'll keep going.";
+      return opener + "The camp burns behind you. You don't know where you're going. You know you'll keep going.";
     },
     choices: [
       { label: "— THE END —", next: function(s) {
+        if (s.flags.mayaSacrificed) return "ending_final_maya_fell";
+        if (s.flags.vegaStayedBehind && !s.romance) return "ending_final_vega_fell";
         return s.romance ? "ending_final_lovers_road" : "ending_final_escape";
       } },
     ]
@@ -1343,6 +1403,8 @@ window.Story = {
   ending_final_lovers:      { scene: function(s) { return s.romance === "ren" ? "ending_final_lovers_ren" : s.romance === "maya" ? "ending_final_lovers_maya" : "ending_final_lovers"; }, sceneClass: "forest", chapter: "Ending D — Lovers, Saved", text: "You held the wall. You found someone worth holding the wall for.\n\nThanks for playing Dead Light.", choices: [{ label: "Back to title", next: "__title__" }] },
   ending_final_loverlost:   { scene: function(s) { return s.romance === "ren" ? "ending_final_loverlost_ren" : s.romance === "maya" ? "ending_final_loverlost_maya" : "ending_final_loverlost"; }, sceneClass: "blood",  chapter: "Ending E — Lover Lost", text: "You loved them. You lost them. You loved them anyway.\n\nThanks for playing Dead Light.",       choices: [{ label: "Back to title", next: "__title__" }] },
   ending_final_lovers_road: { scene: function(s) { return s.romance === "ren" ? "ending_final_lovers_road_ren" : s.romance === "maya" ? "ending_final_lovers_road_maya" : "ending_final_lovers_road"; }, sceneClass: "forest", chapter: "Ending F — Lovers, Walking", text: "Twenty people. One light. One hand in yours.\n\nThanks for playing Dead Light.", choices: [{ label: "Back to title", next: "__title__" }] },
+  ending_final_vega_fell:   { scene: "ending_final_vega_fell",  sceneClass: "blood", chapter: "Ending G — Captain Held", text: "She held the gate. She held it long enough.\n\nThanks for playing Dead Light.", choices: [{ label: "Back to title", next: "__title__" }] },
+  ending_final_maya_fell:   { scene: "ending_final_maya_fell",  sceneClass: "blood", chapter: "Ending H — She Stayed", text: "She stayed so you could walk. You keep walking.\n\nThanks for playing Dead Light.", choices: [{ label: "Back to title", next: "__title__" }] },
 
   death: {
     art: "💀",

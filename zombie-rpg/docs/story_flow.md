@@ -41,6 +41,7 @@ One section per story node, in definition order. Function-branching fields (text
 - [`chore_done`](#chore_done) — Day 4 — Briefing
 - [`nora_asks`](#nora_asks) — Day 4 — Camp gate
 - [`horde_warning`](#horde_warning) — Day 5 — Sunrise
+- [`flee_rearguard`](#flee_rearguard) — Day 5 — The Back Gate
 - [`post_horde_win`](#post_horde_win) — Sunrise — After
 - [`post_horde_lose`](#post_horde_lose) — Sunset — A Memorial
 - [`post_horde_flee`](#post_horde_flee) — Dawn — The Long Road
@@ -64,6 +65,8 @@ One section per story node, in definition order. Function-branching fields (text
 - [`ending_final_lovers`](#ending_final_lovers) — Ending D — Lovers, Saved
 - [`ending_final_loverlost`](#ending_final_loverlost) — Ending E — Lover Lost
 - [`ending_final_lovers_road`](#ending_final_lovers_road) — Ending F — Lovers, Walking
+- [`ending_final_vega_fell`](#ending_final_vega_fell) — Ending G — Captain Held
+- [`ending_final_maya_fell`](#ending_final_maya_fell) — Ending H — She Stayed
 - [`death`](#death) — You Died
 
 ---
@@ -1013,6 +1016,47 @@ One section per story node, in definition order. Function-branching fields (text
    - ⚔ combat _(default, with Maya companion, mission partner = maya, mission partner = ren, solo mission, saved Nora, bring Nora on mission, rested in car, told Vega, chore: medbay, chore: perimeter, chore: kitchen, killed traitor, romance Maya, romance Ren)_: enemy `horde` · risky · hp=46 · atk=[5,8] → win `post_horde_win` / lose `post_horde_lose`
    - ⚔ combat _(exposed traitor)_: enemy `horde` · hp=38 · atk=[4,7] → win `post_horde_win` / lose `post_horde_lose`
 2. **Get the survivors out the back.**
+   - → `flee_rearguard`
+
+---
+
+## <a id="flee_rearguard"></a>`flee_rearguard`
+**Chapter:** Day 5 — The Back Gate  
+**Scene art:** `flee_rearguard`  
+**Speaker:** Captain Vega  
+
+<details><summary>Variant: default / with Maya companion / mission partner = maya / mission partner = ren / solo mission / saved Nora / bring Nora on mission / rested in car / told Vega / chore: medbay / chore: perimeter / chore: kitchen / exposed traitor / killed traitor / romance Ren</summary>
+
+> The back gate is a bottleneck. Twenty survivors, one path, and the horde already beginning to wrap the wall. Whoever goes last buys the minutes the rest need.
+> 
+> Vega racks her rifle. "I'm the one with the most rounds and the least family. I stay. I slow them."
+> 
+> The first of them are at the inner fence.
+
+</details>
+
+<details><summary>Variant: romance Maya</summary>
+
+> The back gate is a bottleneck. Twenty survivors, one path, and the horde already beginning to wrap the wall. Whoever goes last buys the minutes the rest need.
+> 
+> Vega racks her rifle. "I'm the one with the most rounds and the least family. I stay. I slow them."
+> 
+> Maya steps up beside her. She doesn't look at you — she can't. "I can shoot. I can hold a gate. Let me do it, Ellis."
+> 
+> The first of them are at the inner fence.
+
+</details>
+
+**Choices:**
+
+1. **"No. We all go. Together."**
+   - _effect:_ `s => { s.flags.vegaSaved = true; if (s.bonds) s.bonds.vega = (s.bonds.vega || 0) + 1; Game.toast("Vega's trust +1"); }`
+   - → `post_horde_flee`
+2. **"Go, Vega. We'll see you on the road."**
+   - _effect:_ `s => { s.flags.vegaStayedBehind = true; }`
+   - → `post_horde_flee`
+3. **"Maya. Come back to me."** _require:_ `s => (s.companion === "Maya" || s.flags.maya) && s.romance === "maya" && s.flags.lovedMaya`
+   - _effect:_ `s => { s.flags.mayaSacrificed = true; s.flags.vegaSaved = true; }`
    - → `post_horde_flee`
 
 ---
@@ -1826,6 +1870,36 @@ One section per story node, in definition order. Function-branching fields (text
 **Scene art:** fn → `ending_final_lovers_road` _(default, with Maya companion, mission partner = maya, mission partner = ren, solo mission, saved Nora, bring Nora on mission, rested in car, told Vega, chore: medbay, chore: perimeter, chore: kitchen, exposed traitor, killed traitor)_, `ending_final_lovers_road_maya` _(romance Maya)_, `ending_final_lovers_road_ren` _(romance Ren)_  
 
 > Twenty people. One light. One hand in yours.
+> 
+> Thanks for playing Dead Light.
+
+**Choices:**
+
+1. **Back to title**
+   - → `__title__`
+
+---
+
+## <a id="ending_final_vega_fell"></a>`ending_final_vega_fell`
+**Chapter:** Ending G — Captain Held  
+**Scene art:** `ending_final_vega_fell`  
+
+> She held the gate. She held it long enough.
+> 
+> Thanks for playing Dead Light.
+
+**Choices:**
+
+1. **Back to title**
+   - → `__title__`
+
+---
+
+## <a id="ending_final_maya_fell"></a>`ending_final_maya_fell`
+**Chapter:** Ending H — She Stayed  
+**Scene art:** `ending_final_maya_fell`  
+
+> She stayed so you could walk. You keep walking.
 > 
 > Thanks for playing Dead Light.
 
