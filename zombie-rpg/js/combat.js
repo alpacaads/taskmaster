@@ -318,13 +318,14 @@ window.Combat = (function () {
       risky,
       turn: 0,
       bracing: false,
-      // Romance lets the companion act one step sooner.
-      mayaCd: lovedMaya() ? 0 : 1,
-      renCd:  lovedRen()  ? 1 : 2,
-      // Vega opens the scene with a rifle ready; she can fire turn one.
+      // Allies always start a new fight with their cooldowns at zero —
+      // whatever happened last fight, they're rested and ready to open
+      // turn one here. Romance still shortens Maya's follow-up cooldown
+      // after she fires (handled where state.mayaCd is reset post-action).
+      mayaCd: 0,
+      renCd:  0,
       vegaCd: 0,
-      // Nora spots a threat every few turns — first warning around turn 3.
-      noraCd: 3,
+      noraCd: 0,
       noraWarn: false,
       startMs: Date.now(),
     };
