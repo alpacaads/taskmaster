@@ -14,6 +14,18 @@ function payGoodwillOnce(s) {
   }
 }
 
+// Vega slings you her personal ranger rifle if you earned her trust
+// (bonds.vega >= 3). Fires from both Day-5 horde_warning choices — hold
+// or flee, the gift is the gift — but only once per playthrough.
+function equipVegaRifleOnce(s) {
+  if ((s.bonds && s.bonds.vega >= 3) && !s.flags.vegaRifleGiven) {
+    Game.giveWeapon({ name: "Vega's Ranger Rifle", bonus: 3, slot: "ranged" });
+    s.ammo = (s.ammo || 0) + 8;
+    s.flags.vegaRifleGiven = true;
+    Game.toast("🔫 Vega's Ranger Rifle · +8 rounds");
+  }
+}
+
 window.Story = {
 
   intro: {
@@ -422,7 +434,11 @@ window.Story = {
     choices: [
       { label: "Show your arms. No bites.", next: "greenbelt_in" },
       { label: "Offer supplies as a gift", require: s => s.ammo >= 2,
-        effect: s => { s.ammo -= 2; s.flags.goodwill = true; Game.toast("-2 🔫"); },
+        effect: s => {
+          s.ammo -= 2; s.flags.goodwill = true;
+          s.bonds.vega = (s.bonds.vega || 0) + 1;
+          Game.toast("-2 🔫  · Vega's trust +1");
+        },
         next: "greenbelt_in" },
     ]
   },
@@ -593,7 +609,14 @@ window.Story = {
     },
     choices: [
       { label: "Wash up and report in",
-        effect: s => { Game.giveRandomItem(); Game.giveRandomItem(); },
+        effect: s => {
+          Game.giveRandomItem(); Game.giveRandomItem();
+          // Cooking is Vega's domain — she clocks who pulls their weight
+          // without being asked. Builds the trust that ends up with
+          // her slinging you her ranger rifle at the horde.
+          s.bonds.vega = (s.bonds.vega || 0) + 1;
+          Game.toast("Vega's trust +1");
+        },
         next: "chore_done" },
     ]
   },
@@ -701,6 +724,10 @@ window.Story = {
       rally.push("Vega's already on the wall");
       if (s.flags.savedNora) rally.push("Nora ducks into the medbay sandbags");
       intro += rally.join(", ") + ".\n\n";
+      // Earned enough trust with Vega that she arms you personally.
+      if ((s.bonds.vega || 0) >= 3 && !s.flags.vegaRifleGiven) {
+        intro += "Vega meets you at the armory door before you reach the wall. She shoves her own ranger rifle into your hands, already slinging a spare. \"You earned a good gun. Don't make me regret it.\"\n\n";
+      }
       // Ren notices the Maya romance on her way past. One quiet beat
       // so the love triangle doesn't just hang silent.
       if (s.romance === "maya" && s.flags.lovedMaya) {
@@ -713,6 +740,7 @@ window.Story = {
         effect: s => {
           // Every saved ally is on the wall for this one.
           s.flags.hordeDefense = true;
+          equipVegaRifleOnce(s);
         },
         combat: function (s) {
           // The party is much larger (Maya + Ren + Vega + Nora's spotting),
@@ -728,7 +756,9 @@ window.Story = {
             onLose: "post_horde_lose",
           };
         } },
-      { label: "Get the survivors out the back.", next: "post_horde_flee" },
+      { label: "Get the survivors out the back.",
+        effect: equipVegaRifleOnce,
+        next: "post_horde_flee" },
     ]
   },
 
@@ -1059,7 +1089,11 @@ window.Story = {
     choices: [
       { label: "Lie in wait", tag: "RISKY", tagClass: "warn", next: "confront_traitor" },
       { label: "Tell Vega and bring the cavalry",
-        effect: s => { s.flags.toldVega = true; },
+        effect: s => {
+          s.flags.toldVega = true;
+          s.bonds.vega = (s.bonds.vega || 0) + 1;
+          Game.toast("Vega's trust +1");
+        },
         next: "confront_traitor" },
     ]
   },
@@ -1143,12 +1177,13 @@ window.Story = {
           Game.giveRandomItem();
           if (s.bonds) {
             s.bonds.ren = (s.bonds.ren || 0) + 1;
+            s.bonds.vega = (s.bonds.vega || 0) + 1;
             // Maya helped put him down. She approves of you owning it.
             if (s.companion === "Maya") s.bonds.maya = (s.bonds.maya || 0) + 1;
           }
           Game.toast(s.companion === "Maya"
-            ? "+2 🔫  · Ren's trust +1 · Maya's trust +1"
-            : "+2 🔫  · Ren's trust +1");
+            ? "+2 🔫  · Ren's trust +1 · Vega's trust +1 · Maya's trust +1"
+            : "+2 🔫  · Ren's trust +1 · Vega's trust +1");
         },
         next: "bonfire_invite" },
       { label: "Help Vega rouse the camp. Reinforce the fence tonight.",
@@ -1159,11 +1194,12 @@ window.Story = {
           Game.giveRandomItem();
           if (s.bonds) {
             s.bonds.ren = (s.bonds.ren || 0) + 1;
+            s.bonds.vega = (s.bonds.vega || 0) + 1;
             if (s.companion === "Maya") s.bonds.maya = (s.bonds.maya || 0) + 1;
           }
           Game.toast(s.companion === "Maya"
-            ? "+2 🔫  · Ren's trust +1 · Maya's trust +1"
-            : "+2 🔫  · Ren's trust +1");
+            ? "+2 🔫  · Ren's trust +1 · Vega's trust +1 · Maya's trust +1"
+            : "+2 🔫  · Ren's trust +1 · Vega's trust +1");
         },
         next: "bonfire_invite" },
     ]

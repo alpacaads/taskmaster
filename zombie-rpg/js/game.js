@@ -12,7 +12,7 @@ window.Game = (function () {
     companion2: null,
     node: "intro",
     flags: {},
-    bonds: { maya: 0, ren: 0 },
+    bonds: { maya: 0, ren: 0, vega: 0 },
     romance: null,
     // Equipped weapons — starter kit is a pocket knife only. Your first
     // firearm is looted from Mrs. Cho's apartment; every drop after

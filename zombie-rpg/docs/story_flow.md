@@ -576,7 +576,7 @@ One section per story node, in definition order. Function-branching fields (text
 1. **Show your arms. No bites.**
    - → `greenbelt_in`
 2. **Offer supplies as a gift** _require:_ `s => s.ammo >= 2`
-   - _effect:_ `s => { s.ammo -= 2; s.flags.goodwill = true; Game.toast("-2 🔫"); }`
+   - _effect:_ `s => { s.ammo -= 2; s.flags.goodwill = true; s.bonds.vega = (s.bonds.vega || 0) + 1; Game.toast("-2 🔫 · Vega's trust +1"); }`
    - → `greenbelt_in`
 
 ---
@@ -814,7 +814,7 @@ One section per story node, in definition order. Function-branching fields (text
 **Choices:**
 
 1. **Wash up and report in**
-   - _effect:_ `s => { Game.giveRandomItem(); Game.giveRandomItem(); }`
+   - _effect:_ `s => { Game.giveRandomItem(); Game.giveRandomItem(); // Cooking is Vega's domain — she clocks who pulls their weight // without being asked. Builds the trust that ends up with // her slinging you her ranger rifle at the horde. s.bonds.vega = (s.bonds.vega || 0) + 1; Game.toast("Vega's trust +1"); }`
    - → `chore_done`
 
 ---
@@ -1008,10 +1008,11 @@ One section per story node, in definition order. Function-branching fields (text
 **Choices:**
 
 1. **Hold the wall.** `COMBAT`
-   - _effect:_ `s => { // Every saved ally is on the wall for this one. s.flags.hordeDefense = true; }`
+   - _effect:_ `s => { // Every saved ally is on the wall for this one. s.flags.hordeDefense = true; equipVegaRifleOnce(s); }`
    - ⚔ combat _(default, with Maya companion, mission partner = maya, mission partner = ren, solo mission, saved Nora, bring Nora on mission, rested in car, told Vega, chore: medbay, chore: perimeter, chore: kitchen, killed traitor, romance Maya, romance Ren)_: enemy `horde` · risky · hp=46 · atk=[5,8] → win `post_horde_win` / lose `post_horde_lose`
    - ⚔ combat _(exposed traitor)_: enemy `horde` · hp=38 · atk=[4,7] → win `post_horde_win` / lose `post_horde_lose`
 2. **Get the survivors out the back.**
+   - _effect:_ `function equipVegaRifleOnce(s) { if ((s.bonds && s.bonds.vega >= 3) && !s.flags.vegaRifleGiven) { Game.giveWeapon({ name: "Vega's Ranger Rifle", bonus: 3, slot: "ranged" }); s.ammo = (s.ammo || 0) + 8; s.flags.vegaRifleGiven = true; Game.toast("🔫 Vega's Ranger Rifle · +8 rounds"); } }`
    - → `post_horde_flee`
 
 ---
@@ -1412,7 +1413,7 @@ One section per story node, in definition order. Function-branching fields (text
 1. **Lie in wait** `RISKY`
    - → `confront_traitor`
 2. **Tell Vega and bring the cavalry**
-   - _effect:_ `s => { s.flags.toldVega = true; }`
+   - _effect:_ `s => { s.flags.toldVega = true; s.bonds.vega = (s.bonds.vega || 0) + 1; Game.toast("Vega's trust +1"); }`
    - → `confront_traitor`
 
 ---
@@ -1502,10 +1503,10 @@ One section per story node, in definition order. Function-branching fields (text
    - _effect:_ `s => { s.flags.killedTraitor = true; // Maya is ex-military — burying this instead of reporting // reads as a command failure to her. Costs her real trust. if (s.flags.maya && s.bonds) { s.bonds.maya = Math.max(0, (s.bonds.maya || 0) - 2); Game.toast("The camp will not know · Maya's trust -2"); } else { Game.toast("The camp will not know."); } }`
    - → `bonfire_invite`
 2. **Tell Vega. They deserve the truth.** _require:_ `s => !s.flags.toldVega`
-   - _effect:_ `s => { s.flags.exposedTraitor = true; // Vega opens the armory; camp reinforces the fence overnight. s.ammo += 2; Game.giveRandomItem(); if (s.bonds) { s.bonds.ren = (s.bonds.ren || 0) + 1; // Maya helped put him down. She approves of you owning it. if (s.companion === "Maya") s.bonds.maya = (s.bonds.maya || 0) + 1; } Game.toast(s.companion === "Maya" ? "+2 🔫 · Ren's trust +1 · Maya's trust +1" : "+2 🔫 · Ren's trust +1"); }`
+   - _effect:_ `s => { s.flags.exposedTraitor = true; // Vega opens the armory; camp reinforces the fence overnight. s.ammo += 2; Game.giveRandomItem(); if (s.bonds) { s.bonds.ren = (s.bonds.ren || 0) + 1; s.bonds.vega = (s.bonds.vega || 0) + 1; // Maya helped put him down. She approves of you owning it. if (s.companion === "Maya") s.bonds.maya = (s.bonds.maya || 0) + 1; } Game.toast(s.companion === "Maya" ? "+2 🔫 · Ren's trust +1 · Vega's trust +1 · Maya's trust +1" : "+2 🔫 · Ren's trust +1 · Vega's trust +1"); }`
    - → `bonfire_invite`
 3. **Help Vega rouse the camp. Reinforce the fence tonight.** _require:_ `s => s.flags.toldVega`
-   - _effect:_ `s => { s.flags.exposedTraitor = true; s.ammo += 2; Game.giveRandomItem(); if (s.bonds) { s.bonds.ren = (s.bonds.ren || 0) + 1; if (s.companion === "Maya") s.bonds.maya = (s.bonds.maya || 0) + 1; } Game.toast(s.companion === "Maya" ? "+2 🔫 · Ren's trust +1 · Maya's trust +1" : "+2 🔫 · Ren's trust +1"); }`
+   - _effect:_ `s => { s.flags.exposedTraitor = true; s.ammo += 2; Game.giveRandomItem(); if (s.bonds) { s.bonds.ren = (s.bonds.ren || 0) + 1; s.bonds.vega = (s.bonds.vega || 0) + 1; if (s.companion === "Maya") s.bonds.maya = (s.bonds.maya || 0) + 1; } Game.toast(s.companion === "Maya" ? "+2 🔫 · Ren's trust +1 · Vega's trust +1 · Maya's trust +1" : "+2 🔫 · Ren's trust +1 · Vega's trust +1"); }`
    - → `bonfire_invite`
 
 ---
