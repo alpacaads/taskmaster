@@ -415,10 +415,10 @@ window.Story = {
     choices: [
       { label: "Tell them about the boy in the subway fire",
         effect: s => { s.bonds.ren += 2; Game.toast("Ren's trust +2"); },
-        next: "briefing_approach_medbay" },
+        next: "chore_done" },
       { label: "Change the subject. Some doors stay shut.",
         effect: s => { s.bonds.ren += 1; },
-        next: "briefing_approach_medbay" },
+        next: "chore_done" },
     ]
   },
 
@@ -431,10 +431,10 @@ window.Story = {
     choices: [
       { label: "\"Tell me about him.\"",
         effect: s => { s.bonds.maya += 2; Game.toast("Maya's trust +2"); },
-        next: "briefing_approach_perimeter" },
+        next: "chore_done" },
       { label: "Stand watch in silence. Some things don't need words.",
         effect: s => { s.bonds.maya += 1; },
-        next: "briefing_approach_perimeter" },
+        next: "chore_done" },
     ]
   },
 
@@ -446,50 +446,36 @@ window.Story = {
     choices: [
       { label: "Wash up and report in",
         effect: s => { Game.giveRandomItem(); Game.giveRandomItem(); },
-        next: "briefing_approach_kitchen" },
-    ]
-  },
-
-  briefing_approach_medbay: {
-    sceneClass: "indoor",
-    chapter: "Day 4 — Briefing",
-    text: function(s) {
-      if (!s.flags.maya) return "You push the command-tent flap open. Vega is already at the map. The lamp hisses. Nothing to read behind it.";
-      return "You push the command-tent flap open. Maya is in the far corner breaking down a rifle, the parts laid out with deliberate care. She doesn't look up when you step in.\n\nThe treeline could've used a second pair of eyes today.";
-    },
-    choices: [
-      { label: "Sit down at the table.", next: "chore_done" },
-    ]
-  },
-
-  briefing_approach_perimeter: {
-    sceneClass: "indoor",
-    chapter: "Day 4 — Briefing",
-    speaker: "Ren",
-    text: "You push the command-tent flap open. Ren is already inside, clipboard balanced on her knee, the hurricane lamp making a halo of her hair.\n\n\"Med inventory's thinner than it should be,\" she murmurs without looking up. It isn't a complaint. It lands like one anyway.",
-    choices: [
-      { label: "Sit down at the table.", next: "chore_done" },
-    ]
-  },
-
-  briefing_approach_kitchen: {
-    sceneClass: "indoor",
-    chapter: "Day 4 — Briefing",
-    text: function(s) {
-      if (!s.flags.maya) return "You push the command-tent flap open, mug of something still warm in your hand. Ren slides a chair out for you without meeting your eye. Vega is already at the map.";
-      return "You push the command-tent flap open, mug of something still warm in your hand. Ren slides a chair out for you without meeting your eye. Maya's across the table, back half-turned.\n\nThe map is the only thing the three of you are willing to look at.";
-    },
-    choices: [
-      { label: "Sit down at the table.", next: "chore_done" },
+        next: "chore_done" },
     ]
   },
 
   chore_done: {
-    scene: "briefing_tent",
+    scene: function(s) {
+      const c = s.flags && s.flags.choreChosen;
+      if (c === "medbay")    return "chore_done_medbay";
+      if (c === "perimeter") return "chore_done_perimeter";
+      if (c === "kitchen")   return "chore_done_kitchen";
+      return "chore_done";
+    },
     sceneClass: "indoor",
     chapter: "Day 4 — Briefing",
     speaker: "Captain Vega",
-    text: "\"Old Mercy Hospital. Three klicks south. Pharmacy on the second floor — antibiotics, painkillers, anything that hasn't walked off.\"\n\nShe spreads a hand-drawn map. \"In and out. Don't be a hero. Pick someone to take.\"",
+    text: function(s) {
+      // Short tag scene acknowledging who noticed you weren't around
+      // this morning, based on the chore you picked.
+      let tag = "";
+      if (s.flags.choreChosen === "medbay" && s.flags.maya) {
+        tag = "Maya is in the corner of the tent, breaking down a rifle. She doesn't look up when you walk in. The treeline could've used a second pair of eyes today.\n\n";
+      } else if (s.flags.choreChosen === "perimeter") {
+        tag = "Ren's at the briefing too, clipboard balanced on her knee. \"Med inventory's thinner than it should be,\" she murmurs as you sit down. It's not a complaint. It lands like one anyway.\n\n";
+      } else if (s.flags.choreChosen === "kitchen") {
+        tag = "Ren sets a mug of something hot in front of you without meeting your eye. " +
+          (s.flags.maya ? "Maya's across the table, back half-turned. The map is the only thing the three of you are willing to look at.\n\n"
+                        : "Vega's the only other person here, and she's all business.\n\n");
+      }
+      return tag + "\"Old Mercy Hospital. Three klicks south. Pharmacy on the second floor — antibiotics, painkillers, anything that hasn't walked off.\"\n\nShe spreads a hand-drawn map. \"In and out. Don't be a hero. Pick someone to take.\"";
+    },
     choices: [
       { label: "Take Maya — she knows how to fight",
         require: s => s.flags.maya,
