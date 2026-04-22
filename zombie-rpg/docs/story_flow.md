@@ -1,6 +1,6 @@
 # Dead Light — Story Flow
 
-Auto-generated from `zombie-rpg/js/story.js`. 2026-04-21
+Auto-generated from `zombie-rpg/js/story.js`. 2026-04-22
 
 One section per story node, in definition order. Function-branching fields (text, scene, speaker, next, combat) are enumerated across a set of common state permutations so every reachable variant is legible.
 
@@ -612,7 +612,7 @@ One section per story node, in definition order. Function-branching fields (text
 **Choices:**
 
 1. **"She needs food. Please."**
-   - _effect:_ `s => { // goodwill flag stays narrowly tied to the 'offer supplies // at the gate' path — Vega's spare mag at the briefing // literally references the rounds you handed over. // The sacrifice path gets its reward via Maya's +2 bond // and the carrying-Nora-through-the-gate narrative. if (s.companion === "Maya") { s.bonds.maya += 2; Game.toast("Maya's trust +2"); } }`
+   - _effect:_ `s => { // goodwill flag stays narrowly tied to the 'offer supplies // at the gate' path — Vega's spare mag at the briefing // literally references the rounds you handed over. // The sacrifice path gets its reward via Maya's +2 bond, // a Vega +1 (she meets you at the gate carrying a bloodied // kid you nearly died for — that's where she clocks you), // and the carrying-Nora-through-the-gate narrative. if (s.companion === "Maya") { s.bonds.maya += 2; } s.bonds.vega = (s.bonds.vega || 0) + 1; Game.toast(s.companion === "Maya" ? "Maya's trust +2 · Vega's trust +1" : "Vega's trust +1"); }`
    - → `greenbelt_in`
 
 ---
