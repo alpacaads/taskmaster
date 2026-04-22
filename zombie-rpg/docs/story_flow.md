@@ -75,6 +75,7 @@ One section per story node, in definition order. Function-branching fields (text
 - [`ending_final_vega_fell`](#ending_final_vega_fell) — Ending G — Captain Held
 - [`ending_final_maya_fell`](#ending_final_maya_fell) — Ending H — She Stayed
 - [`ending_final_ren_fell`](#ending_final_ren_fell) — Ending I — The Medbay Door
+- [`ending_final_vega_caught_up`](#ending_final_vega_caught_up) — Ending J — Smoke on the Road
 - [`death`](#death) — You Died
 
 ---
@@ -2136,6 +2137,21 @@ One section per story node, in definition order. Function-branching fields (text
 **Scene art:** `ending_final_ren_fell`  
 
 > She stayed with the ones who couldn't walk. You carry her song with you.
+> 
+> Thanks for playing Dead Light.
+
+**Choices:**
+
+1. **Back to title**
+   - → `__title__`
+
+---
+
+## <a id="ending_final_vega_caught_up"></a>`ending_final_vega_caught_up`
+**Chapter:** Ending J — Smoke on the Road  
+**Scene art:** `ending_final_vega_caught_up`  
+
+> You gave her a pull-pin. She gave it back as a sunrise.
 > 
 > Thanks for playing Dead Light.
 

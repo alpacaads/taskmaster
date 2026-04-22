@@ -738,7 +738,7 @@ window.Scenes = (function () {
   // fresh image URLs automatically, so a commit on one device (PC)
   // shows up on another (phone) as soon as Pages rebuilds, without
   // relying on localStorage which is per-device.
-  const BUILD = "172";
+  const BUILD = "173";
 
   // Smart cache-bust: per-scene timestamp from the admin takes priority
   // (committer sees their upload immediately), then a device-wide global
@@ -855,6 +855,7 @@ window.Scenes = (function () {
     ending_final_vega_fell:   "blood-red dawn over a battered fortified camp gate overrun behind a wall of zombies, Captain Vega's abandoned rifle propped against a burned signpost in the foreground, a folded captain's patch resting on the stock, distant column of survivors walking away through pine mist, somber and reverent, cinematic wide shot, painterly, in the style of The Last of Us",
     ending_final_maya_fell:   "blood-red dawn at a burned back gate of a fortified camp, a faded olive army jacket hanging on the chainlink fence in the foreground, a single empty rifle shell standing upright in the mud below it, distant column of survivors walking away through pine mist, deep grief, quiet reverence, cinematic wide shot, painterly, in the style of The Last of Us",
     ending_final_ren_fell:    "blood-red dawn at a small fortified camp medbay, a closed wooden medbay door in the foreground with a small silver stethoscope hung on the handle, a sprig of wildflowers tied with a gauze strip tucked beside it, distant column of survivors walking away through pine mist behind, deep grief, quiet reverence, cinematic wide shot, painterly, in the style of The Last of Us",
+    ending_final_vega_caught_up: "misty dawn creek crossing on a pine forest trail, a small column of survivors paused knee-deep in the water, Captain Vega in scorched tactical fatigues with a graze above one eye and grenade smoke still on her jacket walking out of the mist behind them to fall in at the leader's shoulder, a bandolier of empty shells clinking, first pale gold sun through the trees, hopeful earned reunion, cinematic wide shot, painterly, in the style of The Last of Us",
     death:               "dark blood-red haze, faint silhouette of a fallen body on the ground, faint cross marker in the distance, deep grief, oppressive horror finality, painterly cinematic",
 
     nora_asks:           "a small ten-year-old girl with messy copper-brown hair and a ragged little backpack, standing at the open wooden gate of a fortified survivor camp at sunrise, looking up pleadingly at a lone survivor tightening rucksack straps, pine forest and watchtower in the background, warm dawn light, tender quiet moment before a dangerous mission, cinematic",

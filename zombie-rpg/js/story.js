@@ -1187,8 +1187,7 @@ window.Story = {
       { label: "— THE END —", next: function(s) {
         if (s.flags.mayaSacrificed) return "ending_final_maya_fell";
         if (s.flags.renSacrificed)  return "ending_final_ren_fell";
-        // Vega only 'falls' if you didn't give her the grenade at the
-        // gate. If you did, she caught up and the road ending plays.
+        if (s.flags.vegaStayedBehind && s.flags.gaveGrenade && !s.romance) return "ending_final_vega_caught_up";
         if (s.flags.vegaStayedBehind && !s.flags.gaveGrenade && !s.romance) return "ending_final_vega_fell";
         return s.romance ? "ending_final_lovers_road" : "ending_final_escape";
       } },
@@ -1733,6 +1732,7 @@ window.Story = {
   ending_final_vega_fell:   { scene: "ending_final_vega_fell",  sceneClass: "blood", chapter: "Ending G — Captain Held", text: function(s) { return s.companion2 === "Nora" ? "She held the gate. Long enough for a kid to see another dawn.\n\nThanks for playing Dead Light." : "She held the gate. She held it long enough.\n\nThanks for playing Dead Light."; }, choices: [{ label: "Back to title", next: "__title__" }] },
   ending_final_maya_fell:   { scene: "ending_final_maya_fell",  sceneClass: "blood", chapter: "Ending H — She Stayed", text: "She stayed so you could walk. You keep walking.\n\nThanks for playing Dead Light.", choices: [{ label: "Back to title", next: "__title__" }] },
   ending_final_ren_fell:    { scene: "ending_final_ren_fell",   sceneClass: "blood", chapter: "Ending I — The Medbay Door", text: "She stayed with the ones who couldn't walk. You carry her song with you.\n\nThanks for playing Dead Light.", choices: [{ label: "Back to title", next: "__title__" }] },
+  ending_final_vega_caught_up: { scene: "ending_final_vega_caught_up", sceneClass: "forest", chapter: "Ending J — Smoke on the Road", text: "You gave her a pull-pin. She gave it back as a sunrise.\n\nThanks for playing Dead Light.", choices: [{ label: "Back to title", next: "__title__" }] },
 
   death: {
     art: "💀",
