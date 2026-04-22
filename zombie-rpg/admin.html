@@ -898,12 +898,12 @@
   </footer>
 
   <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
-  <script src="js/overrides.js?v=153"></script>
-  <script src="js/scenes.js?v=153"></script>
+  <script src="js/overrides.js?v=154"></script>
+  <script src="js/scenes.js?v=154"></script>
   <!-- story.js is read-only here: we pull chapters / text / choices
        to annotate each scene card so the flow is legible without
        having to play through. -->
-  <script src="js/story.js?v=153"></script>
+  <script src="js/story.js?v=154"></script>
   <script>
     (async function () {
       const PROMPTS = (window.Scenes && window.Scenes.PROMPTS) || {};
@@ -1363,26 +1363,62 @@
 
       // ---------- Flow reader ----------
       // Single-scene preview that mirrors the game's layout: scene
-      // image + chapter/speaker + text + choices. Choice buttons
-      // navigate to the destination without executing effects or
-      // starting combat, so you can walk the whole story as a reader.
+      // image + chapter/speaker + text + choices. Walking a choice now
+      // clones the current state, applies the choice's effect, and
+      // evaluates the destination against that updated state — so the
+      // preview reads exactly as the game would at each step.
       const flowEl = document.getElementById("flow");
       const READER_START = "intro";
-      const readerState = {
-        current: READER_START,
-        history: [READER_START],
-        index: 0,
-      };
 
-      function readerDummyState() {
+      // Mock Game / Combat so story effects (Game.toast, Game.giveWeapon,
+      // Game.giveRandomItem, Combat.start...) don't throw in admin.
+      // Effects still mutate state — that's what we care about. Weapon
+      // slots get written onto the active walking state so equipment
+      // flags (vegaRifleGiven etc.) stay visible.
+      if (!window.Game) {
+        window.Game = {
+          toast: () => {},
+          giveWeapon: (w) => {
+            if (!w || !window.__readerActiveState) return;
+            const slot = w.slot || "melee";
+            if (slot === "ranged") window.__readerActiveState.bestRanged = w;
+            else window.__readerActiveState.bestMelee = w;
+          },
+          giveRandomItem: () => {},
+          save: () => {},
+        };
+      }
+      if (!window.Combat) window.Combat = { start: () => {} };
+
+      function readerFreshState() {
         return {
+          name: "Ellis",
           hp: 10, hpMax: 10,
           stam: 5, stamMax: 5,
           ammo: 3,
           companion: null, companion2: null,
-          flags: {}, bonds: { maya: 0, ren: 0 }, romance: null,
+          node: "intro",
+          flags: {},
+          bonds: { maya: 0, ren: 0, vega: 0 },
+          romance: null,
+          bestMelee: { name: "Pocket Knife", bonus: 0, slot: "melee" },
+          bestRanged: null,
           inventory: [],
         };
+      }
+      const readerState = {
+        current: READER_START,
+        history: [READER_START],
+        stateStack: [readerFreshState()],
+        index: 0,
+      };
+      function readerActiveState() {
+        return readerState.stateStack[readerState.index];
+      }
+      // Back-compat alias: helpers like enumerateTextVariants use a
+      // baseline (permissive) state to probe function text/scene/next.
+      function readerDummyState() {
+        return readerFreshState();
       }
       function callFn(fn, ...args) {
         try { return fn(...args); } catch (e) { return null; }
@@ -1455,11 +1491,35 @@
         return "live";
       }
 
-      function readerGoTo(id) {
+      function cloneState(s) {
+        // Plain JSON clone is good enough — state is serializable.
+        try { return JSON.parse(JSON.stringify(s)); } catch (e) { return readerFreshState(); }
+      }
+      // Walk a choice: clone state, apply its effect on the clone, push
+      // to history. `effect` is optional — crumb jumps / dropdown jumps
+      // skip it entirely and reset history from the target.
+      function readerGoTo(id, effect) {
         if (!id) return;
+        const base = cloneState(readerActiveState());
+        if (typeof effect === "function") {
+          window.__readerActiveState = base;
+          try { effect(base); } catch (e) { /* effects may reference Game.x — mocked */ }
+          window.__readerActiveState = null;
+        }
         readerState.history = readerState.history.slice(0, readerState.index + 1);
+        readerState.stateStack = readerState.stateStack.slice(0, readerState.index + 1);
         readerState.history.push(id);
+        readerState.stateStack.push(base);
         readerState.index = readerState.history.length - 1;
+        readerState.current = id;
+        renderFlow();
+      }
+      // Hard jump — reset state, start a new walk from `id`.
+      function readerJumpReset(id) {
+        if (!id) return;
+        readerState.history = [id];
+        readerState.stateStack = [readerFreshState()];
+        readerState.index = 0;
         readerState.current = id;
         renderFlow();
       }
@@ -1474,6 +1534,40 @@
         readerState.index += 1;
         readerState.current = readerState.history[readerState.index];
         renderFlow();
+      }
+
+      function readerPartyLabel(s) {
+        const out = ["Ellis"];
+        const onMission = s.flags && "missionPartner" in s.flags;
+        if (onMission) {
+          if (s.flags.missionPartner === "maya") out.push("Maya");
+          else if (s.flags.missionPartner === "ren") out.push("Ren");
+        } else if (s.companion) {
+          out.push(s.companion);
+        }
+        if (s.companion2 === "Nora") {
+          if (onMission) {
+            if (s.flags.bringNora === true) out.push("Nora");
+          } else {
+            out.push("Nora");
+          }
+        }
+        return out.join(" + ");
+      }
+      function readerStateLine(s) {
+        const b = s.bonds || {};
+        const f = s.flags || {};
+        const parts = [`M:${b.maya||0}/5`, `R:${b.ren||0}/4`, `V:${b.vega||0}/3`];
+        const tags = [];
+        if (f.committedMaya) tags.push("cMaya");
+        if (f.committedRen)  tags.push("cRen");
+        if (f.savedNora)     tags.push("+Nora");
+        if (f.toldVega)      tags.push("toldVega");
+        if (f.exposedTraitor) tags.push("exposedTraitor");
+        if (f.killedTraitor)  tags.push("killedTraitor");
+        if (s.romance)       tags.push("romance:" + s.romance);
+        if (tags.length) parts.push("· " + tags.join(" "));
+        return parts.join("  ");
       }
 
       function renderFlow() {
@@ -1504,40 +1598,40 @@
           `<option value="${escapeText(opt)}"${opt === id ? " selected" : ""}>${escapeText(opt)}</option>`
         ).join("");
 
+        const live = readerActiveState();
         const sceneId = (typeof node.scene === "function")
-          ? (callFn(node.scene, readerDummyState()) || id)
+          ? (callFn(node.scene, live) || id)
           : (node.scene || id);
         const imgSourceId = PROMPTS[sceneId] ? sceneId : (PROMPTS[id] ? id : null);
         const badge = imgSourceId ? readerBadgeFor(imgSourceId) : "no card";
 
         const chapter = typeof node.chapter === "string" ? node.chapter : "";
         const speaker = (typeof node.speaker === "function")
-          ? callFn(node.speaker, readerDummyState())
+          ? callFn(node.speaker, live)
           : (node.speaker || "");
         const isTextFn = typeof node.text === "function";
         const textStr = isTextFn
-          ? callFn(node.text, readerDummyState())
+          ? callFn(node.text, live)
           : (node.text || "");
 
         const choices = Array.isArray(node.choices) ? node.choices : [];
-        const fakeState = readerDummyState();
         const choiceHtml = choices.map((c, idx) => {
           if (!c) return "";
-          const gated = typeof c.require === "function" && !callFn(c.require, fakeState);
+          const gated = typeof c.require === "function" && !callFn(c.require, live);
           const tag = c.tag
             ? ` <span class="tag ${c.tagClass || ""}">${escapeText(c.tag)}</span>`
             : "";
           const label = `${escapeText(c.label || "")}${tag}`;
           if (c.combat) {
-            const cfg = typeof c.combat === "function" ? callFn(c.combat, fakeState) : c.combat;
+            const cfg = typeof c.combat === "function" ? callFn(c.combat, live) : c.combat;
             const enemy = cfg && cfg.enemy ? cfg.enemy : "?";
             const winId = cfg && cfg.onWin ? cfg.onWin : "";
             const loseId = cfg && cfg.onLose ? cfg.onLose : "";
             const meta = [];
             meta.push(`<span class="muted">⚔ ${escapeText(enemy)}</span>`);
-            if (winId)  meta.push(`<a class="pill" data-jump="${escapeText(winId)}">win → ${escapeText(winId)}</a>`);
-            if (loseId && loseId !== winId) meta.push(`<a class="pill lose" data-jump="${escapeText(loseId)}">lose → ${escapeText(loseId)}</a>`);
-            return `<button class="choice-btn"` +
+            if (winId)  meta.push(`<a class="pill" data-jump="${escapeText(winId)}" data-choice-idx="${idx}">win → ${escapeText(winId)}</a>`);
+            if (loseId && loseId !== winId) meta.push(`<a class="pill lose" data-jump="${escapeText(loseId)}" data-choice-idx="${idx}">lose → ${escapeText(loseId)}</a>`);
+            return `<button class="choice-btn" data-choice-idx="${idx}"` +
               (winId ? ` data-jump="${escapeText(winId)}"` : " disabled") +
               (gated ? " disabled" : "") +
               `>${label}` +
@@ -1546,22 +1640,28 @@
           }
           let jumpTarget = "";
           if (typeof c.next === "function") {
-            const targets = enumerateNextTargets(c);
+            // Probe with live state first — that's the target the game
+            // would actually pick. Fall back to enumeration if the live
+            // state probe returns nothing useful.
+            const liveTarget = callFn(c.next, live);
+            const targets = typeof liveTarget === "string" && liveTarget
+              ? [liveTarget]
+              : enumerateNextTargets(c);
             jumpTarget = targets[0] || "";
             const metaHtml = targets.length > 1
               ? `<div class="next-fn-targets">` +
                 targets.map(t =>
-                  `<a class="pill" data-jump="${escapeText(t)}">→ ${escapeText(t)}</a>`
+                  `<a class="pill" data-jump="${escapeText(t)}" data-choice-idx="${idx}">→ ${escapeText(t)}</a>`
                 ).join("") +
                 `</div>`
               : "";
-            return `<button class="choice-btn"` +
+            return `<button class="choice-btn" data-choice-idx="${idx}"` +
               (jumpTarget ? ` data-jump="${escapeText(jumpTarget)}"` : " disabled") +
               (gated ? " disabled" : "") +
               `>${label}${metaHtml}</button>`;
           }
           if (c.next) jumpTarget = c.next;
-          return `<button class="choice-btn"` +
+          return `<button class="choice-btn" data-choice-idx="${idx}"` +
             (jumpTarget ? ` data-jump="${escapeText(jumpTarget)}"` : " disabled") +
             (gated ? " disabled" : "") +
             `>${label}</button>`;
@@ -1613,11 +1713,12 @@
           `<div class="reader">` +
             // Fake HUD — matches game layout so the preview reads like play.
             `<div class="hud">` +
-              `<div class="hud-name">Ellis</div>` +
+              `<div class="hud-name">${escapeText(readerPartyLabel(live))}</div>` +
+              `<div style="font-size:10px;color:#7a9e7e;letter-spacing:.05em;text-align:center;padding:1px 0 2px;opacity:.85;">${escapeText(readerStateLine(live))}</div>` +
               `<div class="hud-stats">` +
-                `<span class="stat" title="Health">❤️ <span class="stat-bar-track"><span class="stat-bar-fill"></span></span><b>10</b>/10</span>` +
-                `<span class="stat" title="Stamina">⚡ <span class="stat-bar-track"><span class="stat-bar-fill stam"></span></span><b>5</b>/5</span>` +
-                `<span class="stat" title="Ammo">🔫 <b>3</b></span>` +
+                `<span class="stat" title="Health">❤️ <span class="stat-bar-track"><span class="stat-bar-fill"></span></span><b>${live.hp}</b>/${live.hpMax}</span>` +
+                `<span class="stat" title="Stamina">⚡ <span class="stat-bar-track"><span class="stat-bar-fill stam"></span></span><b>${live.stam}</b>/${live.stamMax}</span>` +
+                `<span class="stat" title="Ammo">🔫 <b>${live.ammo}</b></span>` +
               `</div>` +
             `</div>` +
             (imgSourceId
@@ -1641,18 +1742,18 @@
             devPanel +
           `</div>`;
 
-        wireReaderControls(imgSourceId);
+        wireReaderControls(imgSourceId, choices);
       }
 
-      function wireReaderControls(imgSourceId) {
+      function wireReaderControls(imgSourceId, choices) {
         const backBtn = flowEl.querySelector(".reader-back");
         const fwdBtn = flowEl.querySelector(".reader-fwd");
         const startBtn = flowEl.querySelector(".reader-start");
         if (backBtn) backBtn.addEventListener("click", readerBack);
         if (fwdBtn) fwdBtn.addEventListener("click", readerForward);
-        if (startBtn) startBtn.addEventListener("click", () => readerGoTo(READER_START));
+        if (startBtn) startBtn.addEventListener("click", () => readerJumpReset(READER_START));
         const jumpSel = flowEl.querySelector(".reader-jump");
-        if (jumpSel) jumpSel.addEventListener("change", (e) => readerGoTo(e.target.value));
+        if (jumpSel) jumpSel.addEventListener("change", (e) => readerJumpReset(e.target.value));
         flowEl.querySelectorAll(".crumbs a[data-hop]").forEach(a => {
           a.addEventListener("click", () => {
             const idx = parseInt(a.dataset.hop, 10);
@@ -1671,15 +1772,25 @@
             devToggle.classList.toggle("active", document.body.classList.contains("dev"));
           });
         }
-        // Clicking a choice button navigates; inner combat / next-fn pills
-        // navigate to their specific target and stop bubbling.
+        // Clicking a choice button applies its effect on a cloned
+        // state, then navigates. Inner pills (combat win/lose, function
+        // next alts) navigate to their specific target but still apply
+        // the parent choice's effect so walking-state stays correct.
         flowEl.querySelectorAll(".choice-btn[data-jump]").forEach(btn => {
-          btn.addEventListener("click", () => readerGoTo(btn.dataset.jump));
+          btn.addEventListener("click", () => {
+            const idx = parseInt(btn.dataset.choiceIdx, 10);
+            const choice = !isNaN(idx) ? choices[idx] : null;
+            const effect = choice && typeof choice.effect === "function" ? choice.effect : null;
+            readerGoTo(btn.dataset.jump, effect);
+          });
         });
         flowEl.querySelectorAll(".choice-btn .combat-meta .pill[data-jump], .choice-btn .next-fn-targets .pill[data-jump]").forEach(pill => {
           pill.addEventListener("click", (e) => {
             e.stopPropagation();
-            readerGoTo(pill.dataset.jump);
+            const idx = parseInt(pill.dataset.choiceIdx, 10);
+            const choice = !isNaN(idx) ? choices[idx] : null;
+            const effect = choice && typeof choice.effect === "function" ? choice.effect : null;
+            readerGoTo(pill.dataset.jump, effect);
           });
         });
         if (!imgSourceId) return;
