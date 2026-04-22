@@ -24,7 +24,7 @@ One section per story node, in definition order. Function-branching fields (text
 - [`grocery_exterior`](#grocery_exterior) — Day 1 — Grocery (rear)
 - [`grocery_inside`](#grocery_inside) — Day 1 — Grocery
 - [`grocery_quick_exit`](#grocery_quick_exit) — Day 1 — Grocery
-- [`meet_nora_card`](#meet_nora_card) — Day 1 — Freezer
+- [`meet_nora_card`](#meet_nora_card) — Day 1 — The Road
 - [`freezer`](#freezer) — Day 1 — Freezer
 - [`road_out`](#road_out) — Day 2 — The Road
 - [`road_out_child`](#road_out_child) — Day 2 — The Road
@@ -174,7 +174,7 @@ One section per story node, in definition order. Function-branching fields (text
 **Choices:**
 
 1. **"I'm clean. Who are you?"**
-   - → `meet_maya_card`
+   - → `meet_maya`
 2. **Stay silent. Keep moving.** `RISKY`
    - _effect:_ `s => { s.flags.solo = true; }`
    - → `alone_street`
@@ -187,8 +187,8 @@ One section per story node, in definition order. Function-branching fields (text
 
 **Choices:**
 
-1. **Lower the light. Listen.**
-   - → `meet_maya`
+1. **Fall in step with her.**
+   - → `street_plan`
 
 ---
 
@@ -197,7 +197,7 @@ One section per story node, in definition order. Function-branching fields (text
 **Scene art:** (no explicit scene — uses node id)  
 **Speaker:** Maya  
 
-> "Maya. 2F. I've been watching the street for two days — there's a pack of them at the corner store."
+> A woman, mid-twenties, army jacket, a hunting knife in her belt. "Maya. 2F. I've been watching the street for two days — there's a pack of them at the corner store."
 > 
 > She pulls a crowbar from her pack and hands it to you. "Better than that letter opener."
 
@@ -205,7 +205,7 @@ One section per story node, in definition order. Function-branching fields (text
 
 1. **"Stick together. Two's better than one."**
    - _effect:_ `s => { s.companion = "Maya"; s.flags.maya = true; Game.giveWeapon({ name: "Crowbar", bonus: 1, slot: "melee" }); }`
-   - → `street_plan`
+   - → `meet_maya_card`
 2. **"I work better alone."**
    - _effect:_ `s => { s.flags.solo = true; Game.giveWeapon({ name: "Crowbar", bonus: 1, slot: "melee" }); }`
    - → `alone_street`
@@ -333,7 +333,7 @@ One section per story node, in definition order. Function-branching fields (text
    - → `road_out`
 2. **Open the freezer** `RISKY`
    - _effect:_ `s => { s.ammo += 3; s.hp = Math.min(s.hpMax, s.hp + 1); Game.toast("+3 🔫, +1 ❤️"); }`
-   - ⚔ combat: enemy `freezer_abom` · risky → win `meet_nora_card` / lose `death`
+   - ⚔ combat: enemy `freezer_abom` · risky → win `freezer` / lose `death`
 
 ---
 
@@ -351,13 +351,13 @@ One section per story node, in definition order. Function-branching fields (text
 ---
 
 ## <a id="meet_nora_card"></a>`meet_nora_card`
-**Chapter:** Day 1 — Freezer  
+**Chapter:** Day 1 — The Road  
 **Scene art:** `meet_nora_card`  
 
 **Choices:**
 
-1. **Lower the weapon. Crouch.**
-   - → `freezer`
+1. **Keep walking.**
+   - → `road_out_child`
 
 ---
 
@@ -367,17 +367,27 @@ One section per story node, in definition order. Function-branching fields (text
 
 <details><summary>Variant: default / mission partner = maya / mission partner = ren / solo mission / saved Nora / bring Nora on mission / rested in car / told Vega / chore: medbay / chore: perimeter / chore: kitchen / exposed traitor / killed traitor / romance Ren</summary>
 
-> "Don't. Don't touch me," she says.
+> The thing finally stops moving. You don't want to look at what it used to be.
 > 
-> Her voice is smaller than the knife.
+> Breath fogging in the cold. Blood steaming on the floor.
+> 
+> Behind a wall of tipped shelving, small and perfectly still — a girl, maybe ten, a kitchen knife shaking in her hand.
+> 
+> "Don't. Don't touch me."
 
 </details>
 
 <details><summary>Variant: with Maya companion / romance Maya</summary>
 
-> Maya drops into a low crouch beside you, hands wide. "Hey. Hey, kid. We're not going to hurt you."
+> The thing finally stops moving. Neither of you want to look at what it used to be.
 > 
-> The girl's eyes stay locked on you. "Don't. Don't touch me."
+> Breath fogging in the cold. Blood steaming on the floor.
+> 
+> Behind a wall of tipped shelving, small and perfectly still — a girl, maybe ten, a kitchen knife shaking in her hand.
+> 
+> Maya drops into a low crouch, hands wide. "Hey. Hey, kid. We're not going to hurt you."
+> 
+> The girl's eyes lock on you. "Don't. Don't touch me."
 
 </details>
 
@@ -385,7 +395,7 @@ One section per story node, in definition order. Function-branching fields (text
 
 1. **"It's okay. I'm not going to hurt you."**
    - _effect:_ `s => { s.companion2 = "Nora"; s.flags.savedNora = true; // Maya saw you risk yourself for a kid — tracks for her. if (s.companion === "Maya") { s.bonds.maya += 1; Game.toast("Nora joined you · Maya's trust +1"); } else Game.toast("Nora joined you"); }`
-   - → `road_out_child`
+   - → `meet_nora_card`
 2. **Close the door. It's not your problem.**
    - _effect:_ `s => { s.flags.coward = true; // Maya saw the opposite — and she does not forgive this one. if (s.companion === "Maya") { s.bonds.maya = Math.max(0, (s.bonds.maya || 0) - 2); Game.toast("You leave her behind · Maya's trust -2"); } else Game.toast("You leave her behind"); }`
    - → `road_out`
@@ -526,7 +536,7 @@ One section per story node, in definition order. Function-branching fields (text
 
 1. **Fight for your life** `COMBAT`
    - _effect:_ `s => { s.flags.carriedNora = true; }`
-   - ⚔ combat: enemy `bandit` → win `meet_vega_card` / lose `death`
+   - ⚔ combat: enemy `bandit` → win `greenbelt_gate_hero` / lose `death`
 
 ---
 
@@ -539,7 +549,7 @@ One section per story node, in definition order. Function-branching fields (text
 **Choices:**
 
 1. **Push on to the Greenbelt**
-   - → `meet_vega_card`
+   - → `greenbelt_gate`
 
 ---
 
@@ -567,7 +577,7 @@ One section per story node, in definition order. Function-branching fields (text
 
 1. **Loot and move on**
    - _effect:_ `s => { s.ammo += 4; s.flags.killedBandits = true; Game.giveRandomItem(); Game.toast("+4 🔫"); }`
-   - → `meet_vega_card`
+   - → `greenbelt_gate`
 
 ---
 
@@ -577,8 +587,8 @@ One section per story node, in definition order. Function-branching fields (text
 
 **Choices:**
 
-1. **Keep your hands where she can see them.**
-   - → function targets: `greenbelt_gate`
+1. **Step inside the wire.**
+   - → `greenbelt_in`
 
 ---
 
@@ -608,10 +618,10 @@ One section per story node, in definition order. Function-branching fields (text
 **Choices:**
 
 1. **Show your arms. No bites.**
-   - → `greenbelt_in`
+   - → `meet_vega_card`
 2. **Offer supplies as a gift** _require:_ `s => s.ammo >= 2`
    - _effect:_ `s => { s.ammo -= 2; s.flags.goodwill = true; s.bonds.vega = (s.bonds.vega || 0) + 1; Game.toast("-2 🔫 · Vega's trust +1"); }`
-   - → `greenbelt_in`
+   - → `meet_vega_card`
 
 ---
 
@@ -641,7 +651,7 @@ One section per story node, in definition order. Function-branching fields (text
 
 1. **"She needs food. Please."**
    - _effect:_ `s => { // goodwill flag stays narrowly tied to the 'offer supplies // at the gate' path — Vega's spare mag at the briefing // literally references the rounds you handed over. // The sacrifice path gets its reward via Maya's +2 bond, // a Vega +1 (she meets you at the gate carrying a bloodied // kid you nearly died for — that's where she clocks you), // and the carrying-Nora-through-the-gate narrative. if (s.companion === "Maya") { s.bonds.maya += 2; } s.bonds.vega = (s.bonds.vega || 0) + 1; Game.toast(s.companion === "Maya" ? "Maya's trust +2 · Vega's trust +1" : "Vega's trust +1"); }`
-   - → `greenbelt_in`
+   - → `meet_vega_card`
 
 ---
 
@@ -687,7 +697,7 @@ One section per story node, in definition order. Function-branching fields (text
 
 1. **Let Ren patch you up properly before bed.** `BOND`
    - _effect:_ `function payGoodwillOnce(s) { if (s.flags && s.flags.goodwill && !s.flags.goodwill_paid) { s.ammo += 3; s.flags.goodwill_paid = true; } }`
-   - → `meet_ren_card`
+   - → `ren_medbay_intro`
 2. **Sleep now. Tomorrow is another day.**
    - _effect:_ `s => { s.hp = s.hpMax; s.stam = s.stamMax; payGoodwillOnce(s); Game.toast("❤️ ⚡ restored"); }`
    - → `camp_morning`
@@ -700,8 +710,8 @@ One section per story node, in definition order. Function-branching fields (text
 
 **Choices:**
 
-1. **Sit down.**
-   - → `ren_medbay_intro`
+1. **Step out into the camp.**
+   - → `camp_morning`
 
 ---
 
@@ -740,10 +750,10 @@ One section per story node, in definition order. Function-branching fields (text
 
 1. **"Thank you."**
    - _effect:_ `s => { s.hp = s.hpMax; s.stam = s.stamMax; Game.toast("❤️ ⚡ restored"); }`
-   - → `camp_morning`
+   - → `meet_ren_card`
 2. **Sit with Ren in silence until she finishes.**
    - _effect:_ `s => { s.hp = s.hpMax; s.stam = s.stamMax; s.bonds.ren += 1; Game.toast("❤️ ⚡ restored · Ren's trust +1"); }`
-   - → `camp_morning`
+   - → `meet_ren_card`
 
 ---
 

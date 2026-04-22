@@ -102,7 +102,7 @@ window.Story = {
     chapter: "Day 1 — Stairwell",
     text: "Four floors down. Your flashlight flickers. The dragging sound is louder now — more than one set of feet.\n\nA voice, raspy but alive: \"Hey. Don't scream. You bit?\"",
     choices: [
-      { label: "\"I'm clean. Who are you?\"", next: "meet_maya_card" },
+      { label: "\"I'm clean. Who are you?\"", next: "meet_maya" },
       { label: "Stay silent. Keep moving.", tag: "RISKY", tagClass: "warn",
         // Silent path is a solo path too. Make the flag consistent so
         // later scenes (greenbelt_in, post-horde) can acknowledge it.
@@ -128,7 +128,7 @@ window.Story = {
     },
     text: "",
     choices: [
-      { label: "Lower the light. Listen.", next: "meet_maya" },
+      { label: "Fall in step with her.", next: "street_plan" },
     ]
   },
 
@@ -137,14 +137,14 @@ window.Story = {
     sceneClass: "night",
     chapter: "Day 1 — Stairwell",
     speaker: "Maya",
-    text: "\"Maya. 2F. I've been watching the street for two days — there's a pack of them at the corner store.\"\n\nShe pulls a crowbar from her pack and hands it to you. \"Better than that letter opener.\"",
+    text: "A woman, mid-twenties, army jacket, a hunting knife in her belt. \"Maya. 2F. I've been watching the street for two days — there's a pack of them at the corner store.\"\n\nShe pulls a crowbar from her pack and hands it to you. \"Better than that letter opener.\"",
     choices: [
       { label: "\"Stick together. Two's better than one.\"",
         effect: s => {
           s.companion = "Maya"; s.flags.maya = true;
           Game.giveWeapon({ name: "Crowbar", bonus: 1, slot: "melee" });
         },
-        next: "street_plan" },
+        next: "meet_maya_card" },
       { label: "\"I work better alone.\"",
         effect: s => {
           s.flags.solo = true;
@@ -263,7 +263,7 @@ window.Story = {
         next: "road_out" },
       { label: "Open the freezer", tag: "RISKY", tagClass: "warn",
         effect: s => { s.ammo += 3; s.hp = Math.min(s.hpMax, s.hp + 1); Game.toast("+3 🔫, +1 ❤️"); },
-        combat: { enemy: "freezer_abom", risky: true, onWin: "meet_nora_card", onLose: "death" } },
+        combat: { enemy: "freezer_abom", risky: true, onWin: "freezer", onLose: "death" } },
     ]
   },
 
@@ -282,7 +282,7 @@ window.Story = {
     scene: "meet_nora_card",
     sceneClass: "indoor",
     portraitCard: true,
-    chapter: "Day 1 — Freezer",
+    chapter: "Day 1 — The Road",
     profile: {
       name: "NORA",
       role: "About 10 · Alone",
@@ -295,7 +295,7 @@ window.Story = {
     },
     text: "",
     choices: [
-      { label: "Lower the weapon. Crouch.", next: "freezer" },
+      { label: "Keep walking.", next: "road_out_child" },
     ]
   },
 
@@ -305,9 +305,9 @@ window.Story = {
     chapter: "Day 1 — Freezer",
     text: function(s) {
       if (s.companion === "Maya") {
-        return "Maya drops into a low crouch beside you, hands wide. \"Hey. Hey, kid. We're not going to hurt you.\"\n\nThe girl's eyes stay locked on you. \"Don't. Don't touch me.\"";
+        return "The thing finally stops moving. Neither of you want to look at what it used to be.\n\nBreath fogging in the cold. Blood steaming on the floor.\n\nBehind a wall of tipped shelving, small and perfectly still — a girl, maybe ten, a kitchen knife shaking in her hand.\n\nMaya drops into a low crouch, hands wide. \"Hey. Hey, kid. We're not going to hurt you.\"\n\nThe girl's eyes lock on you. \"Don't. Don't touch me.\"";
       }
-      return "\"Don't. Don't touch me,\" she says.\n\nHer voice is smaller than the knife.";
+      return "The thing finally stops moving. You don't want to look at what it used to be.\n\nBreath fogging in the cold. Blood steaming on the floor.\n\nBehind a wall of tipped shelving, small and perfectly still — a girl, maybe ten, a kitchen knife shaking in her hand.\n\n\"Don't. Don't touch me.\"";
     },
     choices: [
       { label: "\"It's okay. I'm not going to hurt you.\"",
@@ -317,7 +317,7 @@ window.Story = {
           if (s.companion === "Maya") { s.bonds.maya += 1; Game.toast("Nora joined you · Maya's trust +1"); }
           else Game.toast("Nora joined you");
         },
-        next: "road_out_child" },
+        next: "meet_nora_card" },
       { label: "Close the door. It's not your problem.",
         effect: s => {
           s.flags.coward = true;
@@ -428,7 +428,7 @@ window.Story = {
     choices: [
       { label: "Fight for your life", tag: "COMBAT", tagClass: "danger",
         effect: s => { s.flags.carriedNora = true; },
-        combat: { enemy: "bandit", onWin: "meet_vega_card", onLose: "death" } },
+        combat: { enemy: "bandit", onWin: "greenbelt_gate_hero", onLose: "death" } },
     ]
   },
 
@@ -438,7 +438,7 @@ window.Story = {
     chapter: "Day 2 — The Pines",
     text: "They take what they want and disappear into the trees. You're lighter now — but alive.",
     choices: [
-      { label: "Push on to the Greenbelt", next: "meet_vega_card" },
+      { label: "Push on to the Greenbelt", next: "greenbelt_gate" },
     ]
   },
 
@@ -459,7 +459,7 @@ window.Story = {
           Game.giveRandomItem();
           Game.toast("+4 🔫");
         },
-        next: "meet_vega_card" },
+        next: "greenbelt_gate" },
     ]
   },
 
@@ -480,9 +480,7 @@ window.Story = {
     },
     text: "",
     choices: [
-      { label: "Keep your hands where she can see them.", next: function(s) {
-        return s.flags.carriedNora ? "greenbelt_gate_hero" : "greenbelt_gate";
-      } },
+      { label: "Step inside the wire.", next: "greenbelt_in" },
     ]
   },
 
@@ -498,14 +496,14 @@ window.Story = {
       return "A chain-link fence topped with razor wire. A woman in tactical gear studies you through the scope of a rifle.\n\n\"State your business. And show me your arms — both sides.\"";
     },
     choices: [
-      { label: "Show your arms. No bites.", next: "greenbelt_in" },
+      { label: "Show your arms. No bites.", next: "meet_vega_card" },
       { label: "Offer supplies as a gift", require: s => s.ammo >= 2,
         effect: s => {
           s.ammo -= 2; s.flags.goodwill = true;
           s.bonds.vega = (s.bonds.vega || 0) + 1;
           Game.toast("-2 🔫  · Vega's trust +1");
         },
-        next: "greenbelt_in" },
+        next: "meet_vega_card" },
     ]
   },
 
@@ -537,7 +535,7 @@ window.Story = {
             ? "Maya's trust +2 · Vega's trust +1"
             : "Vega's trust +1");
         },
-        next: "greenbelt_in" },
+        next: "meet_vega_card" },
     ]
   },
 
@@ -567,7 +565,7 @@ window.Story = {
     choices: [
       { label: "Let Ren patch you up properly before bed.", tag: "BOND", tagClass: "warn",
         effect: payGoodwillOnce,
-        next: "meet_ren_card" },
+        next: "ren_medbay_intro" },
       { label: "Sleep now. Tomorrow is another day.",
         effect: s => {
           s.hp = s.hpMax; s.stam = s.stamMax;
@@ -595,7 +593,7 @@ window.Story = {
     },
     text: "",
     choices: [
-      { label: "Sit down.", next: "ren_medbay_intro" },
+      { label: "Step out into the camp.", next: "camp_morning" },
     ]
   },
 
@@ -616,14 +614,14 @@ window.Story = {
           s.hp = s.hpMax; s.stam = s.stamMax;
           Game.toast("❤️ ⚡ restored");
         },
-        next: "camp_morning" },
+        next: "meet_ren_card" },
       { label: "Sit with Ren in silence until she finishes.",
         effect: s => {
           s.hp = s.hpMax; s.stam = s.stamMax;
           s.bonds.ren += 1;
           Game.toast("❤️ ⚡ restored · Ren's trust +1");
         },
-        next: "camp_morning" },
+        next: "meet_ren_card" },
     ]
   },
 
