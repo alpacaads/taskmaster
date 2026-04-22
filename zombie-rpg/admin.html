@@ -898,12 +898,12 @@
   </footer>
 
   <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
-  <script src="js/overrides.js?v=154"></script>
-  <script src="js/scenes.js?v=154"></script>
+  <script src="js/overrides.js?v=155"></script>
+  <script src="js/scenes.js?v=155"></script>
   <!-- story.js is read-only here: we pull chapters / text / choices
        to annotate each scene card so the flow is legible without
        having to play through. -->
-  <script src="js/story.js?v=154"></script>
+  <script src="js/story.js?v=155"></script>
   <script>
     (async function () {
       const PROMPTS = (window.Scenes && window.Scenes.PROMPTS) || {};
@@ -1495,17 +1495,44 @@
         // Plain JSON clone is good enough — state is serializable.
         try { return JSON.parse(JSON.stringify(s)); } catch (e) { return readerFreshState(); }
       }
-      // Walk a choice: clone state, apply its effect on the clone, push
-      // to history. `effect` is optional — crumb jumps / dropdown jumps
-      // skip it entirely and reset history from the target.
-      function readerGoTo(id, effect) {
-        if (!id) return;
+      // Walk a choice: clone state, apply its effect on the clone,
+      // THEN resolve the destination against the post-effect state
+      // (that's how the real game does it — effect then c.next(state)).
+      // overrideTarget lets combat pills force onWin/onLose or let a
+      // function-next alt pill force a specific enumerated branch.
+      function readerAdvance(choice, overrideTarget) {
+        if (!choice) return;
         const base = cloneState(readerActiveState());
-        if (typeof effect === "function") {
+        if (typeof choice.effect === "function") {
           window.__readerActiveState = base;
-          try { effect(base); } catch (e) { /* effects may reference Game.x — mocked */ }
+          try { choice.effect(base); } catch (e) { /* effects may reference mocks */ }
           window.__readerActiveState = null;
         }
+        let targetId = overrideTarget || "";
+        if (!targetId) {
+          if (choice.combat) {
+            const cfg = typeof choice.combat === "function" ? callFn(choice.combat, base) : choice.combat;
+            targetId = (cfg && cfg.onWin) || "";
+          } else if (typeof choice.next === "function") {
+            targetId = callFn(choice.next, base) || "";
+          } else if (typeof choice.next === "string") {
+            targetId = choice.next;
+          }
+        }
+        if (!targetId) return;
+        readerState.history = readerState.history.slice(0, readerState.index + 1);
+        readerState.stateStack = readerState.stateStack.slice(0, readerState.index + 1);
+        readerState.history.push(targetId);
+        readerState.stateStack.push(base);
+        readerState.index = readerState.history.length - 1;
+        readerState.current = targetId;
+        renderFlow();
+      }
+      // Legacy entry kept for callers that only know a target id (e.g.
+      // an internal plain goto with no choice context). No effect.
+      function readerGoTo(id) {
+        if (!id) return;
+        const base = cloneState(readerActiveState());
         readerState.history = readerState.history.slice(0, readerState.index + 1);
         readerState.stateStack = readerState.stateStack.slice(0, readerState.index + 1);
         readerState.history.push(id);
@@ -1773,15 +1800,16 @@
           });
         }
         // Clicking a choice button applies its effect on a cloned
-        // state, then navigates. Inner pills (combat win/lose, function
-        // next alts) navigate to their specific target but still apply
-        // the parent choice's effect so walking-state stays correct.
+        // state, then resolves the destination against THAT state —
+        // matches the game's effect→next order. Inner pills (combat
+        // win/lose, function-next alts) force a specific branch via
+        // overrideTarget while still applying the parent effect.
         flowEl.querySelectorAll(".choice-btn[data-jump]").forEach(btn => {
           btn.addEventListener("click", () => {
             const idx = parseInt(btn.dataset.choiceIdx, 10);
             const choice = !isNaN(idx) ? choices[idx] : null;
-            const effect = choice && typeof choice.effect === "function" ? choice.effect : null;
-            readerGoTo(btn.dataset.jump, effect);
+            if (!choice) { readerGoTo(btn.dataset.jump); return; }
+            readerAdvance(choice);
           });
         });
         flowEl.querySelectorAll(".choice-btn .combat-meta .pill[data-jump], .choice-btn .next-fn-targets .pill[data-jump]").forEach(pill => {
@@ -1789,8 +1817,8 @@
             e.stopPropagation();
             const idx = parseInt(pill.dataset.choiceIdx, 10);
             const choice = !isNaN(idx) ? choices[idx] : null;
-            const effect = choice && typeof choice.effect === "function" ? choice.effect : null;
-            readerGoTo(pill.dataset.jump, effect);
+            if (!choice) { readerGoTo(pill.dataset.jump); return; }
+            readerAdvance(choice, pill.dataset.jump);
           });
         });
         if (!imgSourceId) return;
