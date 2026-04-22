@@ -14,6 +14,7 @@ One section per story node, in definition order. Function-branching fields (text
 - [`neighbour_wake`](#neighbour_wake) — Day 1 — Apartment 3A
 - [`cho_loot`](#cho_loot) — Day 1 — Apartment 3A
 - [`stairwell_first`](#stairwell_first) — Day 1 — Stairwell
+- [`meet_maya_card`](#meet_maya_card) — Day 1 — Stairwell
 - [`meet_maya`](#meet_maya) — Day 1 — Stairwell
 - [`alone_street`](#alone_street) — Day 1 — Market Street
 - [`alone_street_sneak`](#alone_street_sneak) — Day 1 — Market Street
@@ -23,6 +24,7 @@ One section per story node, in definition order. Function-branching fields (text
 - [`grocery_exterior`](#grocery_exterior) — Day 1 — Grocery (rear)
 - [`grocery_inside`](#grocery_inside) — Day 1 — Grocery
 - [`grocery_quick_exit`](#grocery_quick_exit) — Day 1 — Grocery
+- [`meet_nora_card`](#meet_nora_card) — Day 1 — Freezer
 - [`freezer`](#freezer) — Day 1 — Freezer
 - [`road_out`](#road_out) — Day 2 — The Road
 - [`road_out_child`](#road_out_child) — Day 2 — The Road
@@ -30,9 +32,11 @@ One section per story node, in definition order. Function-branching fields (text
 - [`sacrifice_intro`](#sacrifice_intro) — Day 2 — The Pines
 - [`after_ambush_mercy`](#after_ambush_mercy) — Day 2 — The Pines
 - [`after_ambush_fight`](#after_ambush_fight) — Day 2 — The Pines
+- [`meet_vega_card`](#meet_vega_card) — Day 3 — Greenbelt
 - [`greenbelt_gate`](#greenbelt_gate) — Day 3 — Greenbelt
 - [`greenbelt_gate_hero`](#greenbelt_gate_hero) — Day 3 — Greenbelt
 - [`greenbelt_in`](#greenbelt_in) — Day 3 — Greenbelt Camp
+- [`meet_ren_card`](#meet_ren_card) — Day 3 — Medbay
 - [`ren_medbay_intro`](#ren_medbay_intro) — Day 3 — Medbay
 - [`camp_morning`](#camp_morning) — Day 4 — Greenbelt
 - [`chore_medbay`](#chore_medbay) — Day 4 — Medbay
@@ -170,10 +174,27 @@ One section per story node, in definition order. Function-branching fields (text
 **Choices:**
 
 1. **"I'm clean. Who are you?"**
-   - → `meet_maya`
+   - → `meet_maya_card`
 2. **Stay silent. Keep moving.** `RISKY`
    - _effect:_ `s => { s.flags.solo = true; }`
    - → `alone_street`
+
+---
+
+## <a id="meet_maya_card"></a>`meet_maya_card`
+**Chapter:** Day 1 — Stairwell  
+**Scene art:** `meet_maya_card`  
+
+> You raise the flashlight.
+> 
+> Messy dark red hair, shoulder-length. A faded olive army jacket over a grey undershirt. There's a scar through one eyebrow she hasn't bothered to hide, and a hunting knife already on her belt.
+> 
+> She holds your beam without flinching. Waiting.
+
+**Choices:**
+
+1. **Lower the light. Listen.**
+   - → `meet_maya`
 
 ---
 
@@ -182,7 +203,7 @@ One section per story node, in definition order. Function-branching fields (text
 **Scene art:** (no explicit scene — uses node id)  
 **Speaker:** Maya  
 
-> A woman, mid-thirties, army jacket, a hunting knife in her belt. "Maya. 2F. I've been watching the street for two days — there's a pack of them at the corner store."
+> "Maya. 2F. I've been watching the street for two days — there's a pack of them at the corner store."
 > 
 > She pulls a crowbar from her pack and hands it to you. "Better than that letter opener."
 
@@ -318,7 +339,7 @@ One section per story node, in definition order. Function-branching fields (text
    - → `road_out`
 2. **Open the freezer** `RISKY`
    - _effect:_ `s => { s.ammo += 3; s.hp = Math.min(s.hpMax, s.hp + 1); Game.toast("+3 🔫, +1 ❤️"); }`
-   - ⚔ combat: enemy `freezer_abom` · risky → win `freezer` / lose `death`
+   - ⚔ combat: enemy `freezer_abom` · risky → win `meet_nora_card` / lose `death`
 
 ---
 
@@ -335,33 +356,42 @@ One section per story node, in definition order. Function-branching fields (text
 
 ---
 
+## <a id="meet_nora_card"></a>`meet_nora_card`
+**Chapter:** Day 1 — Freezer  
+**Scene art:** `meet_nora_card`  
+
+> You sweep the freezer.
+> 
+> Something small shifts behind a wall of tipped shelving.
+> 
+> Copper-brown hair in a loose ponytail. An oversized grey hoodie. A kitchen knife far too big for the hand that's holding it. She can't be older than ten. Her breath fogs in the cold.
+> 
+> Her eyes are huge, and they don't leave you.
+
+**Choices:**
+
+1. **Lower the weapon. Crouch.**
+   - → `freezer`
+
+---
+
 ## <a id="freezer"></a>`freezer`
 **Chapter:** Day 1 — Freezer  
 **Scene art:** (no explicit scene — uses node id)  
 
 <details><summary>Variant: default / mission partner = maya / mission partner = ren / solo mission / saved Nora / bring Nora on mission / rested in car / told Vega / chore: medbay / chore: perimeter / chore: kitchen / exposed traitor / killed traitor / romance Ren</summary>
 
-> The thing finally stops moving. You don't want to look at what it used to be.
+> "Don't. Don't touch me," she says.
 > 
-> Breath fogging in the cold. Blood steaming on the floor.
-> 
-> Behind a wall of tipped shelving, small and perfectly still — a girl, maybe ten, a kitchen knife shaking in her hand.
-> 
-> "Don't. Don't touch me."
+> Her voice is smaller than the knife.
 
 </details>
 
 <details><summary>Variant: with Maya companion / romance Maya</summary>
 
-> The thing finally stops moving. Neither of you want to look at what it used to be.
+> Maya drops into a low crouch beside you, hands wide. "Hey. Hey, kid. We're not going to hurt you."
 > 
-> Breath fogging in the cold. Blood steaming on the floor.
-> 
-> Behind a wall of tipped shelving, small and perfectly still — a girl, maybe ten, a kitchen knife shaking in her hand.
-> 
-> Maya drops into a low crouch, hands wide. "Hey. Hey, kid. We're not going to hurt you."
-> 
-> The girl's eyes lock on you. "Don't. Don't touch me."
+> The girl's eyes stay locked on you. "Don't. Don't touch me."
 
 </details>
 
@@ -509,7 +539,8 @@ One section per story node, in definition order. Function-branching fields (text
 **Choices:**
 
 1. **Fight for your life** `COMBAT`
-   - ⚔ combat: enemy `bandit` → win `greenbelt_gate_hero` / lose `death`
+   - _effect:_ `s => { s.flags.carriedNora = true; }`
+   - ⚔ combat: enemy `bandit` → win `meet_vega_card` / lose `death`
 
 ---
 
@@ -522,7 +553,7 @@ One section per story node, in definition order. Function-branching fields (text
 **Choices:**
 
 1. **Push on to the Greenbelt**
-   - → `greenbelt_gate`
+   - → `meet_vega_card`
 
 ---
 
@@ -550,7 +581,28 @@ One section per story node, in definition order. Function-branching fields (text
 
 1. **Loot and move on**
    - _effect:_ `s => { s.ammo += 4; s.flags.killedBandits = true; Game.giveRandomItem(); Game.toast("+4 🔫"); }`
-   - → `greenbelt_gate`
+   - → `meet_vega_card`
+
+---
+
+## <a id="meet_vega_card"></a>`meet_vega_card`
+**Chapter:** Day 3 — Greenbelt  
+**Scene art:** `meet_vega_card`  
+
+<details><summary>Variant: default / with Maya companion / mission partner = maya / mission partner = ren / solo mission / saved Nora / bring Nora on mission / rested in car / told Vega / chore: medbay / chore: perimeter / chore: kitchen / exposed traitor / killed traitor / romance Maya / romance Ren</summary>
+
+> You come up the last rise and a scope finds you before you find it.
+> 
+> Behind the rifle: tactical fatigues, captain's patch on the shoulder. Black hair pulled back tight. Sharp grey eyes. A thin scar along her cheekbone. She holds the aim rock steady, like she could do it all day.
+> 
+> "Stop right there," she calls. "State your business."
+
+</details>
+
+**Choices:**
+
+1. **Keep your hands where she can see them.**
+   - → function targets: `greenbelt_gate`
 
 ---
 
@@ -659,10 +711,29 @@ One section per story node, in definition order. Function-branching fields (text
 
 1. **Let Ren patch you up properly before bed.** `BOND`
    - _effect:_ `function payGoodwillOnce(s) { if (s.flags && s.flags.goodwill && !s.flags.goodwill_paid) { s.ammo += 3; s.flags.goodwill_paid = true; } }`
-   - → `ren_medbay_intro`
+   - → `meet_ren_card`
 2. **Sleep now. Tomorrow is another day.**
    - _effect:_ `s => { s.hp = s.hpMax; s.stam = s.stamMax; payGoodwillOnce(s); Game.toast("❤️ ⚡ restored"); }`
    - → `camp_morning`
+
+---
+
+## <a id="meet_ren_card"></a>`meet_ren_card`
+**Chapter:** Day 3 — Medbay  
+**Scene art:** `meet_ren_card`  
+
+> A hand gestures you toward a converted shipping container at the back of the camp. Inside smells of antiseptic and old coffee.
+> 
+> She's younger than you expected — mid-twenties, maybe. Messy dark brown hair tucked behind one ear. Warm brown eyes. Freckles. A small silver stethoscope around her neck. Grey medic's scrubs under a worn olive jacket.
+> 
+> She pulls up a metal stool and pats the cot beside her. Her smile is tired and very kind.
+> 
+> "Sit. Let me see."
+
+**Choices:**
+
+1. **Sit down.**
+   - → `ren_medbay_intro`
 
 ---
 

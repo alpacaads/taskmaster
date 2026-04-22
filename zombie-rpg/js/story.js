@@ -102,7 +102,7 @@ window.Story = {
     chapter: "Day 1 — Stairwell",
     text: "Four floors down. Your flashlight flickers. The dragging sound is louder now — more than one set of feet.\n\nA voice, raspy but alive: \"Hey. Don't scream. You bit?\"",
     choices: [
-      { label: "\"I'm clean. Who are you?\"", next: "meet_maya" },
+      { label: "\"I'm clean. Who are you?\"", next: "meet_maya_card" },
       { label: "Stay silent. Keep moving.", tag: "RISKY", tagClass: "warn",
         // Silent path is a solo path too. Make the flag consistent so
         // later scenes (greenbelt_in, post-horde) can acknowledge it.
@@ -111,12 +111,22 @@ window.Story = {
     ]
   },
 
+  meet_maya_card: {
+    scene: "meet_maya_card",
+    sceneClass: "night",
+    chapter: "Day 1 — Stairwell",
+    text: "You raise the flashlight.\n\nMessy dark red hair, shoulder-length. A faded olive army jacket over a grey undershirt. There's a scar through one eyebrow she hasn't bothered to hide, and a hunting knife already on her belt.\n\nShe holds your beam without flinching. Waiting.",
+    choices: [
+      { label: "Lower the light. Listen.", next: "meet_maya" },
+    ]
+  },
+
   meet_maya: {
     art: "🧍🧍‍♀️",
     sceneClass: "night",
     chapter: "Day 1 — Stairwell",
     speaker: "Maya",
-    text: "A woman, mid-thirties, army jacket, a hunting knife in her belt. \"Maya. 2F. I've been watching the street for two days — there's a pack of them at the corner store.\"\n\nShe pulls a crowbar from her pack and hands it to you. \"Better than that letter opener.\"",
+    text: "\"Maya. 2F. I've been watching the street for two days — there's a pack of them at the corner store.\"\n\nShe pulls a crowbar from her pack and hands it to you. \"Better than that letter opener.\"",
     choices: [
       { label: "\"Stick together. Two's better than one.\"",
         effect: s => {
@@ -242,7 +252,7 @@ window.Story = {
         next: "road_out" },
       { label: "Open the freezer", tag: "RISKY", tagClass: "warn",
         effect: s => { s.ammo += 3; s.hp = Math.min(s.hpMax, s.hp + 1); Game.toast("+3 🔫, +1 ❤️"); },
-        combat: { enemy: "freezer_abom", risky: true, onWin: "freezer", onLose: "death" } },
+        combat: { enemy: "freezer_abom", risky: true, onWin: "meet_nora_card", onLose: "death" } },
     ]
   },
 
@@ -257,15 +267,25 @@ window.Story = {
     ]
   },
 
+  meet_nora_card: {
+    scene: "meet_nora_card",
+    sceneClass: "indoor",
+    chapter: "Day 1 — Freezer",
+    text: "You sweep the freezer.\n\nSomething small shifts behind a wall of tipped shelving.\n\nCopper-brown hair in a loose ponytail. An oversized grey hoodie. A kitchen knife far too big for the hand that's holding it. She can't be older than ten. Her breath fogs in the cold.\n\nHer eyes are huge, and they don't leave you.",
+    choices: [
+      { label: "Lower the weapon. Crouch.", next: "freezer" },
+    ]
+  },
+
   freezer: {
     art: "🚪❄️👧",
     sceneClass: "indoor",
     chapter: "Day 1 — Freezer",
     text: function(s) {
       if (s.companion === "Maya") {
-        return "The thing finally stops moving. Neither of you want to look at what it used to be.\n\nBreath fogging in the cold. Blood steaming on the floor.\n\nBehind a wall of tipped shelving, small and perfectly still — a girl, maybe ten, a kitchen knife shaking in her hand.\n\nMaya drops into a low crouch, hands wide. \"Hey. Hey, kid. We're not going to hurt you.\"\n\nThe girl's eyes lock on you. \"Don't. Don't touch me.\"";
+        return "Maya drops into a low crouch beside you, hands wide. \"Hey. Hey, kid. We're not going to hurt you.\"\n\nThe girl's eyes stay locked on you. \"Don't. Don't touch me.\"";
       }
-      return "The thing finally stops moving. You don't want to look at what it used to be.\n\nBreath fogging in the cold. Blood steaming on the floor.\n\nBehind a wall of tipped shelving, small and perfectly still — a girl, maybe ten, a kitchen knife shaking in her hand.\n\n\"Don't. Don't touch me.\"";
+      return "\"Don't. Don't touch me,\" she says.\n\nHer voice is smaller than the knife.";
     },
     choices: [
       { label: "\"It's okay. I'm not going to hurt you.\"",
@@ -385,7 +405,8 @@ window.Story = {
     },
     choices: [
       { label: "Fight for your life", tag: "COMBAT", tagClass: "danger",
-        combat: { enemy: "bandit", onWin: "greenbelt_gate_hero", onLose: "death" } },
+        effect: s => { s.flags.carriedNora = true; },
+        combat: { enemy: "bandit", onWin: "meet_vega_card", onLose: "death" } },
     ]
   },
 
@@ -395,7 +416,7 @@ window.Story = {
     chapter: "Day 2 — The Pines",
     text: "They take what they want and disappear into the trees. You're lighter now — but alive.",
     choices: [
-      { label: "Push on to the Greenbelt", next: "greenbelt_gate" },
+      { label: "Push on to the Greenbelt", next: "meet_vega_card" },
     ]
   },
 
@@ -416,7 +437,24 @@ window.Story = {
           Game.giveRandomItem();
           Game.toast("+4 🔫");
         },
-        next: "greenbelt_gate" },
+        next: "meet_vega_card" },
+    ]
+  },
+
+  meet_vega_card: {
+    scene: "meet_vega_card",
+    sceneClass: "forest",
+    chapter: "Day 3 — Greenbelt",
+    text: function(s) {
+      if (s.flags.carriedNora) {
+        return "You come up the last rise with the kid dead weight on your shoulder. Guards at the gate raise their rifles — protocol.\n\nOne of them doesn't.\n\nTactical fatigues, captain's patch on the shoulder. Black hair pulled back tight. Sharp grey eyes. A thin scar along her cheekbone. She sees the blood on your jacket, the small ponytail against your neck, the knife-shake in your hands — clocks all of it in about a second.\n\nShe doesn't lower her rifle. Not yet. But she's not pointing it at you either.";
+      }
+      return "You come up the last rise and a scope finds you before you find it.\n\nBehind the rifle: tactical fatigues, captain's patch on the shoulder. Black hair pulled back tight. Sharp grey eyes. A thin scar along her cheekbone. She holds the aim rock steady, like she could do it all day.\n\n\"Stop right there,\" she calls. \"State your business.\"";
+    },
+    choices: [
+      { label: "Keep your hands where she can see them.", next: function(s) {
+        return s.flags.carriedNora ? "greenbelt_gate_hero" : "greenbelt_gate";
+      } },
     ]
   },
 
@@ -501,7 +539,7 @@ window.Story = {
     choices: [
       { label: "Let Ren patch you up properly before bed.", tag: "BOND", tagClass: "warn",
         effect: payGoodwillOnce,
-        next: "ren_medbay_intro" },
+        next: "meet_ren_card" },
       { label: "Sleep now. Tomorrow is another day.",
         effect: s => {
           s.hp = s.hpMax; s.stam = s.stamMax;
@@ -509,6 +547,16 @@ window.Story = {
           Game.toast("❤️ ⚡ restored");
         },
         next: "camp_morning" },
+    ]
+  },
+
+  meet_ren_card: {
+    scene: "meet_ren_card",
+    sceneClass: "indoor",
+    chapter: "Day 3 — Medbay",
+    text: "A hand gestures you toward a converted shipping container at the back of the camp. Inside smells of antiseptic and old coffee.\n\nShe's younger than you expected — mid-twenties, maybe. Messy dark brown hair tucked behind one ear. Warm brown eyes. Freckles. A small silver stethoscope around her neck. Grey medic's scrubs under a worn olive jacket.\n\nShe pulls up a metal stool and pats the cot beside her. Her smile is tired and very kind.\n\n\"Sit. Let me see.\"",
+    choices: [
+      { label: "Sit down.", next: "ren_medbay_intro" },
     ]
   },
 
