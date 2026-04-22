@@ -484,6 +484,30 @@ window.Story = {
     ]
   },
 
+  // Sacrifice-path variant: Vega has already lowered her rifle. The
+  // framing is softer — she clocks the kid, reads the blood, waves
+  // you in. Different image + different tags so the mood matches.
+  meet_vega_card_hero: {
+    scene: "meet_vega_card_hero",
+    sceneClass: "forest",
+    portraitCard: true,
+    chapter: "Day 3 — Greenbelt",
+    profile: {
+      name: "CAPTAIN VEGA",
+      role: "Mid 30s · Camp CO",
+      tags: [
+        "Black hair pulled back tight",
+        "Tactical fatigues, captain's patch",
+        "Thin scar along her cheekbone",
+        "Rifle lowered · clocking the kid on your shoulder",
+      ],
+    },
+    text: "",
+    choices: [
+      { label: "Step inside the wire.", next: "greenbelt_in" },
+    ]
+  },
+
   greenbelt_gate: {
     art: "🚧🛡️⛺",
     sceneClass: "forest",
@@ -535,7 +559,7 @@ window.Story = {
             ? "Maya's trust +2 · Vega's trust +1"
             : "Vega's trust +1");
         },
-        next: "meet_vega_card" },
+        next: "meet_vega_card_hero" },
     ]
   },
 

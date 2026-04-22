@@ -33,6 +33,7 @@ One section per story node, in definition order. Function-branching fields (text
 - [`after_ambush_mercy`](#after_ambush_mercy) — Day 2 — The Pines
 - [`after_ambush_fight`](#after_ambush_fight) — Day 2 — The Pines
 - [`meet_vega_card`](#meet_vega_card) — Day 3 — Greenbelt
+- [`meet_vega_card_hero`](#meet_vega_card_hero) — Day 3 — Greenbelt
 - [`greenbelt_gate`](#greenbelt_gate) — Day 3 — Greenbelt
 - [`greenbelt_gate_hero`](#greenbelt_gate_hero) — Day 3 — Greenbelt
 - [`greenbelt_in`](#greenbelt_in) — Day 3 — Greenbelt Camp
@@ -592,6 +593,17 @@ One section per story node, in definition order. Function-branching fields (text
 
 ---
 
+## <a id="meet_vega_card_hero"></a>`meet_vega_card_hero`
+**Chapter:** Day 3 — Greenbelt  
+**Scene art:** `meet_vega_card_hero`  
+
+**Choices:**
+
+1. **Step inside the wire.**
+   - → `greenbelt_in`
+
+---
+
 ## <a id="greenbelt_gate"></a>`greenbelt_gate`
 **Chapter:** Day 3 — Greenbelt  
 **Scene art:** (no explicit scene — uses node id)  
@@ -651,7 +663,7 @@ One section per story node, in definition order. Function-branching fields (text
 
 1. **"She needs food. Please."**
    - _effect:_ `s => { // goodwill flag stays narrowly tied to the 'offer supplies // at the gate' path — Vega's spare mag at the briefing // literally references the rounds you handed over. // The sacrifice path gets its reward via Maya's +2 bond, // a Vega +1 (she meets you at the gate carrying a bloodied // kid you nearly died for — that's where she clocks you), // and the carrying-Nora-through-the-gate narrative. if (s.companion === "Maya") { s.bonds.maya += 2; } s.bonds.vega = (s.bonds.vega || 0) + 1; Game.toast(s.companion === "Maya" ? "Maya's trust +2 · Vega's trust +1" : "Vega's trust +1"); }`
-   - → `meet_vega_card`
+   - → `meet_vega_card_hero`
 
 ---
 
