@@ -569,7 +569,7 @@ One section per story node, in definition order. Function-branching fields (text
 **Choices:**
 
 1. **Keep moving toward the Greenbelt.**
-   - _effect:_ `s => { // Carrying Nora, one-handed pocket-grab. You still pick up // the shotgun (sling it across your back) and shells, but // no time to rifle supplies. s.flags.killedBandits = true; Game.giveWeapon({ name: "Bandit Shotgun", bonus: 2, slot: "ranged" }); s.ammo += 4; Game.toast("+4 🔫 · Bandit Shotgun slung across your back"); }`
+   - _effect:_ `s => { // Carrying Nora, one-handed pocket-grab. You still clip the // grenade to your belt and pocket the shells — but no time // to rifle supplies. s.flags.killedBandits = true; s.ammo += 4; s.inventory = s.inventory || []; const existing = s.inventory.find(i => i && i.grenade); if (existing) existing.qty = (existing.qty || 1) + 1; else s.inventory.push({ id: "grenade", name: "🧨 Grenade", desc: "One-time combat throw. Big damage.", grenade: true, qty: 1, }); Game.toast("+4 🔫 · 🧨 Grenade on your belt"); }`
    - → `greenbelt_gate_hero`
 
 ---
@@ -610,7 +610,7 @@ One section per story node, in definition order. Function-branching fields (text
 **Choices:**
 
 1. **Loot and move on**
-   - _effect:_ `s => { // Two armed humans = real reward. Take the better bandit's // shotgun (+2 ranged — upgrade from the .38 if you looted // Cho's), shells, jerky, spare consumable. This is the main // loadout jump before the Greenbelt. s.flags.killedBandits = true; Game.giveWeapon({ name: "Bandit Shotgun", bonus: 2, slot: "ranged" }); s.ammo += 6; Game.giveRandomItem(); Game.giveRandomItem(); Game.toast("+6 🔫 · Bandit Shotgun equipped"); }`
+   - _effect:_ `s => { // Two armed humans = real reward. The big one had a pull-pin // grenade clipped to his webbing — one-time use, huge damage // when you throw it. Also rounds, jerky, a spare consumable. s.flags.killedBandits = true; s.ammo += 6; s.inventory = s.inventory || []; const existing = s.inventory.find(i => i && i.grenade); if (existing) existing.qty = (existing.qty || 1) + 1; else s.inventory.push({ id: "grenade", name: "🧨 Grenade", desc: "One-time combat throw. Big damage.", grenade: true, qty: 1, }); Game.giveRandomItem(); Game.giveRandomItem(); Game.toast("+6 🔫 · 🧨 Grenade stashed"); }`
    - → `greenbelt_gate`
 
 ---
@@ -666,6 +666,9 @@ One section per story node, in definition order. Function-branching fields (text
    - → `meet_vega_card`
 2. **Offer supplies as a gift** _require:_ `s => s.ammo >= 2`
    - _effect:_ `s => { s.ammo -= 2; s.flags.goodwill = true; s.bonds.vega = (s.bonds.vega || 0) + 1; Game.toast("-2 🔫 · Vega's trust +1"); }`
+   - → `meet_vega_card`
+3. **Offer the grenade — "You'll use this better than me."** `GIFT` _require:_ `s => (s.inventory || []).some(it => it && it.grenade && (it.qty === undefined || it.qty > 0))`
+   - _effect:_ `s => { // Consume one grenade. Vega lights up — this is exactly the // kind of thing her armoury could do something with. Bigger // bond bump than a handful of rounds, and she'll remember it // at the mission briefing. const inv = s.inventory || []; const gi = inv.findIndex(it => it && it.grenade && (it.qty === undefined || it.qty > 0)); if (gi >= 0) { const g = inv[gi]; if (g.qty && g.qty > 1) g.qty -= 1; else inv.splice(gi, 1); } s.flags.goodwill = true; s.flags.gaveGrenade = true; s.bonds.vega = (s.bonds.vega || 0) + 2; Game.toast("🧨 handed off · Vega's trust +2"); }`
    - → `meet_vega_card`
 
 ---
