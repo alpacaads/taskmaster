@@ -15,6 +15,12 @@ window.Combat = (function () {
     runner:       { name: "Runner",      art: "🧟‍♂️", hp: 4,  atk: [3, 4], speed: 2, desc: "Fresh. Fast. Furious." },
     bloater:      { name: "Bloater",     art: "🧟💀",  hp: 9,  atk: [3, 5], speed: 1, desc: "A swollen, leaking thing." },
     bandit:       { name: "Bandit",      art: "🧔🔫",  hp: 6,  atk: [3, 4], speed: 2, desc: "Smart. Armed. Desperate.", human: true },
+    // Two bandits — one engaged with an ally (if present), one on you.
+    // Modelled as a single HP pool so combat stays simple, but the
+    // engagement lifts at engagementFlipAt (see start()) — when that
+    // triggers, the ally rejoins the fight. Extra damage while engaged
+    // represents the second bandit taking shots at you.
+    bandit_pair:  { name: "Two Bandits",  art: "🧔🔫🧔", hp: 11, atk: [3, 5], speed: 2, desc: "One on you. One on yours.", human: true, pack: true },
     horde:        { name: "The Horde",   art: "🧟🧟🧟", hp: 16, atk: [3, 5], speed: 1, desc: "A tide of the dead." },
     // Mini-boss: the thing that was sealed inside the meat locker.
     // Mass of ruptured bodies fused together — slow, heavy, high HP.
@@ -241,21 +247,38 @@ window.Combat = (function () {
         `</span>` +
       `</span>`;
     };
+    const eng = (state && state.engaged) || {};
     if (mayaPresent()) {
-      const ready = state.mayaCd <= 0;
-      chips.push(build("maya", "👩‍🦰", "MAYA", ready, ready ? "NEXT SHOT" : `CD ${state.mayaCd}`));
+      if (eng.maya) {
+        chips.push(build("maya", "👩‍🦰", "MAYA", false, "ENGAGED"));
+      } else {
+        const ready = state.mayaCd <= 0;
+        chips.push(build("maya", "👩‍🦰", "MAYA", ready, ready ? "NEXT SHOT" : `CD ${state.mayaCd}`));
+      }
     }
     if (renPresent()) {
-      const ready = state.renCd <= 0;
-      chips.push(build("ren", "🧑‍⚕️", "REN", ready, ready ? "TRIAGE" : `CD ${state.renCd}`));
+      if (eng.ren) {
+        chips.push(build("ren", "🧑‍⚕️", "REN", false, "ENGAGED"));
+      } else {
+        const ready = state.renCd <= 0;
+        chips.push(build("ren", "🧑‍⚕️", "REN", ready, ready ? "TRIAGE" : `CD ${state.renCd}`));
+      }
     }
     if (vegaPresent()) {
-      const ready = state.vegaCd <= 0;
-      chips.push(build("vega", "🫡", "VEGA", ready, ready ? "RIFLE READY" : `CD ${state.vegaCd}`));
+      if (eng.vega) {
+        chips.push(build("vega", "🫡", "VEGA", false, "ENGAGED"));
+      } else {
+        const ready = state.vegaCd <= 0;
+        chips.push(build("vega", "🫡", "VEGA", ready, ready ? "RIFLE READY" : `CD ${state.vegaCd}`));
+      }
     }
     if (noraPresent()) {
-      const ready = (state.noraCd || 0) <= 0;
-      chips.push(build("nora", "👧", "NORA", ready, ready ? "SPOTTER" : `CD ${state.noraCd}`));
+      if (eng.nora) {
+        chips.push(build("nora", "👧", "NORA", false, "ENGAGED"));
+      } else {
+        const ready = (state.noraCd || 0) <= 0;
+        chips.push(build("nora", "👧", "NORA", ready, ready ? "SPOTTER" : `CD ${state.noraCd}`));
+      }
     }
     wrap.innerHTML = chips.join("");
   }
@@ -288,6 +311,23 @@ window.Combat = (function () {
     const hp = config.hp !== undefined ? config.hp : baseHp;
     const atk = config.atk || baseAtk;
 
+    // Party-vs-party engagement. When a combat config declares
+    // engagedAllies (e.g. the two-bandit ambush where Maya is tied
+    // up fighting the second one), those allies can't assist from
+    // the sidelines until engagementFlipAt is reached. At that
+    // point the "second enemy" drops, the engagement lifts, and the
+    // ally rejoins the fight. Extra hostile damage is applied while
+    // the engagement is still live — the uncovered bandit takes
+    // his own shots at you.
+    const engagedAllies = Array.isArray(config.engagedAllies)
+      ? config.engagedAllies.filter(a => typeof a === "string")
+      : [];
+    const engagedSet = {};
+    engagedAllies.forEach(a => { engagedSet[a] = true; });
+    const engagementFlipAt = typeof config.engagementFlipAt === "number"
+      ? config.engagementFlipAt
+      : (engagedAllies.length ? Math.ceil(hp / 2) : 0);
+
     state = {
       enemy: { ...def, hp, maxHp: hp, atk },
       onWin: config.onWin,
@@ -305,6 +345,10 @@ window.Combat = (function () {
       vegaCd: 0,
       noraCd: 0,
       noraWarn: false,
+      engaged: engagedSet,
+      engagedInitial: engagedAllies.slice(),
+      engagementFlipAt: engagementFlipAt,
+      engagementLifted: false,
       startMs: Date.now(),
     };
 
@@ -354,8 +398,17 @@ window.Combat = (function () {
 
     if (config.enemy === "horde") Sound.play("hordeRoar");
     else if (config.enemy === "runner") Sound.play("runnerScream");
-    else if (config.enemy === "bandit") Sound.play("drySnap");
+    else if (config.enemy === "bandit" || config.enemy === "bandit_pair") Sound.play("drySnap");
     else Sound.play("groan");
+
+    // Opening log line when an ally gets pinned down — gives the player
+    // the 'one on you, one on yours' read before the first turn.
+    if (state.engagedInitial && state.engagedInitial.length) {
+      state.engagedInitial.forEach(a => {
+        const name = a === "maya" ? "Maya" : a === "ren" ? "Ren" : a === "vega" ? "Vega" : a === "nora" ? "Nora" : a;
+        log(`${name} breaks off — she's got the other one.`, "info");
+      });
+    }
 
     refreshHud();
     updateEnemyHp();
@@ -560,6 +613,7 @@ window.Combat = (function () {
 
     refreshHud();
     updateEnemyHp();
+    checkEngagementFlip();
 
     if (state.enemy.hp <= 0) {
       log(`${state.enemy.name} falls.`, "crit");
@@ -735,6 +789,11 @@ window.Combat = (function () {
     // Rare savage hit — ignores 1 of brace.
     const savage = Math.random() < 0.12;
     if (savage) dmg += 2;
+    // Party-vs-party: while an ally is still tied up with the second
+    // enemy, the uncovered bandit also takes a shot at you. Flat +1
+    // until the engagement flips.
+    const engActive = state.engaged && Object.keys(state.engaged).some(k => state.engaged[k]);
+    if (engActive) dmg += 1;
 
     // Brace absorbs more now: -3 normal, -2 on savage. Desperate brace
     // (stam was 0) still absorbs something but only half as much.
@@ -829,12 +888,42 @@ window.Combat = (function () {
     el.classList.add("hit-red");
   }
 
+  // Check if the "second enemy" has been whittled down enough to
+  // lift the engagement — e.g. Maya finishes her bandit and swings
+  // back to the main fight. Fires at most once per combat.
+  function checkEngagementFlip() {
+    if (!state || state.engagementLifted) return;
+    if (!state.engagementFlipAt) return;
+    if (!state.engagedInitial || !state.engagedInitial.length) return;
+    if (state.enemy.hp > state.engagementFlipAt) return;
+    state.engagementLifted = true;
+    const freed = state.engagedInitial.slice();
+    // Clear the engagement so companionTurn starts picking them back up.
+    state.engaged = {};
+    // Give each newly-freed ally a short grace cooldown so they don't
+    // fire on the same tick the flip happens — gives the log a beat.
+    freed.forEach(a => {
+      if (a === "maya") state.mayaCd = Math.max(state.mayaCd || 0, 1);
+      if (a === "ren")  state.renCd  = Math.max(state.renCd  || 0, 1);
+      if (a === "vega") state.vegaCd = Math.max(state.vegaCd || 0, 1);
+      if (a === "nora") state.noraCd = Math.max(state.noraCd || 0, 1);
+    });
+    const who = freed.map(a =>
+      a === "maya" ? "Maya" :
+      a === "ren"  ? "Ren"  :
+      a === "vega" ? "Vega" :
+      a === "nora" ? "Nora" : a
+    ).join(" and ");
+    log(`${who} drops her bandit — swings back to yours.`, "crit");
+    renderAllies();
+  }
+
   // ---------- companion turn ----------
   function companionTurn() {
     const s = Game.state;
     if (!state || state.enemy.hp <= 0) return;
 
-    if (mayaPresent()) {
+    if (mayaPresent() && !(state.engaged && state.engaged.maya)) {
       state.mayaCd = (state.mayaCd || 0) - 1;
       if (state.mayaCd <= 0) {
         // Lovers fight harder. +1 damage and a tighter cooldown.
@@ -860,7 +949,7 @@ window.Combat = (function () {
       }
     }
 
-    if (renPresent()) {
+    if (renPresent() && !(state.engaged && state.engaged.ren)) {
       state.renCd = (state.renCd || 0) - 1;
       // Heal amount + cooldown both scale with bond / love.
       const heal = renHealAmount();
@@ -885,7 +974,7 @@ window.Combat = (function () {
       }
     }
 
-    if (vegaPresent()) {
+    if (vegaPresent() && !(state.engaged && state.engaged.vega)) {
       state.vegaCd = (state.vegaCd || 0) - 1;
       if (state.vegaCd <= 0) {
         // Captain's rifle hits hard but the angle is tight — 3-4 dmg.
@@ -910,7 +999,7 @@ window.Combat = (function () {
       }
     }
 
-    if (noraPresent()) {
+    if (noraPresent() && !(state.engaged && state.engaged.nora)) {
       state.noraCd = (state.noraCd || 0) - 1;
       // Hold the warning until you actually need it: she pipes up once
       // the fight turns (hero below ~60%) OR the enemy is still healthy

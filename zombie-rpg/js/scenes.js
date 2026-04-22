@@ -738,7 +738,7 @@ window.Scenes = (function () {
   // fresh image URLs automatically, so a commit on one device (PC)
   // shows up on another (phone) as soon as Pages rebuilds, without
   // relying on localStorage which is per-device.
-  const BUILD = "164";
+  const BUILD = "165";
 
   // Smart cache-bust: per-scene timestamp from the admin takes priority
   // (committer sees their upload immediately), then a device-wide global
@@ -875,6 +875,7 @@ window.Scenes = (function () {
     combat_runner:       "fresh zombie runner sprinting straight at the camera mid-lunge, snarling, dark city street, motion blur, cinematic horror portrait",
     combat_bloater:      "massive bloated zombie with lumpy mutated body, hunched posture, advancing slowly in a dim ruined hospital corridor, cinematic horror portrait",
     combat_bandit:       "armed human bandit raising a shotgun at the camera, pine forest at dusk, fog, gritty cinematic portrait",
+    combat_bandit_pair:  "two armed human bandits in a pine forest at dusk — one directly facing the camera raising a shotgun, the other off to one side half-turned exchanging fire with a red-haired woman in an olive army jacket with a rifle just off-frame, muzzle flash, fog, dramatic lighting, gritty cinematic widescreen portrait",
     combat_horde:        "massive zombie horde pouring toward the camera down an abandoned highway at blood-red dawn, hundreds of silhouettes, cinematic wide shot",
     combat_freezer_abom: "grotesque zombie abomination covered in fungal tumor growths bursting from an industrial meat locker freezer, steaming breath, dim flickering fluorescent light, cinematic horror in the style of The Last of Us bloater",
     combat_traitor:      "man mid-zombification, fresh black bite mark on forearm with sleeve pushed up, eyes fogging milky white, teeth bared, tense confrontation at a chainlink fence at night, moonlight, cinematic horror portrait",

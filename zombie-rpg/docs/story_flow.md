@@ -499,7 +499,8 @@ One section per story node, in definition order. Function-branching fields (text
    - _effect:_ `s => { s.ammo = Math.max(0, s.ammo - 2); Game.toast("-2 🔫"); }`
    - → `after_ambush_mercy`
 2. **Fight — you need these supplies** `COMBAT`
-   - ⚔ combat _(default, with Maya companion, mission partner = maya, mission partner = ren, solo mission, saved Nora, bring Nora on mission, told Vega, chore: medbay, chore: perimeter, chore: kitchen, exposed traitor, killed traitor, romance Maya, romance Ren)_: enemy `bandit` · risky → win `after_ambush_fight` / lose `death`
+   - ⚔ combat _(default, mission partner = maya, mission partner = ren, solo mission, saved Nora, bring Nora on mission, told Vega, chore: medbay, chore: perimeter, chore: kitchen, exposed traitor, killed traitor, romance Ren)_: enemy `bandit` · risky → win `after_ambush_fight` / lose `death`
+   - ⚔ combat _(with Maya companion, romance Maya)_: enemy `bandit_pair` · risky → win `after_ambush_fight` / lose `death`
    - ⚔ combat _(rested in car)_: enemy `bandit` → win `after_ambush_fight` / lose `death`
 3. **"Take me. Let the kid go."** `SACRIFICE` _require:_ `s => s.companion2 === "Nora"`
    - → `sacrifice_intro`
@@ -538,7 +539,8 @@ One section per story node, in definition order. Function-branching fields (text
 
 1. **Fight for your life** `COMBAT`
    - _effect:_ `s => { s.flags.carriedNora = true; }`
-   - ⚔ combat: enemy `bandit` → win `sacrifice_aftermath` / lose `death`
+   - ⚔ combat _(default, mission partner = maya, mission partner = ren, solo mission, saved Nora, bring Nora on mission, rested in car, told Vega, chore: medbay, chore: perimeter, chore: kitchen, exposed traitor, killed traitor, romance Ren)_: enemy `bandit` → win `sacrifice_aftermath` / lose `death`
+   - ⚔ combat _(with Maya companion, romance Maya)_: enemy `bandit_pair` → win `sacrifice_aftermath` / lose `death`
 
 ---
 
