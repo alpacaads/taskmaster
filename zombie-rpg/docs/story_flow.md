@@ -185,12 +185,6 @@ One section per story node, in definition order. Function-branching fields (text
 **Chapter:** Day 1 — Stairwell  
 **Scene art:** `meet_maya_card`  
 
-> You raise the flashlight.
-> 
-> Messy dark red hair, shoulder-length. A faded olive army jacket over a grey undershirt. There's a scar through one eyebrow she hasn't bothered to hide, and a hunting knife already on her belt.
-> 
-> She holds your beam without flinching. Waiting.
-
 **Choices:**
 
 1. **Lower the light. Listen.**
@@ -359,14 +353,6 @@ One section per story node, in definition order. Function-branching fields (text
 ## <a id="meet_nora_card"></a>`meet_nora_card`
 **Chapter:** Day 1 — Freezer  
 **Scene art:** `meet_nora_card`  
-
-> You sweep the freezer.
-> 
-> Something small shifts behind a wall of tipped shelving.
-> 
-> Copper-brown hair in a loose ponytail. An oversized grey hoodie. A kitchen knife far too big for the hand that's holding it. She can't be older than ten. Her breath fogs in the cold.
-> 
-> Her eyes are huge, and they don't leave you.
 
 **Choices:**
 
@@ -589,16 +575,6 @@ One section per story node, in definition order. Function-branching fields (text
 **Chapter:** Day 3 — Greenbelt  
 **Scene art:** `meet_vega_card`  
 
-<details><summary>Variant: default / with Maya companion / mission partner = maya / mission partner = ren / solo mission / saved Nora / bring Nora on mission / rested in car / told Vega / chore: medbay / chore: perimeter / chore: kitchen / exposed traitor / killed traitor / romance Maya / romance Ren</summary>
-
-> You come up the last rise and a scope finds you before you find it.
-> 
-> Behind the rifle: tactical fatigues, captain's patch on the shoulder. Black hair pulled back tight. Sharp grey eyes. A thin scar along her cheekbone. She holds the aim rock steady, like she could do it all day.
-> 
-> "Stop right there," she calls. "State your business."
-
-</details>
-
 **Choices:**
 
 1. **Keep your hands where she can see them.**
@@ -721,14 +697,6 @@ One section per story node, in definition order. Function-branching fields (text
 ## <a id="meet_ren_card"></a>`meet_ren_card`
 **Chapter:** Day 3 — Medbay  
 **Scene art:** `meet_ren_card`  
-
-> A hand gestures you toward a converted shipping container at the back of the camp. Inside smells of antiseptic and old coffee.
-> 
-> She's younger than you expected — mid-twenties, maybe. Messy dark brown hair tucked behind one ear. Warm brown eyes. Freckles. A small silver stethoscope around her neck. Grey medic's scrubs under a worn olive jacket.
-> 
-> She pulls up a metal stool and pats the cot beside her. Her smile is tired and very kind.
-> 
-> "Sit. Let me see."
 
 **Choices:**
 

@@ -225,6 +225,55 @@ html, body {
   aspect-ratio: 4 / 5;
   max-height: 62vh;
 }
+/* Character profile overlay — name + role + a few identifying tags,
+ * rendered on the image itself. Bottom-anchored with a soft gradient
+ * so the text stays readable over any art. */
+.profile-overlay {
+  position: absolute;
+  left: 0; right: 0; bottom: 0;
+  z-index: 3;
+  padding: 14px 16px 14px;
+  background: linear-gradient(180deg,
+    rgba(0, 0, 0, 0) 0%,
+    rgba(0, 0, 0, 0.55) 40%,
+    rgba(0, 0, 0, 0.9) 100%);
+  color: #e7ebe0;
+  font-family: inherit;
+  pointer-events: none;
+}
+.profile-overlay .profile-name {
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: 2.5px;
+  color: var(--accent-2, #c7e6b1);
+  text-shadow: 0 2px 6px rgba(0, 0, 0, 0.8);
+  margin-bottom: 2px;
+}
+.profile-overlay .profile-role {
+  font-size: 11px;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: #b9c0ad;
+  margin-bottom: 8px;
+}
+.profile-overlay .profile-tags {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  font-size: 12px;
+  line-height: 1.45;
+  color: #d6dccb;
+}
+.profile-overlay .profile-tags li {
+  position: relative;
+  padding-left: 12px;
+}
+.profile-overlay .profile-tags li::before {
+  content: "·";
+  position: absolute;
+  left: 2px;
+  color: var(--accent-2, #c7e6b1);
+}
 .scene-art {
   position: absolute;
   inset: 0;

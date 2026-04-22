@@ -116,7 +116,17 @@ window.Story = {
     sceneClass: "night",
     portraitCard: true,
     chapter: "Day 1 — Stairwell",
-    text: "You raise the flashlight.\n\nMessy dark red hair, shoulder-length. A faded olive army jacket over a grey undershirt. There's a scar through one eyebrow she hasn't bothered to hide, and a hunting knife already on her belt.\n\nShe holds your beam without flinching. Waiting.",
+    profile: {
+      name: "MAYA",
+      role: "Late 20s · Ex-military",
+      tags: [
+        "Messy dark red hair, shoulder-length",
+        "Faded olive army jacket, grey undershirt",
+        "Scar through one eyebrow",
+        "Hunting knife on her belt",
+      ],
+    },
+    text: "",
     choices: [
       { label: "Lower the light. Listen.", next: "meet_maya" },
     ]
@@ -273,7 +283,17 @@ window.Story = {
     sceneClass: "indoor",
     portraitCard: true,
     chapter: "Day 1 — Freezer",
-    text: "You sweep the freezer.\n\nSomething small shifts behind a wall of tipped shelving.\n\nCopper-brown hair in a loose ponytail. An oversized grey hoodie. A kitchen knife far too big for the hand that's holding it. She can't be older than ten. Her breath fogs in the cold.\n\nHer eyes are huge, and they don't leave you.",
+    profile: {
+      name: "NORA",
+      role: "About 10 · Alone",
+      tags: [
+        "Messy copper-brown hair, loose ponytail",
+        "Oversized grey hoodie, small olive jacket",
+        "Dirt-smudged cheeks, big hazel eyes",
+        "Kitchen knife too big for her hand",
+      ],
+    },
+    text: "",
     choices: [
       { label: "Lower the weapon. Crouch.", next: "freezer" },
     ]
@@ -448,12 +468,17 @@ window.Story = {
     sceneClass: "forest",
     portraitCard: true,
     chapter: "Day 3 — Greenbelt",
-    text: function(s) {
-      if (s.flags.carriedNora) {
-        return "You come up the last rise with the kid dead weight on your shoulder. Guards at the gate raise their rifles — protocol.\n\nOne of them doesn't.\n\nTactical fatigues, captain's patch on the shoulder. Black hair pulled back tight. Sharp grey eyes. A thin scar along her cheekbone. She sees the blood on your jacket, the small ponytail against your neck, the knife-shake in your hands — clocks all of it in about a second.\n\nShe doesn't lower her rifle. Not yet. But she's not pointing it at you either.";
-      }
-      return "You come up the last rise and a scope finds you before you find it.\n\nBehind the rifle: tactical fatigues, captain's patch on the shoulder. Black hair pulled back tight. Sharp grey eyes. A thin scar along her cheekbone. She holds the aim rock steady, like she could do it all day.\n\n\"Stop right there,\" she calls. \"State your business.\"";
+    profile: {
+      name: "CAPTAIN VEGA",
+      role: "Mid 30s · Camp CO",
+      tags: [
+        "Black hair pulled back tight",
+        "Tactical fatigues, captain's patch",
+        "Thin scar along her cheekbone",
+        "Rock-steady scope, jaw set",
+      ],
     },
+    text: "",
     choices: [
       { label: "Keep your hands where she can see them.", next: function(s) {
         return s.flags.carriedNora ? "greenbelt_gate_hero" : "greenbelt_gate";
@@ -558,7 +583,17 @@ window.Story = {
     sceneClass: "indoor",
     portraitCard: true,
     chapter: "Day 3 — Medbay",
-    text: "A hand gestures you toward a converted shipping container at the back of the camp. Inside smells of antiseptic and old coffee.\n\nShe's younger than you expected — mid-twenties, maybe. Messy dark brown hair tucked behind one ear. Warm brown eyes. Freckles. A small silver stethoscope around her neck. Grey medic's scrubs under a worn olive jacket.\n\nShe pulls up a metal stool and pats the cot beside her. Her smile is tired and very kind.\n\n\"Sit. Let me see.\"",
+    profile: {
+      name: "REN",
+      role: "Mid 20s · Camp medic",
+      tags: [
+        "Messy dark brown hair, tucked behind one ear",
+        "Warm brown eyes, faint freckles",
+        "Grey scrubs under a worn olive jacket",
+        "Small silver stethoscope · guitar in the corner",
+      ],
+    },
+    text: "",
     choices: [
       { label: "Sit down.", next: "ren_medbay_intro" },
     ]

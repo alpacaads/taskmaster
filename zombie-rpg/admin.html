@@ -350,6 +350,51 @@
       aspect-ratio: 4 / 5;
       max-height: 62vh;
     }
+    .reader .profile-overlay {
+      position: absolute;
+      left: 0; right: 0; bottom: 0;
+      z-index: 3;
+      padding: 14px 16px;
+      background: linear-gradient(180deg,
+        rgba(0, 0, 0, 0) 0%,
+        rgba(0, 0, 0, 0.55) 40%,
+        rgba(0, 0, 0, 0.9) 100%);
+      color: #e7ebe0;
+      pointer-events: none;
+    }
+    .reader .profile-overlay .profile-name {
+      font-size: 22px;
+      font-weight: 800;
+      letter-spacing: 2.5px;
+      color: var(--accent-2);
+      text-shadow: 0 2px 6px rgba(0, 0, 0, 0.8);
+      margin-bottom: 2px;
+    }
+    .reader .profile-overlay .profile-role {
+      font-size: 11px;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: #b9c0ad;
+      margin-bottom: 8px;
+    }
+    .reader .profile-overlay .profile-tags {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      font-size: 12px;
+      line-height: 1.45;
+      color: #d6dccb;
+    }
+    .reader .profile-overlay .profile-tags li {
+      position: relative;
+      padding-left: 12px;
+    }
+    .reader .profile-overlay .profile-tags li::before {
+      content: "·";
+      position: absolute;
+      left: 2px;
+      color: var(--accent-2);
+    }
     .reader .scene-art {
       position: absolute; inset: 0;
     }
@@ -902,12 +947,12 @@
   </footer>
 
   <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
-  <script src="js/overrides.js?v=159"></script>
-  <script src="js/scenes.js?v=159"></script>
+  <script src="js/overrides.js?v=160"></script>
+  <script src="js/scenes.js?v=160"></script>
   <!-- story.js is read-only here: we pull chapters / text / choices
        to annotate each scene card so the flow is legible without
        having to play through. -->
-  <script src="js/story.js?v=159"></script>
+  <script src="js/story.js?v=160"></script>
   <script>
     (async function () {
       const PROMPTS = (window.Scenes && window.Scenes.PROMPTS) || {};
@@ -1752,18 +1797,33 @@
                 `<span class="stat" title="Ammo">🔫 <b>${live.ammo}</b></span>` +
               `</div>` +
             `</div>` +
-            (imgSourceId
-              ? `<div class="scene${node.portraitCard ? " portrait-card" : ""}" data-flow-id="${escapeText(imgSourceId)}">` +
-                  (chapter ? `<div class="scene-chapter">${escapeText(chapter)}</div>` : "") +
-                  `<div class="scene-art"><img alt="${escapeText(imgSourceId)}" /></div>` +
-                  `<span class="reader-badge">${escapeText(badge)}</span>` +
-                  `<input type="file" accept="image/*" hidden />` +
-                `</div>`
-              : `<div class="scene img-missing${node.portraitCard ? " portrait-card" : ""}">` +
-                  (chapter ? `<div class="scene-chapter">${escapeText(chapter)}</div>` : "") +
-                  `<div class="scene-art"></div>` +
-                  `<span class="reader-badge">no card</span>` +
-                `</div>`) +
+            (function () {
+              const profileHtml = node.profile
+                ? `<div class="profile-overlay">` +
+                    `<div class="profile-name">${escapeText(node.profile.name || "")}</div>` +
+                    (node.profile.role ? `<div class="profile-role">${escapeText(node.profile.role)}</div>` : "") +
+                    (Array.isArray(node.profile.tags) && node.profile.tags.length
+                      ? `<ul class="profile-tags">` +
+                        node.profile.tags.map(t => `<li>${escapeText(t)}</li>`).join("") +
+                        `</ul>`
+                      : "") +
+                  `</div>`
+                : "";
+              return imgSourceId
+                ? `<div class="scene${node.portraitCard ? " portrait-card" : ""}" data-flow-id="${escapeText(imgSourceId)}">` +
+                    (chapter ? `<div class="scene-chapter">${escapeText(chapter)}</div>` : "") +
+                    `<div class="scene-art"><img alt="${escapeText(imgSourceId)}" /></div>` +
+                    `<span class="reader-badge">${escapeText(badge)}</span>` +
+                    profileHtml +
+                    `<input type="file" accept="image/*" hidden />` +
+                  `</div>`
+                : `<div class="scene img-missing${node.portraitCard ? " portrait-card" : ""}">` +
+                    (chapter ? `<div class="scene-chapter">${escapeText(chapter)}</div>` : "") +
+                    `<div class="scene-art"></div>` +
+                    `<span class="reader-badge">no card</span>` +
+                    profileHtml +
+                  `</div>`;
+            })() +
             `<div class="narrative">` +
               `<div class="speaker">${escapeText(speaker || "")}</div>` +
               `<div class="text">${escapeText(textStr || "(no text)")}</div>` +

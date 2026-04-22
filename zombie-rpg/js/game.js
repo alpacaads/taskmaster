@@ -185,6 +185,26 @@ window.Game = (function () {
       void art.offsetWidth;
       art.classList.add("shake");
     }
+    // Character-introduction overlay — rendered onto the scene image
+    // itself so the player's focus stays on the face. Replaces the
+    // narrative panel for these nodes.
+    const sceneEl2 = document.getElementById("scene");
+    const existingOverlay = sceneEl2.querySelector(".profile-overlay");
+    if (existingOverlay) existingOverlay.remove();
+    if (node.profile) {
+      const p = node.profile;
+      const overlay = document.createElement("div");
+      overlay.className = "profile-overlay";
+      overlay.innerHTML =
+        `<div class="profile-name">${escapeHtml(p.name || "")}</div>` +
+        (p.role ? `<div class="profile-role">${escapeHtml(p.role)}</div>` : "") +
+        (Array.isArray(p.tags) && p.tags.length
+          ? `<ul class="profile-tags">` +
+            p.tags.map(t => `<li>${escapeHtml(t)}</li>`).join("") +
+            `</ul>`
+          : "");
+      sceneEl2.appendChild(overlay);
+    }
     document.getElementById("scene-chapter").textContent = node.chapter || "";
 
     // Narrative
