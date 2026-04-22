@@ -496,7 +496,7 @@ One section per story node, in definition order. Function-branching fields (text
 **Choices:**
 
 1. **Drop the bag. Live to fight another day.**
-   - _effect:_ `s => { s.ammo = Math.max(0, s.ammo - 2); Game.toast("-2 🔫"); }`
+   - _effect:_ `s => { // Bandits take the bag. That means the gun, the rounds, and // the consumables — everything you weren't physically wearing // or holding. Crowbar/melee stays (you were swinging it); the // riot vest stays (it's on your body). const lost = []; if (s.bestRanged) { lost.push(s.bestRanged.name); s.bestRanged = null; } if (s.ammo > 0) { lost.push(`${s.ammo} rounds`); s.ammo = 0; } const keep = (s.inventory || []).filter(it => it && it.armor); const dropped = (s.inventory || []).filter(it => it && !it.armor); if (dropped.length) lost.push(`${dropped.length} supplies`); s.inventory = keep; Game.toast(lost.length ? `They take: ${lost.join(" · ")}` : "They wave you through"); }`
    - → `after_ambush_mercy`
 2. **Fight — you need these supplies** `COMBAT`
    - ⚔ combat _(default, mission partner = maya, mission partner = ren, solo mission, saved Nora, bring Nora on mission, told Vega, chore: medbay, chore: perimeter, chore: kitchen, exposed traitor, killed traitor, romance Ren)_: enemy `bandit_pair` · risky → win `after_ambush_fight` / lose `death`

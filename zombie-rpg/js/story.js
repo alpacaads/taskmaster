@@ -391,7 +391,20 @@ window.Story = {
     },
     choices: [
       { label: "Drop the bag. Live to fight another day.",
-        effect: s => { s.ammo = Math.max(0, s.ammo - 2); Game.toast("-2 🔫"); },
+        effect: s => {
+          // Bandits take the bag. That means the gun, the rounds, and
+          // the consumables — everything you weren't physically wearing
+          // or holding. Crowbar/melee stays (you were swinging it); the
+          // riot vest stays (it's on your body).
+          const lost = [];
+          if (s.bestRanged) { lost.push(s.bestRanged.name); s.bestRanged = null; }
+          if (s.ammo > 0)   { lost.push(`${s.ammo} rounds`); s.ammo = 0; }
+          const keep = (s.inventory || []).filter(it => it && it.armor);
+          const dropped = (s.inventory || []).filter(it => it && !it.armor);
+          if (dropped.length) lost.push(`${dropped.length} supplies`);
+          s.inventory = keep;
+          Game.toast(lost.length ? `They take: ${lost.join(" · ")}` : "They wave you through");
+        },
         next: "after_ambush_mercy" },
       { label: "Fight — you need these supplies", tag: "COMBAT", tagClass: "danger",
         combat: function (s) {
