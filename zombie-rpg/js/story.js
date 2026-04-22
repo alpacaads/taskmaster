@@ -1129,15 +1129,22 @@ window.Story = {
         opener = "Maya stayed. You didn't argue — you couldn't. The last thing you saw was her profile in the muzzle flash, calm, picking targets. The gate held long enough. Long enough is what she gave you.\n\n";
       } else if (s.flags.renSacrificed) {
         opener = "Ren stayed. Three cots she couldn't move — three hands she wouldn't let go of. The medbay door shut behind her with a soft click you shouldn't have been close enough to hear. You heard it anyway.\n\n";
+      } else if (s.flags.vegaStayedBehind && s.flags.gaveGrenade) {
+        // She had the pull-pin you handed her at the gate. That
+        // changes the math — she breaks the line with it and catches
+        // up to the column at the first creek crossing.
+        opener = "Vega stayed.\n\nTwenty minutes down the pines, a flat concussive thump rolls through the trees behind you — that grenade you gave her at the gate, finally good for something. Half an hour after that, boots on the path behind the column.\n\nShe catches up at the first creek crossing, smoke still on her jacket, a graze above one eye. She doesn't say anything. She just falls in at your shoulder and keeps walking.\n\n";
       } else if (s.flags.vegaStayedBehind) {
         opener = "Vega stayed. Somewhere behind you — four minutes back, then five, then gone — her rifle was still working. Then it wasn't. The column kept walking. She'd have wanted that.\n\n";
       } else if (s.flags.vegaSaved) {
         opener = "Nobody stayed. Vega walks the column's flank with her rifle low and her jaw tight. Every so often she glances back, checking no one's lagging. Nobody is.\n\n";
       }
       // Nora's voice in the column when someone didn't make it. One
-      // small beat — she asks once, and you have to answer.
+      // small beat — she asks once, and you have to answer. Skip for
+      // Vega if she caught up via the grenade you gave her.
       let noraTail = "";
-      if (s.companion2 === "Nora" && (s.flags.mayaSacrificed || s.flags.renSacrificed || s.flags.vegaStayedBehind)) {
+      const vegaLost = s.flags.vegaStayedBehind && !s.flags.gaveGrenade;
+      if (s.companion2 === "Nora" && (s.flags.mayaSacrificed || s.flags.renSacrificed || vegaLost)) {
         const who = s.flags.mayaSacrificed ? "Maya"
                   : s.flags.renSacrificed  ? "Ren"
                   : "Captain Vega";
@@ -1180,7 +1187,9 @@ window.Story = {
       { label: "— THE END —", next: function(s) {
         if (s.flags.mayaSacrificed) return "ending_final_maya_fell";
         if (s.flags.renSacrificed)  return "ending_final_ren_fell";
-        if (s.flags.vegaStayedBehind && !s.romance) return "ending_final_vega_fell";
+        // Vega only 'falls' if you didn't give her the grenade at the
+        // gate. If you did, she caught up and the road ending plays.
+        if (s.flags.vegaStayedBehind && !s.flags.gaveGrenade && !s.romance) return "ending_final_vega_fell";
         return s.romance ? "ending_final_lovers_road" : "ending_final_escape";
       } },
     ]
