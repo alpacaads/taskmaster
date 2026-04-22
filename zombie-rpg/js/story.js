@@ -396,10 +396,11 @@ window.Story = {
       { label: "Fight — you need these supplies", tag: "COMBAT", tagClass: "danger",
         combat: function (s) {
           return {
-            // Two bandits, one on you and one on Maya if she's with you.
-            // Maya comes off engagement at the half-HP flip. Falls back
-            // to solo bandit if Maya isn't there.
-            enemy: s.companion === "Maya" ? "bandit_pair" : "bandit",
+            // Always two bandits per the narrative. If Maya's with
+            // you, she pins down one until the half-HP flip. If you're
+            // solo, both are on you — the base pair stats + hostile
+            // damage bump handle it.
+            enemy: "bandit_pair",
             engagedAllies: s.companion === "Maya" ? ["maya"] : [],
             // Rested + spotted = you get the jump on them: non-risky
             // combat (no +25% HP / +1 damage bump on the bandits).
@@ -432,12 +433,11 @@ window.Story = {
     choices: [
       { label: "Fight for your life", tag: "COMBAT", tagClass: "danger",
         effect: s => { s.flags.carriedNora = true; },
-        // Same two-bandit model as ambush — Maya takes one if she's
-        // here; otherwise it's solo bandit (sacrifice still scales via
-        // risky under the hood).
+        // Two bandits either way. Maya pins one if she's here; solo
+        // means both come at you.
         combat: function (s) {
           return {
-            enemy: s.companion === "Maya" ? "bandit_pair" : "bandit",
+            enemy: "bandit_pair",
             engagedAllies: s.companion === "Maya" ? ["maya"] : [],
             onWin: "sacrifice_aftermath",
             onLose: "death",
