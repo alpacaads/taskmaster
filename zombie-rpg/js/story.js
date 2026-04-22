@@ -392,13 +392,16 @@ window.Story = {
     choices: [
       { label: "Drop the bag. Live to fight another day.",
         effect: s => {
-          // Bandits take the bag. That means the gun, the rounds, and
-          // the consumables — everything you weren't physically wearing
-          // or holding. Crowbar/melee stays (you were swinging it); the
-          // riot vest stays (it's on your body).
+          // Bandits take the bag AND the bigger weapon. You're reduced
+          // to the pocket knife you started Day 1 with. Armor stays —
+          // it's on your body, not in the bag.
           const lost = [];
           if (s.bestRanged) { lost.push(s.bestRanged.name); s.bestRanged = null; }
           if (s.ammo > 0)   { lost.push(`${s.ammo} rounds`); s.ammo = 0; }
+          if (s.bestMelee && s.bestMelee.name !== "Pocket Knife") {
+            lost.push(s.bestMelee.name);
+            s.bestMelee = { name: "Pocket Knife", bonus: 0, slot: "melee" };
+          }
           const keep = (s.inventory || []).filter(it => it && it.armor);
           const dropped = (s.inventory || []).filter(it => it && !it.armor);
           if (dropped.length) lost.push(`${dropped.length} supplies`);
