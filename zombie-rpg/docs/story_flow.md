@@ -30,6 +30,7 @@ One section per story node, in definition order. Function-branching fields (text
 - [`road_out_child`](#road_out_child) — Day 2 — The Road
 - [`ambush`](#ambush) — Day 2 — The Pines
 - [`sacrifice_intro`](#sacrifice_intro) — Day 2 — The Pines
+- [`sacrifice_aftermath`](#sacrifice_aftermath) — Day 2 — After the Pines
 - [`after_ambush_mercy`](#after_ambush_mercy) — Day 2 — The Pines
 - [`after_ambush_fight`](#after_ambush_fight) — Day 2 — The Pines
 - [`meet_vega_card`](#meet_vega_card) — Day 3 — Greenbelt
@@ -537,7 +538,36 @@ One section per story node, in definition order. Function-branching fields (text
 
 1. **Fight for your life** `COMBAT`
    - _effect:_ `s => { s.flags.carriedNora = true; }`
-   - ⚔ combat: enemy `bandit` → win `greenbelt_gate_hero` / lose `death`
+   - ⚔ combat: enemy `bandit` → win `sacrifice_aftermath` / lose `death`
+
+---
+
+## <a id="sacrifice_aftermath"></a>`sacrifice_aftermath`
+**Chapter:** Day 2 — After the Pines  
+**Scene art:** `sacrifice_aftermath`  
+
+<details><summary>Variant: default / mission partner = maya / mission partner = ren / solo mission / saved Nora / bring Nora on mission / rested in car / told Vega / chore: medbay / chore: perimeter / chore: kitchen / exposed traitor / killed traitor / romance Ren</summary>
+
+> You call her out from behind the mossy log. She comes slow, eyes enormous. She doesn't say anything about the blood.
+> 
+> She walks the first half-mile and then her legs stop working. You pick her up. She weighs almost nothing.
+
+</details>
+
+<details><summary>Variant: with Maya companion / romance Maya</summary>
+
+> You call her out from behind the mossy log. She comes slow, eyes enormous. She doesn't say anything about the blood.
+> 
+> She walks the first half-mile and then her legs stop working. You pick her up. She weighs almost nothing.
+> 
+> Maya walks three steps behind you, checking the treeline. She doesn't offer to carry the girl. She doesn't have to say it: this was the right call.
+
+</details>
+
+**Choices:**
+
+1. **Keep moving toward the Greenbelt.**
+   - → `greenbelt_gate_hero`
 
 ---
 
@@ -643,19 +673,19 @@ One section per story node, in definition order. Function-branching fields (text
 
 <details><summary>Variant: default / mission partner = maya / mission partner = ren / solo mission / saved Nora / bring Nora on mission / rested in car / told Vega / chore: medbay / chore: perimeter / chore: kitchen / exposed traitor / killed traitor / romance Ren</summary>
 
-> Afterwards you call her out from behind the mossy log. She comes slow, eyes enormous. She doesn't say anything about the blood. She walks the first half-mile and then her legs stop working and you carry her the rest.
+> The gate slides open to the squeal of rusted track.
 > 
-> By the time the gate slides open she's asleep on your shoulder. The guards look at you — bloodied, limping, small weight against your neck — and lower their rifles.
+> She's asleep on your shoulder now — small weight against your neck, a trace of blood drying in her hair that isn't hers. The guards look at you — bloodied, limping, the kid — and lower their rifles.
 
 </details>
 
 <details><summary>Variant: with Maya companion / romance Maya</summary>
 
-> Afterwards you call her out from behind the mossy log. She comes slow, eyes enormous. She doesn't say anything about the blood. She walks the first half-mile and then her legs stop working and you carry her the rest.
+> The gate slides open to the squeal of rusted track.
 > 
-> Maya walks three steps behind you the whole way, checking the treeline. She doesn't offer to carry the girl. She doesn't have to say it: this was the right call.
+> She's asleep on your shoulder now — small weight against your neck, a trace of blood drying in her hair that isn't hers. The guards look at you — bloodied, limping, the kid — and lower their rifles.
 > 
-> By the time the gate slides open she's asleep on your shoulder. The guards look at you — bloodied, limping, small weight against your neck — and lower their rifles.
+> Maya stands half a step behind you. She doesn't say anything. She doesn't have to.
 
 </details>
 

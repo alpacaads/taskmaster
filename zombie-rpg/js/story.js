@@ -428,7 +428,27 @@ window.Story = {
     choices: [
       { label: "Fight for your life", tag: "COMBAT", tagClass: "danger",
         effect: s => { s.flags.carriedNora = true; },
-        combat: { enemy: "bandit", onWin: "greenbelt_gate_hero", onLose: "death" } },
+        combat: { enemy: "bandit", onWin: "sacrifice_aftermath", onLose: "death" } },
+    ]
+  },
+
+  // Between the bandit combat and the camp gate: Nora comes out from
+  // behind the mossy log, you carry her the last half-mile. Own scene
+  // so the image stays in the pines and the gate_hero image arrives
+  // only when you actually reach the gate.
+  sacrifice_aftermath: {
+    scene: "sacrifice_aftermath",
+    sceneClass: "forest",
+    chapter: "Day 2 — After the Pines",
+    text: function(s) {
+      let base = "You call her out from behind the mossy log. She comes slow, eyes enormous. She doesn't say anything about the blood.\n\nShe walks the first half-mile and then her legs stop working. You pick her up. She weighs almost nothing.";
+      if (s.companion === "Maya") {
+        base += "\n\nMaya walks three steps behind you, checking the treeline. She doesn't offer to carry the girl. She doesn't have to say it: this was the right call.";
+      }
+      return base;
+    },
+    choices: [
+      { label: "Keep moving toward the Greenbelt.", next: "greenbelt_gate_hero" },
     ]
   },
 
@@ -536,11 +556,10 @@ window.Story = {
     sceneClass: "forest",
     chapter: "Day 3 — Greenbelt",
     text: function(s) {
-      let base = "Afterwards you call her out from behind the mossy log. She comes slow, eyes enormous. She doesn't say anything about the blood. She walks the first half-mile and then her legs stop working and you carry her the rest.";
+      let base = "The gate slides open to the squeal of rusted track.\n\nShe's asleep on your shoulder now — small weight against your neck, a trace of blood drying in her hair that isn't hers. The guards look at you — bloodied, limping, the kid — and lower their rifles.";
       if (s.companion === "Maya") {
-        base += "\n\nMaya walks three steps behind you the whole way, checking the treeline. She doesn't offer to carry the girl. She doesn't have to say it: this was the right call.";
+        base += "\n\nMaya stands half a step behind you. She doesn't say anything. She doesn't have to.";
       }
-      base += "\n\nBy the time the gate slides open she's asleep on your shoulder. The guards look at you — bloodied, limping, small weight against your neck — and lower their rifles.";
       return base;
     },
     choices: [
