@@ -218,6 +218,13 @@ html, body {
   overflow: hidden;
   flex-shrink: 0;
 }
+/* Character-introduction POV cards — taller portrait framing so the
+ * new face fills the screen. Cap at 62vh so narrative + choices still
+ * fit comfortably below on mobile. */
+.scene.portrait-card {
+  aspect-ratio: 4 / 5;
+  max-height: 62vh;
+}
 .scene-art {
   position: absolute;
   inset: 0;

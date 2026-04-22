@@ -114,6 +114,7 @@ window.Story = {
   meet_maya_card: {
     scene: "meet_maya_card",
     sceneClass: "night",
+    portraitCard: true,
     chapter: "Day 1 — Stairwell",
     text: "You raise the flashlight.\n\nMessy dark red hair, shoulder-length. A faded olive army jacket over a grey undershirt. There's a scar through one eyebrow she hasn't bothered to hide, and a hunting knife already on her belt.\n\nShe holds your beam without flinching. Waiting.",
     choices: [
@@ -270,6 +271,7 @@ window.Story = {
   meet_nora_card: {
     scene: "meet_nora_card",
     sceneClass: "indoor",
+    portraitCard: true,
     chapter: "Day 1 — Freezer",
     text: "You sweep the freezer.\n\nSomething small shifts behind a wall of tipped shelving.\n\nCopper-brown hair in a loose ponytail. An oversized grey hoodie. A kitchen knife far too big for the hand that's holding it. She can't be older than ten. Her breath fogs in the cold.\n\nHer eyes are huge, and they don't leave you.",
     choices: [
@@ -444,6 +446,7 @@ window.Story = {
   meet_vega_card: {
     scene: "meet_vega_card",
     sceneClass: "forest",
+    portraitCard: true,
     chapter: "Day 3 — Greenbelt",
     text: function(s) {
       if (s.flags.carriedNora) {
@@ -553,6 +556,7 @@ window.Story = {
   meet_ren_card: {
     scene: "meet_ren_card",
     sceneClass: "indoor",
+    portraitCard: true,
     chapter: "Day 3 — Medbay",
     text: "A hand gestures you toward a converted shipping container at the back of the camp. Inside smells of antiseptic and old coffee.\n\nShe's younger than you expected — mid-twenties, maybe. Messy dark brown hair tucked behind one ear. Warm brown eyes. Freckles. A small silver stethoscope around her neck. Grey medic's scrubs under a worn olive jacket.\n\nShe pulls up a metal stool and pats the cot beside her. Her smile is tired and very kind.\n\n\"Sit. Let me see.\"",
     choices: [

@@ -163,7 +163,10 @@ window.Game = (function () {
 
     // Update scene
     const sceneEl = document.getElementById("scene");
-    sceneEl.className = "scene " + (node.sceneClass || "");
+    const classes = ["scene"];
+    if (node.sceneClass) classes.push(node.sceneClass);
+    if (node.portraitCard) classes.push("portrait-card");
+    sceneEl.className = classes.join(" ");
     Sound.setAmbience(node.sceneClass || null);
 
     // Scene-entry sting

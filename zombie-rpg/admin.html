@@ -346,6 +346,10 @@
       flex-shrink: 0;
       cursor: pointer;
     }
+    .reader .scene.portrait-card {
+      aspect-ratio: 4 / 5;
+      max-height: 62vh;
+    }
     .reader .scene-art {
       position: absolute; inset: 0;
     }
@@ -898,12 +902,12 @@
   </footer>
 
   <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
-  <script src="js/overrides.js?v=158"></script>
-  <script src="js/scenes.js?v=158"></script>
+  <script src="js/overrides.js?v=159"></script>
+  <script src="js/scenes.js?v=159"></script>
   <!-- story.js is read-only here: we pull chapters / text / choices
        to annotate each scene card so the flow is legible without
        having to play through. -->
-  <script src="js/story.js?v=158"></script>
+  <script src="js/story.js?v=159"></script>
   <script>
     (async function () {
       const PROMPTS = (window.Scenes && window.Scenes.PROMPTS) || {};
@@ -1749,13 +1753,13 @@
               `</div>` +
             `</div>` +
             (imgSourceId
-              ? `<div class="scene" data-flow-id="${escapeText(imgSourceId)}">` +
+              ? `<div class="scene${node.portraitCard ? " portrait-card" : ""}" data-flow-id="${escapeText(imgSourceId)}">` +
                   (chapter ? `<div class="scene-chapter">${escapeText(chapter)}</div>` : "") +
                   `<div class="scene-art"><img alt="${escapeText(imgSourceId)}" /></div>` +
                   `<span class="reader-badge">${escapeText(badge)}</span>` +
                   `<input type="file" accept="image/*" hidden />` +
                 `</div>`
-              : `<div class="scene img-missing">` +
+              : `<div class="scene img-missing${node.portraitCard ? " portrait-card" : ""}">` +
                   (chapter ? `<div class="scene-chapter">${escapeText(chapter)}</div>` : "") +
                   `<div class="scene-art"></div>` +
                   `<span class="reader-badge">no card</span>` +
