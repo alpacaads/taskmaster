@@ -1028,6 +1028,7 @@ window.Story = {
       { label: "\"No. We all go. Together.\"",
         effect: s => {
           s.flags.vegaSaved = true;
+          s.flags.vegaSurvived = true;
           if (s.bonds) s.bonds.vega = (s.bonds.vega || 0) + 1;
           Game.toast("Vega's trust +1");
         },
@@ -1042,6 +1043,7 @@ window.Story = {
         effect: s => {
           s.flags.mayaSacrificed = true;
           s.flags.vegaSaved = true;
+          s.flags.vegaSurvived = true;
         },
         next: "post_horde_flee" },
       { label: "\"Ren. Stay with them. I'll find you.\"",
@@ -1049,6 +1051,7 @@ window.Story = {
         effect: s => {
           s.flags.renSacrificed = true;
           s.flags.vegaSaved = true;
+          s.flags.vegaSurvived = true;
         },
         next: "post_horde_flee" },
     ]
@@ -1059,6 +1062,9 @@ window.Story = {
     sceneClass: "blood",
     chapter: "Sunrise — After",
     text: function(s) {
+      // Vega stood the wall with you and lived through it. Mark her
+      // survival for any Part 2 carryover.
+      s.flags.vegaSurvived = true;
       if (s.romance === "maya" && s.flags.lovedMaya) {
         return "Maya finds you in the smoke, blood on her sleeve and most of it not hers. She presses her forehead to yours and breathes out — a long, shaking exhale. Alive. Both of you. Alive.";
       }
@@ -1187,8 +1193,11 @@ window.Story = {
       { label: "— THE END —", next: function(s) {
         if (s.flags.mayaSacrificed) return "ending_final_maya_fell";
         if (s.flags.renSacrificed)  return "ending_final_ren_fell";
-        if (s.flags.vegaStayedBehind && s.flags.gaveGrenade && !s.romance) return "ending_final_vega_caught_up";
-        if (s.flags.vegaStayedBehind && !s.flags.gaveGrenade && !s.romance) return "ending_final_vega_fell";
+        // Vega survived via the grenade → her own epilogue scene
+        // before the final card, on ANY romance path. Sets
+        // vegaSurvived for a Part 2 to pick up.
+        if (s.flags.vegaStayedBehind && s.flags.gaveGrenade) return "vega_epilogue";
+        if (s.flags.vegaStayedBehind && !s.romance) return "ending_final_vega_fell";
         return s.romance ? "ending_final_lovers_road" : "ending_final_escape";
       } },
     ]
@@ -1732,7 +1741,30 @@ window.Story = {
   ending_final_vega_fell:   { scene: "ending_final_vega_fell",  sceneClass: "blood", chapter: "Ending G — Captain Held", text: function(s) { return s.companion2 === "Nora" ? "She held the gate. Long enough for a kid to see another dawn.\n\nThanks for playing Dead Light." : "She held the gate. She held it long enough.\n\nThanks for playing Dead Light."; }, choices: [{ label: "Back to title", next: "__title__" }] },
   ending_final_maya_fell:   { scene: "ending_final_maya_fell",  sceneClass: "blood", chapter: "Ending H — She Stayed", text: "She stayed so you could walk. You keep walking.\n\nThanks for playing Dead Light.", choices: [{ label: "Back to title", next: "__title__" }] },
   ending_final_ren_fell:    { scene: "ending_final_ren_fell",   sceneClass: "blood", chapter: "Ending I — The Medbay Door", text: "She stayed with the ones who couldn't walk. You carry her song with you.\n\nThanks for playing Dead Light.", choices: [{ label: "Back to title", next: "__title__" }] },
-  ending_final_vega_caught_up: { scene: "ending_final_vega_caught_up", sceneClass: "forest", chapter: "Ending J — Smoke on the Road", text: "You gave her a pull-pin. She gave it back as a sunrise.\n\nThanks for playing Dead Light.", choices: [{ label: "Back to title", next: "__title__" }] },
+  // Epilogue (not a terminal ending) — fires between post_horde_flee
+  // and the final ending card when Vega survived via the grenade you
+  // gave her. Sets vegaSurvived flag so a Part 2 can carry it.
+  vega_epilogue: {
+    scene: "vega_epilogue",
+    sceneClass: "forest",
+    chapter: "Day 6 — First Camp",
+    speaker: "Captain Vega",
+    text: function(s) {
+      const romance = s.romance === "maya" ? "Maya" : s.romance === "ren" ? "Ren" : "";
+      let base = "The column makes camp at dusk in a dry gully. Small fires, no arguments about them. First time in a week anyone's been warm.\n\nVega plants her rifle butt in the dirt and sits down beside your fire — not across from it. A bandolier of empty shells across her chest. A graze above one eye she hasn't bothered to clean.\n\nShe hands you a battered flask.\n\n\"For the one who made it.\"\n\nYou drink. It's whiskey and kerosene and something that was almost coffee once. She watches the treeline the whole time. Never stops watching.";
+      if (romance) {
+        base += `\n\n${romance} squeezes your shoulder as she passes. Doesn't say anything. Doesn't need to.`;
+      }
+      return base;
+    },
+    choices: [
+      { label: "Raise the flask. Dawn can wait.",
+        effect: s => { s.flags.vegaSurvived = true; },
+        next: function(s) {
+          return s.romance ? "ending_final_lovers_road" : "ending_final_escape";
+        } },
+    ]
+  },
 
   death: {
     art: "💀",

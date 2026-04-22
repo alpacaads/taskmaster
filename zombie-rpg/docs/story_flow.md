@@ -75,7 +75,7 @@ One section per story node, in definition order. Function-branching fields (text
 - [`ending_final_vega_fell`](#ending_final_vega_fell) — Ending G — Captain Held
 - [`ending_final_maya_fell`](#ending_final_maya_fell) — Ending H — She Stayed
 - [`ending_final_ren_fell`](#ending_final_ren_fell) — Ending I — The Medbay Door
-- [`ending_final_vega_caught_up`](#ending_final_vega_caught_up) — Ending J — Smoke on the Road
+- [`vega_epilogue`](#vega_epilogue) — Day 6 — First Camp
 - [`death`](#death) — You Died
 
 ---
@@ -1205,16 +1205,16 @@ One section per story node, in definition order. Function-branching fields (text
 **Choices:**
 
 1. **"No. We all go. Together."**
-   - _effect:_ `s => { s.flags.vegaSaved = true; if (s.bonds) s.bonds.vega = (s.bonds.vega || 0) + 1; Game.toast("Vega's trust +1"); }`
+   - _effect:_ `s => { s.flags.vegaSaved = true; s.flags.vegaSurvived = true; if (s.bonds) s.bonds.vega = (s.bonds.vega || 0) + 1; Game.toast("Vega's trust +1"); }`
    - → `post_horde_flee`
 2. **"Go, Vega. We'll see you on the road."**
    - _effect:_ `s => { s.flags.vegaStayedBehind = true; }`
    - → `post_horde_flee`
 3. **"Maya. Come back to me."** _require:_ `s => (s.companion === "Maya" || s.flags.maya) && s.romance === "maya" && s.flags.lovedMaya`
-   - _effect:_ `s => { s.flags.mayaSacrificed = true; s.flags.vegaSaved = true; }`
+   - _effect:_ `s => { s.flags.mayaSacrificed = true; s.flags.vegaSaved = true; s.flags.vegaSurvived = true; }`
    - → `post_horde_flee`
 4. **"Ren. Stay with them. I'll find you."** _require:_ `s => s.romance === "ren" && s.flags.lovedRen`
-   - _effect:_ `s => { s.flags.renSacrificed = true; s.flags.vegaSaved = true; }`
+   - _effect:_ `s => { s.flags.renSacrificed = true; s.flags.vegaSaved = true; s.flags.vegaSurvived = true; }`
    - → `post_horde_flee`
 
 ---
@@ -2147,18 +2147,62 @@ One section per story node, in definition order. Function-branching fields (text
 
 ---
 
-## <a id="ending_final_vega_caught_up"></a>`ending_final_vega_caught_up`
-**Chapter:** Ending J — Smoke on the Road  
-**Scene art:** `ending_final_vega_caught_up`  
+## <a id="vega_epilogue"></a>`vega_epilogue`
+**Chapter:** Day 6 — First Camp  
+**Scene art:** `vega_epilogue`  
+**Speaker:** Captain Vega  
 
-> You gave her a pull-pin. She gave it back as a sunrise.
+<details><summary>Variant: default / with Maya companion / mission partner = maya / mission partner = ren / solo mission / saved Nora / bring Nora on mission / rested in car / told Vega / chore: medbay / chore: perimeter / chore: kitchen / exposed traitor / killed traitor</summary>
+
+> The column makes camp at dusk in a dry gully. Small fires, no arguments about them. First time in a week anyone's been warm.
 > 
-> Thanks for playing Dead Light.
+> Vega plants her rifle butt in the dirt and sits down beside your fire — not across from it. A bandolier of empty shells across her chest. A graze above one eye she hasn't bothered to clean.
+> 
+> She hands you a battered flask.
+> 
+> "For the one who made it."
+> 
+> You drink. It's whiskey and kerosene and something that was almost coffee once. She watches the treeline the whole time. Never stops watching.
+
+</details>
+
+<details><summary>Variant: romance Maya</summary>
+
+> The column makes camp at dusk in a dry gully. Small fires, no arguments about them. First time in a week anyone's been warm.
+> 
+> Vega plants her rifle butt in the dirt and sits down beside your fire — not across from it. A bandolier of empty shells across her chest. A graze above one eye she hasn't bothered to clean.
+> 
+> She hands you a battered flask.
+> 
+> "For the one who made it."
+> 
+> You drink. It's whiskey and kerosene and something that was almost coffee once. She watches the treeline the whole time. Never stops watching.
+> 
+> Maya squeezes your shoulder as she passes. Doesn't say anything. Doesn't need to.
+
+</details>
+
+<details><summary>Variant: romance Ren</summary>
+
+> The column makes camp at dusk in a dry gully. Small fires, no arguments about them. First time in a week anyone's been warm.
+> 
+> Vega plants her rifle butt in the dirt and sits down beside your fire — not across from it. A bandolier of empty shells across her chest. A graze above one eye she hasn't bothered to clean.
+> 
+> She hands you a battered flask.
+> 
+> "For the one who made it."
+> 
+> You drink. It's whiskey and kerosene and something that was almost coffee once. She watches the treeline the whole time. Never stops watching.
+> 
+> Ren squeezes your shoulder as she passes. Doesn't say anything. Doesn't need to.
+
+</details>
 
 **Choices:**
 
-1. **Back to title**
-   - → `__title__`
+1. **Raise the flask. Dawn can wait.**
+   - _effect:_ `s => { s.flags.vegaSurvived = true; }`
+   - → function targets: `ending_final_escape`, `ending_final_lovers_road`
 
 ---
 
