@@ -351,6 +351,15 @@ window.Game = (function () {
     if (hpFill)   hpFill.style.width = hpPct + "%";
     const stamFill = document.getElementById("stat-stam-fill");
     if (stamFill) stamFill.style.width = stamPct + "%";
+    const dbg = document.getElementById("hud-bond-debug");
+    if (dbg && state.bonds) {
+      const b = state.bonds;
+      const flags = state.flags || {};
+      const tags = [];
+      if (flags.committedMaya) tags.push("cMaya");
+      if (flags.committedRen)  tags.push("cRen");
+      dbg.textContent = `M:${b.maya||0}/5  R:${b.ren||0}/4  V:${b.vega||0}/3` + (tags.length ? "  · " + tags.join(" ") : "");
+    }
   }
 
   function toggleMute() {
