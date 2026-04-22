@@ -478,7 +478,17 @@ window.Story = {
       return base;
     },
     choices: [
-      { label: "Keep moving toward the Greenbelt.", next: "greenbelt_gate_hero" },
+      { label: "Keep moving toward the Greenbelt.",
+        effect: s => {
+          // Carrying Nora, one-handed pocket-grab. You still pick up
+          // the shotgun (sling it across your back) and shells, but
+          // no time to rifle supplies.
+          s.flags.killedBandits = true;
+          Game.giveWeapon({ name: "Bandit Shotgun", bonus: 2, slot: "ranged" });
+          s.ammo += 4;
+          Game.toast("+4 🔫 · Bandit Shotgun slung across your back");
+        },
+        next: "greenbelt_gate_hero" },
     ]
   },
 
@@ -505,9 +515,16 @@ window.Story = {
     choices: [
       { label: "Loot and move on",
         effect: s => {
-          s.ammo += 4; s.flags.killedBandits = true;
+          // Two armed humans = real reward. Take the better bandit's
+          // shotgun (+2 ranged — upgrade from the .38 if you looted
+          // Cho's), shells, jerky, spare consumable. This is the main
+          // loadout jump before the Greenbelt.
+          s.flags.killedBandits = true;
+          Game.giveWeapon({ name: "Bandit Shotgun", bonus: 2, slot: "ranged" });
+          s.ammo += 6;
           Game.giveRandomItem();
-          Game.toast("+4 🔫");
+          Game.giveRandomItem();
+          Game.toast("+6 🔫 · Bandit Shotgun equipped");
         },
         next: "greenbelt_gate" },
     ]

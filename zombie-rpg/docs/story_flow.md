@@ -496,7 +496,7 @@ One section per story node, in definition order. Function-branching fields (text
 **Choices:**
 
 1. **Drop the bag. Live to fight another day.**
-   - _effect:_ `s => { // Bandits take the bag. That means the gun, the rounds, and // the consumables — everything you weren't physically wearing // or holding. Crowbar/melee stays (you were swinging it); the // riot vest stays (it's on your body). const lost = []; if (s.bestRanged) { lost.push(s.bestRanged.name); s.bestRanged = null; } if (s.ammo > 0) { lost.push(`${s.ammo} rounds`); s.ammo = 0; } const keep = (s.inventory || []).filter(it => it && it.armor); const dropped = (s.inventory || []).filter(it => it && !it.armor); if (dropped.length) lost.push(`${dropped.length} supplies`); s.inventory = keep; Game.toast(lost.length ? `They take: ${lost.join(" · ")}` : "They wave you through"); }`
+   - _effect:_ `s => { // Bandits take the bag AND the bigger weapon. You're reduced // to the pocket knife you started Day 1 with. Armor stays — // it's on your body, not in the bag. const lost = []; if (s.bestRanged) { lost.push(s.bestRanged.name); s.bestRanged = null; } if (s.ammo > 0) { lost.push(`${s.ammo} rounds`); s.ammo = 0; } if (s.bestMelee && s.bestMelee.name !== "Pocket Knife") { lost.push(s.bestMelee.name); s.bestMelee = { name: "Pocket Knife", bonus: 0, slot: "melee" }; } const keep = (s.inventory || []).filter(it => it && it.armor); const dropped = (s.inventory || []).filter(it => it && !it.armor); if (dropped.length) lost.push(`${dropped.length} supplies`); s.inventory = keep; Game.toast(lost.length ? `They take: ${lost.join(" · ")}` : "They wave you through"); }`
    - → `after_ambush_mercy`
 2. **Fight — you need these supplies** `COMBAT`
    - ⚔ combat _(default, mission partner = maya, mission partner = ren, solo mission, saved Nora, bring Nora on mission, told Vega, chore: medbay, chore: perimeter, chore: kitchen, exposed traitor, killed traitor, romance Ren)_: enemy `bandit_pair` · risky → win `after_ambush_fight` / lose `death`
@@ -569,6 +569,7 @@ One section per story node, in definition order. Function-branching fields (text
 **Choices:**
 
 1. **Keep moving toward the Greenbelt.**
+   - _effect:_ `s => { // Carrying Nora, one-handed pocket-grab. You still pick up // the shotgun (sling it across your back) and shells, but // no time to rifle supplies. s.flags.killedBandits = true; Game.giveWeapon({ name: "Bandit Shotgun", bonus: 2, slot: "ranged" }); s.ammo += 4; Game.toast("+4 🔫 · Bandit Shotgun slung across your back"); }`
    - → `greenbelt_gate_hero`
 
 ---
@@ -609,7 +610,7 @@ One section per story node, in definition order. Function-branching fields (text
 **Choices:**
 
 1. **Loot and move on**
-   - _effect:_ `s => { s.ammo += 4; s.flags.killedBandits = true; Game.giveRandomItem(); Game.toast("+4 🔫"); }`
+   - _effect:_ `s => { // Two armed humans = real reward. Take the better bandit's // shotgun (+2 ranged — upgrade from the .38 if you looted // Cho's), shells, jerky, spare consumable. This is the main // loadout jump before the Greenbelt. s.flags.killedBandits = true; Game.giveWeapon({ name: "Bandit Shotgun", bonus: 2, slot: "ranged" }); s.ammo += 6; Game.giveRandomItem(); Game.giveRandomItem(); Game.toast("+6 🔫 · Bandit Shotgun equipped"); }`
    - → `greenbelt_gate`
 
 ---

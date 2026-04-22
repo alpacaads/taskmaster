@@ -68,6 +68,15 @@ window.Combat = (function () {
       { chance: 1.0,  kind: "ammo", n: 2 },
       { chance: 0.45, kind: "item" },
     ],
+    // Two-bandit kill. Main story reward (shotgun + ammo + items) is
+    // granted by the after-combat scene (after_ambush_fight /
+    // sacrifice_aftermath). This table is a fallback safety net for
+    // any future config that jumps straight to a node without its
+    // own reward effect.
+    bandit_pair: [
+      { chance: 1.0,  kind: "ammo", n: 3 },
+      { chance: 0.5,  kind: "item" },
+    ],
     traitor: [
       { chance: 1.0, kind: "ammo", n: 4 },
       { chance: 1.0, kind: "item" },
