@@ -10,7 +10,7 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <title>Dead Light — A Zombie RPG</title>
-  <link rel="stylesheet" href="css/style.css?v=174" />
+  <link rel="stylesheet" href="css/style.css?v=175" />
 </head>
 <body>
 
@@ -20,7 +20,7 @@
     <div id="title-screen" class="screen">
       <div class="title-bg">
         <img class="title-image" id="title-image" alt=""
-             src="images/title.jpg?v=174"
+             src="images/title.jpg?v=175"
              onerror="this.closest('.title-bg').classList.add('no-image')" />
         <div class="title-vignette"></div>
       </div>
@@ -87,6 +87,7 @@
       <div class="combat-slug">
         <span id="combat-chapter">CONTACT</span>
         <span class="combat-state">HOSTILE</span>
+        <button class="icon-btn combat-inv-btn" onclick="Game.openInventory()" title="Inventory">🎒</button>
       </div>
 
       <div class="combat-enemy" id="combat-enemy">
@@ -136,15 +137,6 @@
           </svg>
           <span class="label">Fire</span>
         </button>
-        <button class="combat-btn" id="combat-btn-grenade" onclick="Combat.act('grenade')" hidden>
-          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-            <circle cx="11" cy="14" r="6"/>
-            <path d="M14 9l2-2"/>
-            <path d="M14 4l3 3"/>
-            <path d="M13 4l2 2"/>
-          </svg>
-          <span class="label">Grenade <b id="combat-btn-grenade-count"></b></span>
-        </button>
         <button class="combat-btn" onclick="Combat.act('brace')">
           <svg class="icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
             <path d="M12 2l9 4v6c0 5.5-4 10-9 12-5-2-9-6.5-9-12V6l9-4z"/>
@@ -192,11 +184,11 @@
 
   </div>
 
-  <script src="js/sound.js?v=174"></script>
-  <script src="js/overrides.js?v=174"></script>
-  <script src="js/scenes.js?v=174"></script>
-  <script src="js/story.js?v=174"></script>
-  <script src="js/combat.js?v=174"></script>
-  <script src="js/game.js?v=174"></script>
+  <script src="js/sound.js?v=175"></script>
+  <script src="js/overrides.js?v=175"></script>
+  <script src="js/scenes.js?v=175"></script>
+  <script src="js/story.js?v=175"></script>
+  <script src="js/combat.js?v=175"></script>
+  <script src="js/game.js?v=175"></script>
 </body>
 </html>

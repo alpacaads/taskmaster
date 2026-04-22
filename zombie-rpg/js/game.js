@@ -70,6 +70,18 @@ window.Game = (function () {
     const idx = state.inventory.findIndex(i => i.id === id);
     if (idx < 0) return;
     const it = state.inventory[idx];
+    // Grenade — combat-only. Out of combat, refuse gracefully; in
+    // combat, delegate to Combat.throwGrenade which handles damage,
+    // the explosion log line, and the hostile follow-up turn.
+    if (it.grenade) {
+      const inCombat = window.Combat && window.Combat.isActive && window.Combat.isActive();
+      if (!inCombat) { toast("Save it for when it counts."); return; }
+      it.qty = (it.qty || 1) - 1;
+      if (it.qty <= 0) state.inventory.splice(idx, 1);
+      closeInventory();
+      Combat.throwGrenade();
+      return;
+    }
     let applied = false;
     if (it.heal && state.hp < state.hpMax) {
       state.hp = Math.min(state.hpMax, state.hp + it.heal);
@@ -428,9 +440,12 @@ window.Game = (function () {
       const row = document.createElement("div");
       row.className = "inv-item";
       const consumable = !it.readonly && (it.heal || it.stam || it.stamRefill);
-      const label = consumable
-        ? `<button class="inv-use" data-id="${escapeHtml(it.id)}">Use</button>`
-        : `<span class="qty">${escapeHtml(String(it.qty ?? 1))}</span>`;
+      const grenade = !it.readonly && it.grenade;
+      const label = grenade
+        ? `<button class="inv-use" data-id="${escapeHtml(it.id)}">Throw</button>`
+        : consumable
+          ? `<button class="inv-use" data-id="${escapeHtml(it.id)}">Use</button>`
+          : `<span class="qty">${escapeHtml(String(it.qty ?? 1))}</span>`;
       const desc = it.desc ? `<div class="inv-desc">${escapeHtml(it.desc)}</div>` : "";
       row.innerHTML =
         `<div class="inv-main">

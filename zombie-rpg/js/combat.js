@@ -440,22 +440,34 @@ window.Combat = (function () {
     logEl.scrollTop = logEl.scrollHeight;
   }
 
-  // Grenade combat button — show / hide + count — based on inventory.
-  function refreshGrenadeBtn() {
-    const btn = document.getElementById("combat-btn-grenade");
-    const countEl = document.getElementById("combat-btn-grenade-count");
-    if (!btn) return;
-    const inv = Game.state && Game.state.inventory || [];
-    let count = 0;
-    inv.forEach(it => {
-      if (it && it.grenade) count += it.qty || 1;
-    });
-    if (count > 0) {
-      btn.hidden = false;
-      if (countEl) countEl.textContent = count > 1 ? "×" + count : "";
-    } else {
-      btn.hidden = true;
+  // Throw a grenade at the current enemy. Called from the inventory
+  // modal's Use button when a combat is active. Caller is responsible
+  // for only firing this when state is live — Game.inCombat gates it.
+  function throwGrenade() {
+    if (!state || state.enemy.hp <= 0) return;
+    state.counterReady = false;
+    const dmg = rand(7, 9);
+    state.enemy.hp -= dmg;
+    log(`You pull the pin. The grenade lands at their feet — BOOM. ${dmg} damage.`, "crit");
+    Sound.play("gunshot");
+    gunFlash();
+    spawnMark("slashCrit");
+    floatDamage(dmg);
+    hitFlash();
+    screenShake();
+    refreshHud();
+    updateEnemyHp();
+    checkEngagementFlip();
+    if (state.enemy.hp <= 0) {
+      log(`${state.enemy.name} falls.`, "crit");
+      Sound.play("victory");
+      applyLoot(state.enemyId);
+      setTimeout(() => end("win"), 950);
+      return;
     }
+    // Grenade still triggers a hostile turn — they're shooting through
+    // the smoke — same cadence as the removed act('grenade') branch.
+    setTimeout(enemyTurn, 600);
   }
 
   function refreshHud() {
@@ -470,7 +482,6 @@ window.Combat = (function () {
     const stamFill = document.getElementById("c-stam-fill");
     if (hpFill)   hpFill.style.width   = hpPct + "%";
     if (stamFill) stamFill.style.width = stamPct + "%";
-    refreshGrenadeBtn();
   }
 
   function updateEnemyHp() {
@@ -582,28 +593,6 @@ window.Combat = (function () {
         hitFlash();
         spawnMark("hit");
       }
-    }
-    else if (action === "grenade") {
-      // One-time-use. Rifles through inventory, pulls the pin, throws.
-      // Big damage, no hit-chance roll, eats the item. Still triggers
-      // a hostile turn after — they're shooting back through the smoke.
-      const inv = s.inventory || [];
-      const gi = inv.findIndex(it => it && it.grenade && (it.qty === undefined || it.qty > 0));
-      if (gi < 0) { Game.toast("No grenade"); return; }
-      state.counterReady = false;
-      const g = inv[gi];
-      if (g.qty && g.qty > 1) g.qty -= 1;
-      else inv.splice(gi, 1);
-      const dmg = rand(7, 9);
-      state.enemy.hp -= dmg;
-      log(`You pull the pin. The grenade lands at their feet — BOOM. ${dmg} damage.`, "crit");
-      Sound.play("gunshot");
-      gunFlash();
-      spawnMark("slashCrit");
-      floatDamage(dmg);
-      hitFlash();
-      screenShake();
-      refreshHud();
     }
     else if (action === "brace") {
       state.counterReady = false;
@@ -1097,5 +1086,10 @@ window.Combat = (function () {
     }, linger);
   }
 
-  return { start, act };
+  return {
+    start, act, throwGrenade,
+    // Is a combat instance currently active? Used by the inventory
+    // modal's grenade-Use button to gate the throw.
+    isActive: () => !!(state && state.enemy && state.enemy.hp > 0),
+  };
 })();
