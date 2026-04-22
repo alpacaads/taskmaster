@@ -324,13 +324,12 @@ window.Combat = (function () {
       : [];
     const engagedSet = {};
     engagedAllies.forEach(a => { engagedSet[a] = true; });
-    // Pair fights flip at half HP regardless — either an ally's
-    // bandit falls (ally-freed flip) or Ellis drops one himself
-    // (solo flip, which just turns the +1 cross-fire damage off).
-    const isPair = def.pack === true && def.human === true;
+    // Flip only fires when an ally was engaged — the narrative beat
+    // is 'ally finishes her bandit and rejoins.' Solo players face
+    // the pair's full pressure the whole fight; no artificial midpoint.
     const engagementFlipAt = typeof config.engagementFlipAt === "number"
       ? config.engagementFlipAt
-      : ((engagedAllies.length || isPair) ? Math.ceil(hp / 2) : 0);
+      : (engagedAllies.length ? Math.ceil(hp / 2) : 0);
 
     state = {
       enemy: { ...def, hp, maxHp: hp, atk },
@@ -899,32 +898,27 @@ window.Combat = (function () {
   function checkEngagementFlip() {
     if (!state || state.engagementLifted) return;
     if (!state.engagementFlipAt) return;
+    if (!state.engagedInitial || !state.engagedInitial.length) return;
     if (state.enemy.hp > state.engagementFlipAt) return;
     state.engagementLifted = true;
-    const freed = (state.engagedInitial || []).slice();
-    if (freed.length) {
-      // Ally-freed flip — she dropped her bandit.
-      state.engaged = {};
-      // Grace cooldown so they don't fire on the same tick.
-      freed.forEach(a => {
-        if (a === "maya") state.mayaCd = Math.max(state.mayaCd || 0, 1);
-        if (a === "ren")  state.renCd  = Math.max(state.renCd  || 0, 1);
-        if (a === "vega") state.vegaCd = Math.max(state.vegaCd || 0, 1);
-        if (a === "nora") state.noraCd = Math.max(state.noraCd || 0, 1);
-      });
-      const who = freed.map(a =>
-        a === "maya" ? "Maya" :
-        a === "ren"  ? "Ren"  :
-        a === "vega" ? "Vega" :
-        a === "nora" ? "Nora" : a
-      ).join(" and ");
-      log(`${who} drops her bandit — swings back to yours.`, "crit");
-      renderAllies();
-    } else {
-      // Solo flip — you dropped one yourself. Cross-fire damage bump
-      // turns off for the rest of the fight.
-      log(`One of them goes down. The other pivots — everything on you now.`, "crit");
-    }
+    const freed = state.engagedInitial.slice();
+    // Clear the engagement so companionTurn starts picking them back up.
+    state.engaged = {};
+    // Grace cooldown so they don't fire on the same tick the flip happens.
+    freed.forEach(a => {
+      if (a === "maya") state.mayaCd = Math.max(state.mayaCd || 0, 1);
+      if (a === "ren")  state.renCd  = Math.max(state.renCd  || 0, 1);
+      if (a === "vega") state.vegaCd = Math.max(state.vegaCd || 0, 1);
+      if (a === "nora") state.noraCd = Math.max(state.noraCd || 0, 1);
+    });
+    const who = freed.map(a =>
+      a === "maya" ? "Maya" :
+      a === "ren"  ? "Ren"  :
+      a === "vega" ? "Vega" :
+      a === "nora" ? "Nora" : a
+    ).join(" and ");
+    log(`${who} drops her bandit — swings back to yours.`, "crit");
+    renderAllies();
   }
 
   // ---------- companion turn ----------
