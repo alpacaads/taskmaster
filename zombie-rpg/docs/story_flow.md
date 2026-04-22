@@ -442,7 +442,7 @@ One section per story node, in definition order. Function-branching fields (text
 
 <details><summary>Variant: default / mission partner = maya / mission partner = ren / solo mission / saved Nora / bring Nora on mission / rested in car / told Vega / chore: medbay / chore: perimeter / chore: kitchen / exposed traitor / killed traitor / romance Ren</summary>
 
-> The girl's name is Nora. She's quiet for hours, then: "My dad said there's people at the Greenbelt. Soldiers. Good ones."
+> Nora is quiet for hours. Then, small: "My dad said there's people at the Greenbelt. Soldiers. Good ones."
 > 
 > She slips her hand into yours.
 
@@ -450,11 +450,11 @@ One section per story node, in definition order. Function-branching fields (text
 
 <details><summary>Variant: with Maya companion / romance Maya</summary>
 
-> The girl's name is Nora. She's quiet for hours, keeping pace between you and Maya. When she speaks, it's to Maya — to the rifle across her back.
+> Nora is quiet for hours, keeping pace between you and Maya. When she finally speaks, it's to Maya — to the rifle across her back.
 > 
 > "My dad said there's people at the Greenbelt. Soldiers. Good ones."
 > 
-> Maya nods without smiling. The girl slips her hand into yours anyway.
+> Maya nods without smiling. Nora slips her hand into yours anyway.
 
 </details>
 

@@ -362,9 +362,9 @@ window.Story = {
     speaker: "Nora",
     text: function(s) {
       if (s.companion === "Maya") {
-        return "The girl's name is Nora. She's quiet for hours, keeping pace between you and Maya. When she speaks, it's to Maya — to the rifle across her back.\n\n\"My dad said there's people at the Greenbelt. Soldiers. Good ones.\"\n\nMaya nods without smiling. The girl slips her hand into yours anyway.";
+        return "Nora is quiet for hours, keeping pace between you and Maya. When she finally speaks, it's to Maya — to the rifle across her back.\n\n\"My dad said there's people at the Greenbelt. Soldiers. Good ones.\"\n\nMaya nods without smiling. Nora slips her hand into yours anyway.";
       }
-      return "The girl's name is Nora. She's quiet for hours, then: \"My dad said there's people at the Greenbelt. Soldiers. Good ones.\"\n\nShe slips her hand into yours.";
+      return "Nora is quiet for hours. Then, small: \"My dad said there's people at the Greenbelt. Soldiers. Good ones.\"\n\nShe slips her hand into yours.";
     },
     choices: [
       { label: "\"Then that's where we go.\"", next: "ambush" },
