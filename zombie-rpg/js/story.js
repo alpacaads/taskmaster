@@ -816,14 +816,33 @@ window.Story = {
     sceneClass: "forest",
     chapter: "Day 4 — Perimeter",
     speaker: "Maya",
-    text: "Maya climbs the watchtower like she was born there. You hand up coffee. She drinks it without taking her eyes off the treeline.\n\n\"My brother used to do this watch with me. Before.\" She doesn't look at you. \"Six months. Feels like six years.\"\n\nThe wind moves through the pines. She's closer than she needs to be.",
+    text: "Maya climbs the watchtower like she was born there. You hand up coffee. She drinks it without taking her eyes off the treeline.\n\n\"Me and my brother used to pull watch like this,\" she says. \"Different fence. Different pines. Same air.\" She doesn't look at you. \"Six months. Feels like six years.\"\n\nThe wind moves through the pines. She's closer than she needs to be.",
     choices: [
       { label: "\"Tell me about your brother.\"",
-        effect: s => { s.bonds.maya += 2; Game.toast("Maya's trust +2"); },
-        next: "chore_done" },
+        effect: s => {
+          s.bonds.maya += 2;
+          s.flags.mayaToldBrother = true;
+          Game.toast("Maya's trust +2");
+        },
+        next: "chore_perimeter_brother" },
       { label: "Stand watch in silence. Some things don't need words.",
         effect: s => { s.bonds.maya += 1; },
         next: "chore_done" },
+    ]
+  },
+
+  // A brief follow-up when you ask about her brother — gives the line
+  // some ground under it. Stays in the watchtower; continues to the
+  // briefing afterwards.
+  chore_perimeter_brother: {
+    scene: "perimeter",
+    sceneClass: "forest",
+    chapter: "Day 4 — Perimeter",
+    speaker: "Maya",
+    text: "She doesn't turn, but her shoulders let go a half-inch.\n\n\"Two years older. We were both Guard — weekend-warrior stuff, mostly. Flood duty. A hurricane, once. Fire season in the back country.\" A pause. \"When it started, he was on a call up north. I drove out to meet him. Got to the roadblock too late.\"\n\nThe treeline moves. She's already scanning it again.\n\n\"He'd have liked you. He liked people who didn't look away.\"",
+    choices: [
+      { label: "\"I'm glad you're still pulling watch.\"", next: "chore_done" },
+      { label: "Let the quiet do the rest of the work.", next: "chore_done" },
     ]
   },
 

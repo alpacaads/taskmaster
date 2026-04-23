@@ -44,6 +44,7 @@ One section per story node, in definition order. Function-branching fields (text
 - [`camp_morning`](#camp_morning) — Day 4 — Morning
 - [`chore_medbay`](#chore_medbay) — Day 4 — Medbay
 - [`chore_perimeter`](#chore_perimeter) — Day 4 — Perimeter
+- [`chore_perimeter_brother`](#chore_perimeter_brother) — Day 4 — Perimeter
 - [`chore_kitchen`](#chore_kitchen) — Day 4 — Kitchen
 - [`chore_done`](#chore_done) — Day 4 — Briefing
 - [`nora_asks`](#nora_asks) — Day 4 — Camp gate
@@ -915,17 +916,39 @@ One section per story node, in definition order. Function-branching fields (text
 
 > Maya climbs the watchtower like she was born there. You hand up coffee. She drinks it without taking her eyes off the treeline.
 > 
-> "My brother used to do this watch with me. Before." She doesn't look at you. "Six months. Feels like six years."
+> "Me and my brother used to pull watch like this," she says. "Different fence. Different pines. Same air." She doesn't look at you. "Six months. Feels like six years."
 > 
 > The wind moves through the pines. She's closer than she needs to be.
 
 **Choices:**
 
 1. **"Tell me about your brother."**
-   - _effect:_ `s => { s.bonds.maya += 2; Game.toast("Maya's trust +2"); }`
-   - → `chore_done`
+   - _effect:_ `s => { s.bonds.maya += 2; s.flags.mayaToldBrother = true; Game.toast("Maya's trust +2"); }`
+   - → `chore_perimeter_brother`
 2. **Stand watch in silence. Some things don't need words.**
    - _effect:_ `s => { s.bonds.maya += 1; }`
+   - → `chore_done`
+
+---
+
+## <a id="chore_perimeter_brother"></a>`chore_perimeter_brother`
+**Chapter:** Day 4 — Perimeter  
+**Scene art:** `perimeter`  
+**Speaker:** Maya  
+
+> She doesn't turn, but her shoulders let go a half-inch.
+> 
+> "Two years older. We were both Guard — weekend-warrior stuff, mostly. Flood duty. A hurricane, once. Fire season in the back country." A pause. "When it started, he was on a call up north. I drove out to meet him. Got to the roadblock too late."
+> 
+> The treeline moves. She's already scanning it again.
+> 
+> "He'd have liked you. He liked people who didn't look away."
+
+**Choices:**
+
+1. **"I'm glad you're still pulling watch."**
+   - → `chore_done`
+2. **Let the quiet do the rest of the work.**
    - → `chore_done`
 
 ---
