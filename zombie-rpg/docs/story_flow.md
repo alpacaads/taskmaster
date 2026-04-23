@@ -30,6 +30,7 @@ One section per story node, in definition order. Function-branching fields (text
 - [`road_out_child`](#road_out_child) — Day 2 — The Road
 - [`ambush`](#ambush) — Day 2 — The Pines
 - [`sacrifice_intro`](#sacrifice_intro) — Day 2 — The Pines
+- [`sacrifice_loot`](#sacrifice_loot) — Day 2 — After the Fight
 - [`sacrifice_aftermath`](#sacrifice_aftermath) — Day 2 — After the Pines
 - [`after_ambush_mercy`](#after_ambush_mercy) — Day 2 — The Pines
 - [`after_ambush_fight`](#after_ambush_fight) — Day 2 — The Pines
@@ -540,8 +541,42 @@ One section per story node, in definition order. Function-branching fields (text
 
 1. **Fight for your life** `COMBAT`
    - _effect:_ `s => { s.flags.carriedNora = true; }`
-   - ⚔ combat _(default, mission partner = maya, mission partner = ren, solo mission, saved Nora, bring Nora on mission, rested in car, told Vega, chore: medbay, chore: perimeter, chore: kitchen, exposed traitor, killed traitor, romance Ren)_: enemy `bandit_pair` → win `sacrifice_aftermath` / lose `death`
-   - ⚔ combat _(with Maya companion, romance Maya)_: enemy `bandit_pair` → win `sacrifice_aftermath` / lose `death`
+   - ⚔ combat _(default, mission partner = maya, mission partner = ren, solo mission, saved Nora, bring Nora on mission, rested in car, told Vega, chore: medbay, chore: perimeter, chore: kitchen, exposed traitor, killed traitor, romance Ren)_: enemy `bandit_pair` → win `sacrifice_loot` / lose `death`
+   - ⚔ combat _(with Maya companion, romance Maya)_: enemy `bandit_pair` → win `sacrifice_loot` / lose `death`
+
+---
+
+## <a id="sacrifice_loot"></a>`sacrifice_loot`
+**Chapter:** Day 2 — After the Fight  
+**Scene art:** `sacrifice_loot`  
+
+<details><summary>Variant: default / mission partner = maya / mission partner = ren / solo mission / saved Nora / bring Nora on mission / rested in car / told Vega / chore: medbay / chore: perimeter / chore: kitchen / exposed traitor / killed traitor / romance Ren</summary>
+
+> The pines go quiet before your breath does. Two bodies. Both of theirs. You stand over the bigger one a long moment — long enough to feel your hands shake — then go to a knee and start patting him down.
+> 
+> A spare magazine. A handful of shells. A battered tin box. And on his webbing — clipped tight, pin still in — a military-issue fragmentation grenade. You unclip it carefully, wrap your fingers around the lever, and let out a long, thin breath.
+> 
+> You slide the grenade onto your own belt.
+
+</details>
+
+<details><summary>Variant: with Maya companion / romance Maya</summary>
+
+> The pines go quiet before your breath does. Two bodies. Both of theirs. You stand over the bigger one a long moment — long enough to feel your hands shake — then go to a knee and start patting him down.
+> 
+> Maya keeps her rifle up, scanning. She doesn't help. She doesn't need to say why.
+> 
+> A spare magazine. A handful of shells. A battered tin box. And on his webbing — clipped tight, pin still in — a military-issue fragmentation grenade. You unclip it carefully, wrap your fingers around the lever, and let out a long, thin breath.
+> 
+> You slide the grenade onto your own belt.
+
+</details>
+
+**Choices:**
+
+1. **Stand up. Call for Nora.**
+   - _effect:_ `s => { s.flags.killedBandits = true; s.ammo += 4; s.inventory = s.inventory || []; const existing = s.inventory.find(i => i && i.grenade); if (existing) existing.qty = (existing.qty || 1) + 1; else s.inventory.push({ id: "grenade", name: "🧨 Grenade", desc: "One-time combat throw. Big damage.", grenade: true, qty: 1, }); Game.toast("+4 🔫 · 🧨 Grenade on your belt"); }`
+   - → `sacrifice_aftermath`
 
 ---
 
@@ -570,7 +605,6 @@ One section per story node, in definition order. Function-branching fields (text
 **Choices:**
 
 1. **Keep moving toward the Greenbelt.**
-   - _effect:_ `s => { // Carrying Nora, one-handed pocket-grab. You still clip the // grenade to your belt and pocket the shells — but no time // to rifle supplies. s.flags.killedBandits = true; s.ammo += 4; s.inventory = s.inventory || []; const existing = s.inventory.find(i => i && i.grenade); if (existing) existing.qty = (existing.qty || 1) + 1; else s.inventory.push({ id: "grenade", name: "🧨 Grenade", desc: "One-time combat throw. Big damage.", grenade: true, qty: 1, }); Game.toast("+4 🔫 · 🧨 Grenade on your belt"); }`
    - → `greenbelt_gate_hero`
 
 ---
@@ -594,7 +628,7 @@ One section per story node, in definition order. Function-branching fields (text
 
 <details><summary>Variant: default / mission partner = maya / mission partner = ren / solo mission / saved Nora / bring Nora on mission / rested in car / told Vega / chore: medbay / chore: perimeter / chore: kitchen / exposed traitor / killed traitor / romance Ren</summary>
 
-> It was ugly. It was quick. You take their shotgun, their jerky, and their silence.
+> It was ugly. It was quick. You pat the bigger bandit down — spare mag, shells, jerky — and find, clipped tight to his webbing, a fragmentation grenade, pin still in. You unclip it carefully and slide it onto your belt. The silence presses in.
 
 </details>
 
@@ -604,7 +638,9 @@ One section per story node, in definition order. Function-branching fields (text
 > 
 > "We don't talk about this one," she says.
 > 
-> You take their shotgun, their jerky, and their silence between you.
+> You pat the bigger bandit down. A spare mag. A handful of shells. Jerky. And — clipped tight to his webbing, pin still in — a fragmentation grenade.
+> 
+> You unclip it very carefully and slide it onto your belt. Maya watches you do it. She doesn't say anything. Neither do you.
 
 </details>
 

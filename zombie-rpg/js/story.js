@@ -455,34 +455,31 @@ window.Story = {
           return {
             enemy: "bandit_pair",
             engagedAllies: s.companion === "Maya" ? ["maya"] : [],
-            onWin: "sacrifice_aftermath",
+            onWin: "sacrifice_loot",
             onLose: "death",
           };
         } },
     ]
   },
 
-  // Between the bandit combat and the camp gate: Nora comes out from
-  // behind the mossy log, you carry her the last half-mile. Own scene
-  // so the image stays in the pines and the gate_hero image arrives
-  // only when you actually reach the gate.
-  sacrifice_aftermath: {
-    scene: "sacrifice_aftermath",
+  // The looting beat: breath back, hands shaking, you pat down the
+  // bigger one. The reward (grenade + shells) is narrated here, not
+  // shoved into the 'carry the kid out' scene that comes next.
+  sacrifice_loot: {
+    scene: "sacrifice_loot",
     sceneClass: "forest",
-    chapter: "Day 2 — After the Pines",
+    chapter: "Day 2 — After the Fight",
     text: function(s) {
-      let base = "You call her out from behind the mossy log. She comes slow, eyes enormous. She doesn't say anything about the blood.\n\nShe walks the first half-mile and then her legs stop working. You pick her up. She weighs almost nothing.";
+      let base = "The pines go quiet before your breath does. Two bodies. Both of theirs. You stand over the bigger one a long moment — long enough to feel your hands shake — then go to a knee and start patting him down.";
       if (s.companion === "Maya") {
-        base += "\n\nMaya walks three steps behind you, checking the treeline. She doesn't offer to carry the girl. She doesn't have to say it: this was the right call.";
+        base += "\n\nMaya keeps her rifle up, scanning. She doesn't help. She doesn't need to say why.";
       }
+      base += "\n\nA spare magazine. A handful of shells. A battered tin box. And on his webbing — clipped tight, pin still in — a military-issue fragmentation grenade. You unclip it carefully, wrap your fingers around the lever, and let out a long, thin breath.\n\nYou slide the grenade onto your own belt.";
       return base;
     },
     choices: [
-      { label: "Keep moving toward the Greenbelt.",
+      { label: "Stand up. Call for Nora.",
         effect: s => {
-          // Carrying Nora, one-handed pocket-grab. You still clip the
-          // grenade to your belt and pocket the shells — but no time
-          // to rifle supplies.
           s.flags.killedBandits = true;
           s.ammo += 4;
           s.inventory = s.inventory || [];
@@ -497,7 +494,25 @@ window.Story = {
           });
           Game.toast("+4 🔫 · 🧨 Grenade on your belt");
         },
-        next: "greenbelt_gate_hero" },
+        next: "sacrifice_aftermath" },
+    ]
+  },
+
+  // Between the loot beat and the camp gate: Nora comes out from
+  // behind the mossy log, you carry her the last half-mile.
+  sacrifice_aftermath: {
+    scene: "sacrifice_aftermath",
+    sceneClass: "forest",
+    chapter: "Day 2 — After the Pines",
+    text: function(s) {
+      let base = "You call her out from behind the mossy log. She comes slow, eyes enormous. She doesn't say anything about the blood.\n\nShe walks the first half-mile and then her legs stop working. You pick her up. She weighs almost nothing.";
+      if (s.companion === "Maya") {
+        base += "\n\nMaya walks three steps behind you, checking the treeline. She doesn't offer to carry the girl. She doesn't have to say it: this was the right call.";
+      }
+      return base;
+    },
+    choices: [
+      { label: "Keep moving toward the Greenbelt.", next: "greenbelt_gate_hero" },
     ]
   },
 
@@ -517,9 +532,9 @@ window.Story = {
     chapter: "Day 2 — The Pines",
     text: function(s) {
       if (s.companion === "Maya") {
-        return "It was ugly. It was quick. Maya wipes her blade on the bigger one's jacket and doesn't look up.\n\n\"We don't talk about this one,\" she says.\n\nYou take their shotgun, their jerky, and their silence between you.";
+        return "It was ugly. It was quick. Maya wipes her blade on the bigger one's jacket and doesn't look up.\n\n\"We don't talk about this one,\" she says.\n\nYou pat the bigger bandit down. A spare mag. A handful of shells. Jerky. And — clipped tight to his webbing, pin still in — a fragmentation grenade.\n\nYou unclip it very carefully and slide it onto your belt. Maya watches you do it. She doesn't say anything. Neither do you.";
       }
-      return "It was ugly. It was quick. You take their shotgun, their jerky, and their silence.";
+      return "It was ugly. It was quick. You pat the bigger bandit down — spare mag, shells, jerky — and find, clipped tight to his webbing, a fragmentation grenade, pin still in. You unclip it carefully and slide it onto your belt. The silence presses in.";
     },
     choices: [
       { label: "Loot and move on",
