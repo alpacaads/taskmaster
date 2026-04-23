@@ -14,13 +14,17 @@ window.Combat = (function () {
     walker_pair:  { name: "Two Walkers", art: "🧟🧟",  hp: 8,  atk: [2, 4], speed: 1, desc: "They move together.", pack: true },
     runner:       { name: "Runner",      art: "🧟‍♂️", hp: 4,  atk: [3, 4], speed: 2, desc: "Fresh. Fast. Furious." },
     bloater:      { name: "Bloater",     art: "🧟💀",  hp: 9,  atk: [3, 5], speed: 1, desc: "A swollen, leaking thing." },
-    bandit:       { name: "Bandit",      art: "🧔🔫",  hp: 6,  atk: [3, 4], speed: 2, desc: "Smart. Armed. Desperate.", human: true },
+    bandit:       { name: "Bandit",      art: "🧔🔫",  hp: 6,  atk: [3, 4], speed: 2, desc: "Smart. Armed. Desperate.", human: true, dodge: 0.22 },
     // Two bandits — one engaged with an ally (if present), one on you.
     // Modelled as a single HP pool so combat stays simple, but the
     // engagement lifts at engagementFlipAt (see start()) — when that
     // triggers, the ally rejoins the fight. Extra damage while engaged
     // represents the second bandit taking shots at you.
-    bandit_pair:  { name: "Two Bandits",  art: "🧔🔫🧔", hp: 11, atk: [3, 5], speed: 2, desc: "One on you. One on yours.", human: true, pack: true },
+    // dodge: human reflex — their smart repositioning makes your melee
+    // whiff sometimes (ducking behind cover). repositionEvery: every
+    // Nth hostile turn, one of them pulls back instead of attacking —
+    // no damage that turn, but no free hits either.
+    bandit_pair:  { name: "Two Bandits",  art: "🧔🔫🧔", hp: 16, atk: [3, 5], speed: 2, desc: "Smart. Armed. Coordinated.", human: true, pack: true, dodge: 0.25, repositionEvery: 4 },
     horde:        { name: "The Horde",   art: "🧟🧟🧟", hp: 16, atk: [3, 5], speed: 1, desc: "A tide of the dead." },
     // Mini-boss: the thing that was sealed inside the meat locker.
     // Mass of ruptured bodies fused together — slow, heavy, high HP.
@@ -554,24 +558,34 @@ window.Combat = (function () {
       const counterBonus = counter ? 3 : 0;
       const dmg = base + weaponBonus + noraBonus() + counterBonus;
       const total = crit ? dmg + 2 : dmg;
-      state.enemy.hp -= total;
       const weaponPhr = weaponPhrase(s.bestMelee ? s.bestMelee.name : "Crowbar");
-      const prefix = counter ? "Reading the lunge — " : "";
-      let line;
-      if (desperateMelee && total <= 0) {
-        line = `You can barely lift your arm. ${weaponPhr} clips its jaw. No give.`;
-      } else if (desperateMelee) {
-        line = `Muscle memory carries you. ${weaponPhr} lands — ${total} damage.`;
-      } else if (crit) {
-        line = `${prefix}You drive ${weaponPhr} through its skull. CRITICAL ${total}.`;
+      // Smart human enemies dodge your swing sometimes. Counter-crits
+      // (reading the lunge) always land — that's the whole payoff.
+      const enemyDodge = !crit && !counter ? (state.enemy.dodge || 0) : 0;
+      const dodged = Math.random() < enemyDodge;
+      if (dodged) {
+        log(`He twists away — ${weaponPhr} hits air.`, "info");
+        Sound.play("dodge");
+        spawnMark("miss");
       } else {
-        line = `You swing — ${total} damage.`;
+        state.enemy.hp -= total;
+        const prefix = counter ? "Reading the lunge — " : "";
+        let line;
+        if (desperateMelee && total <= 0) {
+          line = `You can barely lift your arm. ${weaponPhr} clips its jaw. No give.`;
+        } else if (desperateMelee) {
+          line = `Muscle memory carries you. ${weaponPhr} lands — ${total} damage.`;
+        } else if (crit) {
+          line = `${prefix}You drive ${weaponPhr} through its skull. CRITICAL ${total}.`;
+        } else {
+          line = `You swing — ${total} damage.`;
+        }
+        log(line, crit ? "crit" : "hero");
+        Sound.play(crit ? "crit" : "melee");
+        floatDamage(total, crit ? "crit" : null);
+        hitFlash();
+        spawnMark(crit ? "slashCrit" : "slash");
       }
-      log(line, crit ? "crit" : "hero");
-      Sound.play(crit ? "crit" : "melee");
-      floatDamage(total, crit ? "crit" : null);
-      hitFlash();
-      spawnMark(crit ? "slashCrit" : "slash");
     }
     else if (action === "shoot") {
       state.counterReady = false;
@@ -821,6 +835,20 @@ window.Combat = (function () {
       state.noraWarn = false;
       log(`Nora's warning — the ${e.name} whiffs past you.`, "info");
       Sound.play("dodge");
+      companionTurn();
+      state.turn += 1;
+      renderAllies();
+      return;
+    }
+
+    // Tactical reposition. Smart humans pull back to cover every few
+    // turns — they don't attack and you don't get hit, but the fight
+    // drags. Only fires when the enemy is still healthy enough to be
+    // cautious (above the engagement flip threshold).
+    if (e.repositionEvery && state.turn > 0 && (state.turn % e.repositionEvery === 0)
+        && (!state.engagementFlipAt || e.hp > state.engagementFlipAt)) {
+      log(`They pull back behind cover to reload. No shot from them this turn.`, "info");
+      Sound.play("brace");
       companionTurn();
       state.turn += 1;
       renderAllies();
