@@ -1174,8 +1174,15 @@ window.Story = {
       } else if (s.flags.vegaStayedBehind && s.flags.gaveGrenade) {
         // She had the pull-pin you handed her at the gate. That
         // changes the math — she breaks the line with it and catches
-        // up to the column at the first creek crossing.
-        opener = "Vega stayed.\n\nTwenty minutes down the pines, a flat concussive thump rolls through the trees behind you — that grenade you gave her at the gate, finally good for something. Half an hour after that, boots on the path behind the column.\n\nShe catches up at the first creek crossing, smoke still on her jacket, a graze above one eye. She doesn't say anything. She just falls in at your shoulder and keeps walking.\n\n";
+        // up to the column. If Nora's with you, the catch-up plays
+        // through her question: she asks where Vega is, Vega's voice
+        // answers from behind.
+        opener = "Vega stayed.\n\nTwenty minutes down the pines, a flat concussive thump rolls through the trees behind you — that grenade you gave her at the gate, finally good for something.\n\n";
+        if (s.companion2 === "Nora") {
+          opener += "Two hours in, Nora's small voice at your hip: \"Where's Captain Vega?\"\n\nBefore you can answer — boots on the path behind the column. A low voice, steady as a heartbeat: \"Right here, kid.\"\n\nThe column parts for her. Vega's catching up, smoke still on her jacket, a graze above one eye. Nora's grip on your sleeve loosens. Vega passes her hand once across the top of Nora's head without breaking stride — and falls in at your shoulder.\n\n";
+        } else {
+          opener += "Half an hour later, boots on the path behind the column. She catches up at the first creek crossing, smoke still on her jacket, a graze above one eye. She doesn't say anything. She just falls in at your shoulder and keeps walking.\n\n";
+        }
       } else if (s.flags.vegaStayedBehind) {
         opener = "Vega stayed. Somewhere behind you — four minutes back, then five, then gone — her rifle was still working. Then it wasn't. The column kept walking. She'd have wanted that.\n\n";
       } else if (s.flags.vegaSaved) {
