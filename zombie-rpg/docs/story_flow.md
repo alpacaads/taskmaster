@@ -40,7 +40,7 @@ One section per story node, in definition order. Function-branching fields (text
 - [`greenbelt_in`](#greenbelt_in) — Day 3 — Greenbelt Camp
 - [`meet_ren_card`](#meet_ren_card) — Day 3 — Medbay
 - [`ren_medbay_intro`](#ren_medbay_intro) — Day 3 — Medbay
-- [`camp_morning`](#camp_morning) — Day 4 — Greenbelt
+- [`camp_morning`](#camp_morning) — Day 4 — Morning
 - [`chore_medbay`](#chore_medbay) — Day 4 — Medbay
 - [`chore_perimeter`](#chore_perimeter) — Day 4 — Perimeter
 - [`chore_kitchen`](#chore_kitchen) — Day 4 — Kitchen
@@ -807,13 +807,15 @@ One section per story node, in definition order. Function-branching fields (text
 ---
 
 ## <a id="camp_morning"></a>`camp_morning`
-**Chapter:** Day 4 — Greenbelt  
+**Chapter:** Day 4 — Morning  
 **Scene art:** `greenbelt_morning`  
 **Speaker:** Captain Vega  
 
-> Coffee that tastes like dirt. Sun coming up through the pines.
+> You sleep in fits on a camp cot, and when you wake it's already light.
 > 
-> "You earned a day before we put you to work," Vega says. "Pick a hand to lend. Or don't. Free country — what's left of it."
+> Day 4. Coffee that tastes like dirt, sun coming up through the pines, the camp beginning to stir. Vega finds you by the fire and sits down opposite.
+> 
+> "You earned a day before we put you to work," she says, low. "Pick a hand to lend. Or don't. Free country — what's left of it."
 
 **Choices:**
 
@@ -929,7 +931,9 @@ One section per story node, in definition order. Function-branching fields (text
 
 <details><summary>Variant: default / with Maya companion / mission partner = maya / mission partner = ren / solo mission / saved Nora / bring Nora on mission / rested in car / told Vega / exposed traitor / killed traitor / romance Maya / romance Ren</summary>
 
-> "Old Mercy Hospital. Three klicks south. Pharmacy on the second floor — antibiotics, painkillers, anything that hasn't walked off."
+> By mid-afternoon the light's shifted and the camp smells of cookfire and oil. Vega waves you into the command tent — a canvas square, a folding table, a hurricane lamp not lit yet because the sun still is.
+> 
+> Vega taps the map with two fingers. "Old Mercy Hospital. Three klicks south. Pharmacy on the second floor — antibiotics, painkillers, anything that hasn't walked off."
 > 
 > She spreads a hand-drawn map. "In and out. Don't be a hero. Pick someone to take."
 
@@ -937,9 +941,11 @@ One section per story node, in definition order. Function-branching fields (text
 
 <details><summary>Variant: chore: medbay</summary>
 
-> Maya is in the corner of the tent, breaking down a rifle. She doesn't look up when you walk in. The treeline could've used a second pair of eyes today.
+> By mid-afternoon the light's shifted and the camp smells of cookfire and oil. Vega waves you into the command tent — a canvas square, a folding table, a hurricane lamp not lit yet because the sun still is.
 > 
-> "Old Mercy Hospital. Three klicks south. Pharmacy on the second floor — antibiotics, painkillers, anything that hasn't walked off."
+> Maya is already in the corner, breaking down a rifle. She doesn't look up when you walk in. The treeline could've used a second pair of eyes today.
+> 
+> Vega taps the map with two fingers. "Old Mercy Hospital. Three klicks south. Pharmacy on the second floor — antibiotics, painkillers, anything that hasn't walked off."
 > 
 > She spreads a hand-drawn map. "In and out. Don't be a hero. Pick someone to take."
 
@@ -947,9 +953,13 @@ One section per story node, in definition order. Function-branching fields (text
 
 <details><summary>Variant: chore: perimeter</summary>
 
-> Maya walks in with you from the watchtower and drops onto the bench at your side. Across the table Ren is already there, clipboard balanced on her knee. "Med inventory's thinner than it should be," she murmurs as you sit down. It's not a complaint. It lands like one anyway.
+> By mid-afternoon the light's shifted and the camp smells of cookfire and oil. Vega waves you into the command tent — a canvas square, a folding table, a hurricane lamp not lit yet because the sun still is.
 > 
-> "Old Mercy Hospital. Three klicks south. Pharmacy on the second floor — antibiotics, painkillers, anything that hasn't walked off."
+> Maya walks in with you from the watchtower and drops onto the bench at your side, still in watchtower dust. Across the table Ren is already there, clipboard balanced on her knee.
+> 
+> "Med inventory's thinner than it should be," Ren murmurs as you sit down. It's not a complaint. It lands like one anyway.
+> 
+> Vega taps the map with two fingers. "Old Mercy Hospital. Three klicks south. Pharmacy on the second floor — antibiotics, painkillers, anything that hasn't walked off."
 > 
 > She spreads a hand-drawn map. "In and out. Don't be a hero. Pick someone to take."
 
@@ -957,9 +967,11 @@ One section per story node, in definition order. Function-branching fields (text
 
 <details><summary>Variant: chore: kitchen</summary>
 
+> By mid-afternoon the light's shifted and the camp smells of cookfire and oil. Vega waves you into the command tent — a canvas square, a folding table, a hurricane lamp not lit yet because the sun still is.
+> 
 > Ren sets a mug of something hot in front of you without meeting your eye. Maya's across the table, back half-turned. The map is the only thing the three of you are willing to look at.
 > 
-> "Old Mercy Hospital. Three klicks south. Pharmacy on the second floor — antibiotics, painkillers, anything that hasn't walked off."
+> Vega taps the map with two fingers. "Old Mercy Hospital. Three klicks south. Pharmacy on the second floor — antibiotics, painkillers, anything that hasn't walked off."
 > 
 > She spreads a hand-drawn map. "In and out. Don't be a hero. Pick someone to take."
 
@@ -1372,6 +1384,8 @@ One section per story node, in definition order. Function-branching fields (text
 
 <details><summary>Variant: default / with Maya companion / solo mission / saved Nora / rested in car / told Vega / chore: medbay / chore: perimeter / chore: kitchen / exposed traitor / killed traitor / romance Maya / romance Ren</summary>
 
+> You shoulder the pack. The camp gate opens behind you and shuts again. Late afternoon light through the trees, long shadows crossing the service road.
+> 
 > You walk alone. Every shadow is a question. Every step is loud.
 > 
 > A mile in, your boot knocks a hubcap and you flinch hard enough to bruise yourself. You stop. Listen. Nothing. Just pines.
@@ -1382,6 +1396,8 @@ One section per story node, in definition order. Function-branching fields (text
 
 <details><summary>Variant: mission partner = maya</summary>
 
+> You shoulder the pack. The camp gate opens behind you and shuts again. Late afternoon light through the trees, long shadows crossing the service road.
+> 
 > Maya walks point. Three steps ahead, eyes everywhere. The pines thin into a service road.
 > 
 > "You ever miss anything from before?" she asks, not turning around.
@@ -1390,6 +1406,8 @@ One section per story node, in definition order. Function-branching fields (text
 
 <details><summary>Variant: mission partner = ren</summary>
 
+> You shoulder the pack. The camp gate opens behind you and shuts again. Late afternoon light through the trees, long shadows crossing the service road.
+> 
 > Ren keeps pace beside you. She hums, low — a song you almost recognise.
 > 
 > "My grandmother used to sing it," she says when she catches you listening. "It's the only thing of hers I have left."
@@ -1404,6 +1422,8 @@ One section per story node, in definition order. Function-branching fields (text
 
 <details><summary>Variant: bring Nora on mission</summary>
 
+> You shoulder the pack. The camp gate opens behind you and shuts again. Late afternoon light through the trees, long shadows crossing the service road.
+> 
 > Maya walks point. Three steps ahead, eyes everywhere. The pines thin into a service road.
 > 
 > "You ever miss anything from before?" she asks, not turning around.
@@ -1764,7 +1784,9 @@ One section per story node, in definition order. Function-branching fields (text
 
 <details><summary>Variant: default / with Maya companion / mission partner = maya / mission partner = ren / solo mission / saved Nora / bring Nora on mission / rested in car / told Vega / chore: medbay / chore: perimeter / chore: kitchen / killed traitor</summary>
 
-> The fire burns low. Most of the camp has turned in.
+> By the time the stars are out, the camp has turned in. You sit by the bonfire with your boots off, listening to pine needles snap in the coals.
+> 
+> The fire burns low.
 > 
 > You sit alone with the dying flames.
 
@@ -1772,7 +1794,9 @@ One section per story node, in definition order. Function-branching fields (text
 
 <details><summary>Variant: exposed traitor</summary>
 
-> The fire burns low. Most of the camp has turned in.
+> By the time the stars are out, the camp has turned in. You sit by the bonfire with your boots off, listening to pine needles snap in the coals.
+> 
+> The fire burns low.
 > 
 > Ren is across the fire. When your eyes meet she gives you a small, grave nod. She knows.
 > 
@@ -1782,7 +1806,9 @@ One section per story node, in definition order. Function-branching fields (text
 
 <details><summary>Variant: romance Maya</summary>
 
-> The fire burns low. Most of the camp has turned in.
+> By the time the stars are out, the camp has turned in. You sit by the bonfire with your boots off, listening to pine needles snap in the coals.
+> 
+> The fire burns low.
 > 
 > Maya catches your eye and tilts her head — toward her tent.
 
@@ -1790,7 +1816,9 @@ One section per story node, in definition order. Function-branching fields (text
 
 <details><summary>Variant: romance Ren</summary>
 
-> The fire burns low. Most of the camp has turned in.
+> By the time the stars are out, the camp has turned in. You sit by the bonfire with your boots off, listening to pine needles snap in the coals.
+> 
+> The fire burns low.
 > 
 > Ren leaves her guitar against the log when she stands. She waits, looking at you.
 
@@ -1855,7 +1883,7 @@ One section per story node, in definition order. Function-branching fields (text
 > 
 > She pulls you in, and the rest of the world goes quiet — the camp, the fence, the dead in the dark. Just her hands, your mouth, the small breath she lets out when you find the place at her throat where the muscle softens.
 > 
-> *Later, the lantern out, her head on your shoulder.*
+> Later — the lantern out, her head on your shoulder.
 
 </details>
 
@@ -1871,7 +1899,7 @@ One section per story node, in definition order. Function-branching fields (text
 > 
 > She pulls you in, and the rest of the world goes quiet — the camp, the fence, the dead in the dark. Just her hands, your mouth, the small breath she lets out when you find the place at her throat where the muscle softens.
 > 
-> *Later, the lantern out, her head on your shoulder.*
+> Later — the lantern out, her head on your shoulder.
 
 </details>
 
@@ -1901,7 +1929,7 @@ One section per story node, in definition order. Function-branching fields (text
 > 
 > What happens next is slow. Slow as snow. Her mouth on yours, your fingers in her hair, both of you learning how to be this human again. After, she cries a little. She laughs through it. She thanks you, which breaks something in you in a good way.
 > 
-> *The candle gutters. Her breathing evens out against your ribs.*
+> Later — the candle gutters. Her breathing evens out against your ribs.
 
 </details>
 
@@ -1917,7 +1945,7 @@ One section per story node, in definition order. Function-branching fields (text
 > 
 > What happens next is slow. Slow as snow. Her mouth on yours, your fingers in her hair, both of you learning how to be this human again. After, she cries a little. She laughs through it. She thanks you, which breaks something in you in a good way.
 > 
-> *The candle gutters. Her breathing evens out against your ribs.*
+> Later — the candle gutters. Her breathing evens out against your ribs.
 
 </details>
 

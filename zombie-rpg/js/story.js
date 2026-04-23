@@ -756,9 +756,9 @@ window.Story = {
   camp_morning: {
     scene: "greenbelt_morning",
     sceneClass: "forest",
-    chapter: "Day 4 — Greenbelt",
+    chapter: "Day 4 — Morning",
     speaker: "Captain Vega",
-    text: "Coffee that tastes like dirt. Sun coming up through the pines.\n\n\"You earned a day before we put you to work,\" Vega says. \"Pick a hand to lend. Or don't. Free country — what's left of it.\"",
+    text: "You sleep in fits on a camp cot, and when you wake it's already light.\n\nDay 4. Coffee that tastes like dirt, sun coming up through the pines, the camp beginning to stir. Vega finds you by the fire and sits down opposite.\n\n\"You earned a day before we put you to work,\" she says, low. \"Pick a hand to lend. Or don't. Free country — what's left of it.\"",
     choices: [
       { label: "Help Ren in the medbay", tag: "BOND", tagClass: "warn",
         effect: s => { s.flags.choreChosen = "medbay"; },
@@ -853,25 +853,27 @@ window.Story = {
     chapter: "Day 4 — Briefing",
     speaker: "Captain Vega",
     text: function(s) {
-      // Short tag scene acknowledging who noticed you weren't around
-      // this morning, based on the chore you picked.
-      let tag = "";
+      // Afternoon — you're called into the command tent. Each chore
+      // gets a tag beat acknowledging who's already there and how
+      // they're reading your morning.
+      let setup = "By mid-afternoon the light's shifted and the camp smells of cookfire and oil. Vega waves you into the command tent — a canvas square, a folding table, a hurricane lamp not lit yet because the sun still is.\n\n";
       if (s.flags.choreChosen === "medbay" && s.flags.maya) {
-        tag = "Maya is in the corner of the tent, breaking down a rifle. She doesn't look up when you walk in. The treeline could've used a second pair of eyes today.\n\n";
+        setup += "Maya is already in the corner, breaking down a rifle. She doesn't look up when you walk in. The treeline could've used a second pair of eyes today.\n\n";
       } else if (s.flags.choreChosen === "perimeter") {
-        tag = "Maya walks in with you from the watchtower and drops onto the bench at your side. Across the table Ren is already there, clipboard balanced on her knee. \"Med inventory's thinner than it should be,\" she murmurs as you sit down. It's not a complaint. It lands like one anyway.\n\n";
+        setup += "Maya walks in with you from the watchtower and drops onto the bench at your side, still in watchtower dust. Across the table Ren is already there, clipboard balanced on her knee.\n\n\"Med inventory's thinner than it should be,\" Ren murmurs as you sit down. It's not a complaint. It lands like one anyway.\n\n";
       } else if (s.flags.choreChosen === "kitchen") {
-        tag = "Ren sets a mug of something hot in front of you without meeting your eye. " +
-          (s.flags.maya ? "Maya's across the table, back half-turned. The map is the only thing the three of you are willing to look at.\n\n"
-                        : "Vega's the only other person here, and she's all business.\n\n");
+        setup += "Ren sets a mug of something hot in front of you without meeting your eye. ";
+        setup += s.flags.maya
+          ? "Maya's across the table, back half-turned. The map is the only thing the three of you are willing to look at.\n\n"
+          : "Vega's the only other person here, and she's all business.\n\n";
       }
-      let briefing = "\"Old Mercy Hospital. Three klicks south. Pharmacy on the second floor — antibiotics, painkillers, anything that hasn't walked off.\"";
+      let briefing = "Vega taps the map with two fingers. \"Old Mercy Hospital. Three klicks south. Pharmacy on the second floor — antibiotics, painkillers, anything that hasn't walked off.\"";
       if (s.flags.goodwill) {
         // Pay off the gate 'offer supplies as a gift' choice.
         briefing += "\n\nShe slides something across the table before she unfolds the map — a clean spare magazine. \"For the rounds you handed me at the gate. We remember that here.\"";
       }
       briefing += "\n\nShe spreads a hand-drawn map. \"In and out. Don't be a hero. Pick someone to take.\"";
-      return tag + briefing;
+      return setup + briefing;
     },
     choices: [
       { label: "Take Maya — she knows how to fight",
@@ -1214,9 +1216,11 @@ window.Story = {
     chapter: "Day 4 — South Road",
     text: function(s) {
       let base;
+      // Common opener — you're actually leaving camp now.
+      const opener = "You shoulder the pack. The camp gate opens behind you and shuts again. Late afternoon light through the trees, long shadows crossing the service road.\n\n";
       if (s.flags.missionPartner === "maya") {
         const skippedHerChore = s.flags.choreChosen && s.flags.choreChosen !== "perimeter";
-        base = "Maya walks point. Three steps ahead, eyes everywhere. The pines thin into a service road.";
+        base = opener + "Maya walks point. Three steps ahead, eyes everywhere. The pines thin into a service road.";
         if (skippedHerChore) {
           // She picked you for the mission anyway — but she noticed you
           // didn't pick her this morning. She's not letting it slide.
@@ -1226,10 +1230,10 @@ window.Story = {
           base += "\n\n\"You ever miss anything from before?\" she asks, not turning around.";
         }
       } else if (s.flags.missionPartner === "ren") {
-        base = "Ren keeps pace beside you. She hums, low — a song you almost recognise.\n\n\"My grandmother used to sing it,\" she says when she catches you listening. \"It's the only thing of hers I have left.\"";
+        base = opener + "Ren keeps pace beside you. She hums, low — a song you almost recognise.\n\n\"My grandmother used to sing it,\" she says when she catches you listening. \"It's the only thing of hers I have left.\"";
         base += "\n\nThe humming stops as the hospital squats into view.\n\n\"Worked Mercy's ER the first month,\" she says quietly, like it explains something. \"If my hands shake later — that's why.\"\n\nShe starts humming again.";
       } else {
-        base = "You walk alone. Every shadow is a question. Every step is loud.\n\nA mile in, your boot knocks a hubcap and you flinch hard enough to bruise yourself. You stop. Listen. Nothing. Just pines.";
+        base = opener + "You walk alone. Every shadow is a question. Every step is loud.\n\nA mile in, your boot knocks a hubcap and you flinch hard enough to bruise yourself. You stop. Listen. Nothing. Just pines.";
         if (s.flags.solo) {
           base += "\n\nA memory tries the door. You don't open it.";
         } else {
@@ -1578,7 +1582,8 @@ window.Story = {
       const m = s.bonds.maya, r = s.bonds.ren;
       const mayaSignal = !!(s.flags.maya && m >= 5) && !s.flags.committedRen;
       const renSignal  = r >= 4 && !s.flags.committedMaya;
-      let lines = "The fire burns low. Most of the camp has turned in.\n\n";
+      // Late that night — the camp has turned in, you haven't.
+      let lines = "By the time the stars are out, the camp has turned in. You sit by the bonfire with your boots off, listening to pine needles snap in the coals.\n\nThe fire burns low.\n\n";
       if (s.flags.exposedTraitor && !s.flags.toldVega) {
         // Solo 'Tell Vega' path — Ren wasn't at the fence but she heard.
         lines += "Ren is across the fire. When your eyes meet she gives you a small, grave nod. She knows.\n\n";
@@ -1660,7 +1665,7 @@ window.Story = {
       if (s.companion2 === "Nora") {
         base += "\n\n(Nora is two tents over, asleep against Ren's shoulder — they've been inseparable since you got back. You checked, twice, before coming here.)";
       }
-      base += "\n\nShe pulls you in, and the rest of the world goes quiet — the camp, the fence, the dead in the dark. Just her hands, your mouth, the small breath she lets out when you find the place at her throat where the muscle softens.\n\n*Later, the lantern out, her head on your shoulder.*";
+      base += "\n\nShe pulls you in, and the rest of the world goes quiet — the camp, the fence, the dead in the dark. Just her hands, your mouth, the small breath she lets out when you find the place at her throat where the muscle softens.\n\nLater — the lantern out, her head on your shoulder.";
       return base;
     },
     choices: [
@@ -1683,7 +1688,7 @@ window.Story = {
       if (s.companion2 === "Nora") {
         opener += "\n\n\"She's with Captain Vega tonight,\" Ren says quietly, without having to name who. \"I asked. Vega said of course.\"";
       }
-      opener += "\n\n\"I haven't — since. I wasn't sure I still could.\" A small, embarrassed laugh. \"Be patient with me.\"\n\nYou take her hand and lay it flat against your chest, over your heart. Let her feel it.\n\nWhat happens next is slow. Slow as snow. Her mouth on yours, your fingers in her hair, both of you learning how to be this human again. After, she cries a little. She laughs through it. She thanks you, which breaks something in you in a good way.\n\n*The candle gutters. Her breathing evens out against your ribs.*";
+      opener += "\n\n\"I haven't — since. I wasn't sure I still could.\" A small, embarrassed laugh. \"Be patient with me.\"\n\nYou take her hand and lay it flat against your chest, over your heart. Let her feel it.\n\nWhat happens next is slow. Slow as snow. Her mouth on yours, your fingers in her hair, both of you learning how to be this human again. After, she cries a little. She laughs through it. She thanks you, which breaks something in you in a good way.\n\nLater — the candle gutters. Her breathing evens out against your ribs.";
       return opener;
     },
     choices: [
