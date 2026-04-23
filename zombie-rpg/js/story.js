@@ -859,7 +859,7 @@ window.Story = {
       if (s.flags.choreChosen === "medbay" && s.flags.maya) {
         tag = "Maya is in the corner of the tent, breaking down a rifle. She doesn't look up when you walk in. The treeline could've used a second pair of eyes today.\n\n";
       } else if (s.flags.choreChosen === "perimeter") {
-        tag = "Ren's at the briefing too, clipboard balanced on her knee. \"Med inventory's thinner than it should be,\" she murmurs as you sit down. It's not a complaint. It lands like one anyway.\n\n";
+        tag = "Maya walks in with you from the watchtower and drops onto the bench at your side. Across the table Ren is already there, clipboard balanced on her knee. \"Med inventory's thinner than it should be,\" she murmurs as you sit down. It's not a complaint. It lands like one anyway.\n\n";
       } else if (s.flags.choreChosen === "kitchen") {
         tag = "Ren sets a mug of something hot in front of you without meeting your eye. " +
           (s.flags.maya ? "Maya's across the table, back half-turned. The map is the only thing the three of you are willing to look at.\n\n"

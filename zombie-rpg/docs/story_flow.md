@@ -1,6 +1,6 @@
 # Dead Light — Story Flow
 
-Auto-generated from `zombie-rpg/js/story.js`. 2026-04-22
+Auto-generated from `zombie-rpg/js/story.js`. 2026-04-23
 
 One section per story node, in definition order. Function-branching fields (text, scene, speaker, next, combat) are enumerated across a set of common state permutations so every reachable variant is legible.
 
@@ -947,7 +947,7 @@ One section per story node, in definition order. Function-branching fields (text
 
 <details><summary>Variant: chore: perimeter</summary>
 
-> Ren's at the briefing too, clipboard balanced on her knee. "Med inventory's thinner than it should be," she murmurs as you sit down. It's not a complaint. It lands like one anyway.
+> Maya walks in with you from the watchtower and drops onto the bench at your side. Across the table Ren is already there, clipboard balanced on her knee. "Med inventory's thinner than it should be," she murmurs as you sit down. It's not a complaint. It lands like one anyway.
 > 
 > "Old Mercy Hospital. Three klicks south. Pharmacy on the second floor — antibiotics, painkillers, anything that hasn't walked off."
 > 
