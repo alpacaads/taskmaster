@@ -301,6 +301,7 @@ window.Story = {
 
   freezer: {
     art: "🚪❄️👧",
+    scene: function(s) { return s.companion === "Maya" ? "freezer_maya" : "freezer"; },
     sceneClass: "indoor",
     chapter: "Day 1 — Freezer",
     text: function(s) {
@@ -373,6 +374,7 @@ window.Story = {
 
   ambush: {
     art: "🌳🔫🧔",
+    scene: function(s) { return s.companion === "Maya" ? "ambush_maya" : "ambush"; },
     sceneClass: "forest",
     chapter: "Day 2 — The Pines",
     speaker: "???",
@@ -433,6 +435,7 @@ window.Story = {
 
   sacrifice_intro: {
     art: "🧍👧🌲",
+    scene: function(s) { return s.companion === "Maya" ? "sacrifice_intro_maya" : "sacrifice_intro"; },
     sceneClass: "forest",
     chapter: "Day 2 — The Pines",
     text: function(s) {
@@ -466,7 +469,7 @@ window.Story = {
   // bigger one. The reward (grenade + shells) is narrated here, not
   // shoved into the 'carry the kid out' scene that comes next.
   sacrifice_loot: {
-    scene: "sacrifice_loot",
+    scene: function(s) { return s.companion === "Maya" ? "sacrifice_loot_maya" : "sacrifice_loot"; },
     sceneClass: "forest",
     chapter: "Day 2 — After the Fight",
     text: function(s) {
@@ -501,7 +504,7 @@ window.Story = {
   // Between the loot beat and the camp gate: Nora comes out from
   // behind the mossy log, you carry her the last half-mile.
   sacrifice_aftermath: {
-    scene: "sacrifice_aftermath",
+    scene: function(s) { return s.companion === "Maya" ? "sacrifice_aftermath_maya" : "sacrifice_aftermath"; },
     sceneClass: "forest",
     chapter: "Day 2 — After the Pines",
     text: function(s) {
@@ -528,6 +531,7 @@ window.Story = {
 
   after_ambush_fight: {
     art: "🌲🩸",
+    scene: function(s) { return s.companion === "Maya" ? "after_ambush_fight_maya" : "after_ambush_fight"; },
     sceneClass: "forest",
     chapter: "Day 2 — The Pines",
     text: function(s) {
@@ -609,6 +613,7 @@ window.Story = {
 
   greenbelt_gate: {
     art: "🚧🛡️⛺",
+    scene: function(s) { return s.companion === "Maya" ? "greenbelt_gate_maya" : "greenbelt_gate"; },
     sceneClass: "forest",
     chapter: "Day 3 — Greenbelt",
     speaker: "Guard",
@@ -653,6 +658,7 @@ window.Story = {
 
   greenbelt_gate_hero: {
     art: "🚧🛡️⛺",
+    scene: function(s) { return s.companion === "Maya" ? "greenbelt_gate_hero_maya" : "greenbelt_gate_hero"; },
     sceneClass: "forest",
     chapter: "Day 3 — Greenbelt",
     text: function(s) {

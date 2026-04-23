@@ -368,7 +368,7 @@ One section per story node, in definition order. Function-branching fields (text
 
 ## <a id="freezer"></a>`freezer`
 **Chapter:** Day 1 — Freezer  
-**Scene art:** (no explicit scene — uses node id)  
+**Scene art:** fn → `freezer` _(default, mission partner = maya, mission partner = ren, solo mission, saved Nora, bring Nora on mission, rested in car, told Vega, chore: medbay, chore: perimeter, chore: kitchen, exposed traitor, killed traitor, romance Ren)_, `freezer_maya` _(with Maya companion, romance Maya)_  
 
 <details><summary>Variant: default / mission partner = maya / mission partner = ren / solo mission / saved Nora / bring Nora on mission / rested in car / told Vega / chore: medbay / chore: perimeter / chore: kitchen / exposed traitor / killed traitor / romance Ren</summary>
 
@@ -471,7 +471,7 @@ One section per story node, in definition order. Function-branching fields (text
 
 ## <a id="ambush"></a>`ambush`
 **Chapter:** Day 2 — The Pines  
-**Scene art:** (no explicit scene — uses node id)  
+**Scene art:** fn → `ambush` _(default, mission partner = maya, mission partner = ren, solo mission, saved Nora, bring Nora on mission, rested in car, told Vega, chore: medbay, chore: perimeter, chore: kitchen, exposed traitor, killed traitor, romance Ren)_, `ambush_maya` _(with Maya companion, romance Maya)_  
 **Speaker:** ???  
 
 <details><summary>Variant: default / mission partner = maya / mission partner = ren / solo mission / saved Nora / bring Nora on mission / told Vega / chore: medbay / chore: perimeter / chore: kitchen / exposed traitor / killed traitor / romance Ren</summary>
@@ -512,7 +512,7 @@ One section per story node, in definition order. Function-branching fields (text
 
 ## <a id="sacrifice_intro"></a>`sacrifice_intro`
 **Chapter:** Day 2 — The Pines  
-**Scene art:** (no explicit scene — uses node id)  
+**Scene art:** fn → `sacrifice_intro` _(default, mission partner = maya, mission partner = ren, solo mission, saved Nora, bring Nora on mission, rested in car, told Vega, chore: medbay, chore: perimeter, chore: kitchen, exposed traitor, killed traitor, romance Ren)_, `sacrifice_intro_maya` _(with Maya companion, romance Maya)_  
 
 <details><summary>Variant: default / mission partner = maya / mission partner = ren / solo mission / saved Nora / bring Nora on mission / rested in car / told Vega / chore: medbay / chore: perimeter / chore: kitchen / exposed traitor / killed traitor / romance Ren</summary>
 
@@ -549,7 +549,7 @@ One section per story node, in definition order. Function-branching fields (text
 
 ## <a id="sacrifice_loot"></a>`sacrifice_loot`
 **Chapter:** Day 2 — After the Fight  
-**Scene art:** `sacrifice_loot`  
+**Scene art:** fn → `sacrifice_loot` _(default, mission partner = maya, mission partner = ren, solo mission, saved Nora, bring Nora on mission, rested in car, told Vega, chore: medbay, chore: perimeter, chore: kitchen, exposed traitor, killed traitor, romance Ren)_, `sacrifice_loot_maya` _(with Maya companion, romance Maya)_  
 
 <details><summary>Variant: default / mission partner = maya / mission partner = ren / solo mission / saved Nora / bring Nora on mission / rested in car / told Vega / chore: medbay / chore: perimeter / chore: kitchen / exposed traitor / killed traitor / romance Ren</summary>
 
@@ -583,7 +583,7 @@ One section per story node, in definition order. Function-branching fields (text
 
 ## <a id="sacrifice_aftermath"></a>`sacrifice_aftermath`
 **Chapter:** Day 2 — After the Pines  
-**Scene art:** `sacrifice_aftermath`  
+**Scene art:** fn → `sacrifice_aftermath` _(default, mission partner = maya, mission partner = ren, solo mission, saved Nora, bring Nora on mission, rested in car, told Vega, chore: medbay, chore: perimeter, chore: kitchen, exposed traitor, killed traitor, romance Ren)_, `sacrifice_aftermath_maya` _(with Maya companion, romance Maya)_  
 
 <details><summary>Variant: default / mission partner = maya / mission partner = ren / solo mission / saved Nora / bring Nora on mission / rested in car / told Vega / chore: medbay / chore: perimeter / chore: kitchen / exposed traitor / killed traitor / romance Ren</summary>
 
@@ -625,7 +625,7 @@ One section per story node, in definition order. Function-branching fields (text
 
 ## <a id="after_ambush_fight"></a>`after_ambush_fight`
 **Chapter:** Day 2 — The Pines  
-**Scene art:** (no explicit scene — uses node id)  
+**Scene art:** fn → `after_ambush_fight` _(default, mission partner = maya, mission partner = ren, solo mission, saved Nora, bring Nora on mission, rested in car, told Vega, chore: medbay, chore: perimeter, chore: kitchen, exposed traitor, killed traitor, romance Ren)_, `after_ambush_fight_maya` _(with Maya companion, romance Maya)_  
 
 <details><summary>Variant: default / mission partner = maya / mission partner = ren / solo mission / saved Nora / bring Nora on mission / rested in car / told Vega / chore: medbay / chore: perimeter / chore: kitchen / exposed traitor / killed traitor / romance Ren</summary>
 
@@ -677,7 +677,7 @@ One section per story node, in definition order. Function-branching fields (text
 
 ## <a id="greenbelt_gate"></a>`greenbelt_gate`
 **Chapter:** Day 3 — Greenbelt  
-**Scene art:** (no explicit scene — uses node id)  
+**Scene art:** fn → `greenbelt_gate` _(default, mission partner = maya, mission partner = ren, solo mission, saved Nora, bring Nora on mission, rested in car, told Vega, chore: medbay, chore: perimeter, chore: kitchen, exposed traitor, killed traitor, romance Ren)_, `greenbelt_gate_maya` _(with Maya companion, romance Maya)_  
 **Speaker:** Guard  
 
 <details><summary>Variant: default / mission partner = maya / mission partner = ren / solo mission / saved Nora / bring Nora on mission / rested in car / told Vega / chore: medbay / chore: perimeter / chore: kitchen / exposed traitor / killed traitor / romance Ren</summary>
@@ -713,7 +713,7 @@ One section per story node, in definition order. Function-branching fields (text
 
 ## <a id="greenbelt_gate_hero"></a>`greenbelt_gate_hero`
 **Chapter:** Day 3 — Greenbelt  
-**Scene art:** (no explicit scene — uses node id)  
+**Scene art:** fn → `greenbelt_gate_hero` _(default, mission partner = maya, mission partner = ren, solo mission, saved Nora, bring Nora on mission, rested in car, told Vega, chore: medbay, chore: perimeter, chore: kitchen, exposed traitor, killed traitor, romance Ren)_, `greenbelt_gate_hero_maya` _(with Maya companion, romance Maya)_  
 
 <details><summary>Variant: default / mission partner = maya / mission partner = ren / solo mission / saved Nora / bring Nora on mission / rested in car / told Vega / chore: medbay / chore: perimeter / chore: kitchen / exposed traitor / killed traitor / romance Ren</summary>
 
