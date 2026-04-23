@@ -2094,7 +2094,7 @@ One section per story node, in definition order. Function-branching fields (text
 **Chapter:** Ending G — Captain Held  
 **Scene art:** `ending_final_vega_fell`  
 
-<details><summary>Variant: default / with Maya companion / mission partner = maya / mission partner = ren / solo mission / rested in car / told Vega / chore: medbay / chore: perimeter / chore: kitchen / exposed traitor / killed traitor / romance Maya / romance Ren</summary>
+<details><summary>Variant: default / with Maya companion / mission partner = maya / mission partner = ren / solo mission / rested in car / told Vega / chore: medbay / chore: perimeter / chore: kitchen / exposed traitor / killed traitor</summary>
 
 > She held the gate. She held it long enough.
 > 
@@ -2110,9 +2110,17 @@ One section per story node, in definition order. Function-branching fields (text
 
 </details>
 
+<details><summary>Variant: romance Maya / romance Ren</summary>
+
+> She held the gate. She held it long enough.
+
+</details>
+
 **Choices:**
 
-1. **Back to title**
+1. **Walk on.** _require:_ `s => !!s.romance`
+   - → `ending_final_lovers_road`
+2. **Back to title** _require:_ `s => !s.romance`
    - → `__title__`
 
 ---

@@ -1193,11 +1193,11 @@ window.Story = {
       { label: "— THE END —", next: function(s) {
         if (s.flags.mayaSacrificed) return "ending_final_maya_fell";
         if (s.flags.renSacrificed)  return "ending_final_ren_fell";
-        // Vega survived via the grenade → her own epilogue scene
-        // before the final card, on ANY romance path. Sets
-        // vegaSurvived for a Part 2 to pick up.
         if (s.flags.vegaStayedBehind && s.flags.gaveGrenade) return "vega_epilogue";
-        if (s.flags.vegaStayedBehind && !s.romance) return "ending_final_vega_fell";
+        // Vega fell — image + memorial text plays on every path. On
+        // romance paths it chains through to lovers_road; on no-
+        // romance it's the terminal card.
+        if (s.flags.vegaStayedBehind) return "ending_final_vega_fell";
         return s.romance ? "ending_final_lovers_road" : "ending_final_escape";
       } },
     ]
@@ -1738,7 +1738,29 @@ window.Story = {
   ending_final_lovers:      { scene: function(s) { return s.romance === "ren" ? "ending_final_lovers_ren" : s.romance === "maya" ? "ending_final_lovers_maya" : "ending_final_lovers"; }, sceneClass: "forest", chapter: "Ending D — Lovers, Saved", text: "You held the wall. You found someone worth holding the wall for.\n\nThanks for playing Dead Light.", choices: [{ label: "Back to title", next: "__title__" }] },
   ending_final_loverlost:   { scene: function(s) { return s.romance === "ren" ? "ending_final_loverlost_ren" : s.romance === "maya" ? "ending_final_loverlost_maya" : "ending_final_loverlost"; }, sceneClass: "blood",  chapter: "Ending E — Lover Lost", text: "You loved them. You lost them. You loved them anyway.\n\nThanks for playing Dead Light.",       choices: [{ label: "Back to title", next: "__title__" }] },
   ending_final_lovers_road: { scene: function(s) { return s.romance === "ren" ? "ending_final_lovers_road_ren" : s.romance === "maya" ? "ending_final_lovers_road_maya" : "ending_final_lovers_road"; }, sceneClass: "forest", chapter: "Ending F — Lovers, Walking", text: "Twenty people. One light. One hand in yours.\n\nThanks for playing Dead Light.", choices: [{ label: "Back to title", next: "__title__" }] },
-  ending_final_vega_fell:   { scene: "ending_final_vega_fell",  sceneClass: "blood", chapter: "Ending G — Captain Held", text: function(s) { return s.companion2 === "Nora" ? "She held the gate. Long enough for a kid to see another dawn.\n\nThanks for playing Dead Light." : "She held the gate. She held it long enough.\n\nThanks for playing Dead Light."; }, choices: [{ label: "Back to title", next: "__title__" }] },
+  ending_final_vega_fell: {
+    scene: "ending_final_vega_fell",
+    sceneClass: "blood",
+    chapter: "Ending G — Captain Held",
+    text: function(s) {
+      let base = s.companion2 === "Nora"
+        ? "She held the gate. Long enough for a kid to see another dawn."
+        : "She held the gate. She held it long enough.";
+      // Only the terminal (no-romance) card signs off here. On
+      // romance paths this scene is intermediate — the lovers_road
+      // ending will do the sign-off.
+      if (!s.romance) base += "\n\nThanks for playing Dead Light.";
+      return base;
+    },
+    choices: [
+      { label: "Walk on.",
+        require: s => !!s.romance,
+        next: "ending_final_lovers_road" },
+      { label: "Back to title",
+        require: s => !s.romance,
+        next: "__title__" },
+    ]
+  },
   ending_final_maya_fell:   { scene: "ending_final_maya_fell",  sceneClass: "blood", chapter: "Ending H — She Stayed", text: "She stayed so you could walk. You keep walking.\n\nThanks for playing Dead Light.", choices: [{ label: "Back to title", next: "__title__" }] },
   ending_final_ren_fell:    { scene: "ending_final_ren_fell",   sceneClass: "blood", chapter: "Ending I — The Medbay Door", text: "She stayed with the ones who couldn't walk. You carry her song with you.\n\nThanks for playing Dead Light.", choices: [{ label: "Back to title", next: "__title__" }] },
   // Epilogue (not a terminal ending) — fires between post_horde_flee
