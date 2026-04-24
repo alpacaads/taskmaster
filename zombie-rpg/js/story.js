@@ -1171,7 +1171,7 @@ window.Story = {
     onTimeout: "flee_journey_1_late",
     choices: [
       { label: "Drop the runner. Now.", tag: "COMBAT", tagClass: "danger",
-        combat: { enemy: "runner", onWin: "flee_journey_2", onLose: "death" } },
+        combat: { enemy: "runner_flee", onWin: "flee_journey_2", onLose: "death" } },
       { label: "Keep the column moving. Don't look back.",
         effect: s => {
           s.flags.marisolDied = true;
@@ -1201,7 +1201,7 @@ window.Story = {
     text: "Movement in the pines ahead — low, fast, wrong-shaped. Not shambling. Stalking.\n\nOne of them broke off from the horde and ran ahead to cut the column off. Smart, for something that used to be a man.",
     choices: [
       { label: "Hold the line. Put it down.", tag: "COMBAT", tagClass: "danger",
-        combat: { enemy: "hunter", onWin: "flee_journey_3", onLose: "death" } },
+        combat: { enemy: "hunter_flee", onWin: "flee_journey_3", onLose: "death" } },
       { label: "Push through — don't give it a target.",
         effect: s => {
           s.hp = Math.max(1, s.hp - 2);
@@ -1227,11 +1227,11 @@ window.Story = {
       { label: "Cover her — punch the walker off.",
         require: s => mayaInColumn(s),
         tag: "COMBAT", tagClass: "danger",
-        combat: { enemy: "walker", onWin: "flee_journey_4", onLose: "death" } },
+        combat: { enemy: "walker_flee", onWin: "flee_journey_4", onLose: "death" } },
       { label: "Pull Tomás free. Shoot the walker.",
         require: s => !mayaInColumn(s),
         tag: "COMBAT", tagClass: "danger",
-        combat: { enemy: "walker", onWin: "flee_journey_4", onLose: "death" } },
+        combat: { enemy: "walker_flee", onWin: "flee_journey_4", onLose: "death" } },
       { label: "\"Get yourself free. I have to hold the line.\"",
         require: s => mayaInColumn(s),
         effect: s => {
@@ -1325,7 +1325,7 @@ window.Story = {
     text: "The column crests a low ridge. Below, a dry creek bed.\n\nAnd in the creek bed: three hunters in a loose fan, already turning their heads toward your light.",
     choices: [
       { label: "Turn and put them down.", tag: "COMBAT", tagClass: "danger",
-        combat: { enemy: "hunter", onWin: "flee_journey_6", onLose: "death" } },
+        combat: { enemy: "hunter_flee", onWin: "flee_journey_6", onLose: "death" } },
       { label: "Drive the column through. Shoulders down, run.",
         effect: s => {
           s.hp = Math.max(1, s.hp - 3);
@@ -1353,11 +1353,11 @@ window.Story = {
       { label: "Dive between them. Take the runner.",
         require: s => noraInColumn(s),
         tag: "COMBAT", tagClass: "danger",
-        combat: { enemy: "runner", onWin: "flee_journey_7", onLose: "death" } },
+        combat: { enemy: "runner_flee", onWin: "flee_journey_7", onLose: "death" } },
       { label: "Put the walker down before it tears.",
         require: s => !noraInColumn(s),
         tag: "COMBAT", tagClass: "danger",
-        combat: { enemy: "walker", onWin: "flee_journey_7", onLose: "death" } },
+        combat: { enemy: "walker_flee", onWin: "flee_journey_7", onLose: "death" } },
     ]
   },
 
@@ -1396,7 +1396,7 @@ window.Story = {
       { label: "Fall back to her. Cover fire.",
         require: s => vegaInColumn(s),
         tag: "COMBAT", tagClass: "danger",
-        combat: { enemy: "hunter", onWin: "flee_journey_8", onLose: "death" } },
+        combat: { enemy: "hunter_flee", onWin: "flee_journey_8", onLose: "death" } },
       { label: "Trust her. Keep the column moving.",
         require: s => vegaInColumn(s),
         effect: s => {
@@ -1412,7 +1412,7 @@ window.Story = {
       { label: "Meet them. Drop both.",
         require: s => !vegaInColumn(s),
         tag: "COMBAT", tagClass: "danger",
-        combat: { enemy: "runner", onWin: "flee_journey_8", onLose: "death" } },
+        combat: { enemy: "runner_flee", onWin: "flee_journey_8", onLose: "death" } },
     ]
   },
 
@@ -1455,7 +1455,7 @@ window.Story = {
       { label: "Cover her. Drop the walker.",
         require: s => renInColumn(s),
         tag: "COMBAT", tagClass: "danger",
-        combat: { enemy: "walker", onWin: "flee_journey_9", onLose: "death" } },
+        combat: { enemy: "walker_flee", onWin: "flee_journey_9", onLose: "death" } },
       { label: "\"Ren — he's gone. Leave him.\"",
         require: s => renInColumn(s),
         effect: s => {
@@ -1470,7 +1470,7 @@ window.Story = {
       { label: "Cut the runner off Ezra.",
         require: s => !renInColumn(s),
         tag: "COMBAT", tagClass: "danger",
-        combat: { enemy: "runner", onWin: "flee_journey_9", onLose: "death" } },
+        combat: { enemy: "runner_flee", onWin: "flee_journey_9", onLose: "death" } },
     ]
   },
 
@@ -1539,11 +1539,11 @@ window.Story = {
       { label: "Pull the hunter off her.",
         require: s => mayaInColumn(s) && !noraInColumn(s),
         tag: "COMBAT", tagClass: "danger",
-        combat: { enemy: "hunter", onWin: "flee_journey_10", onLose: "death" } },
+        combat: { enemy: "hunter_flee", onWin: "flee_journey_10", onLose: "death" } },
       { label: "Dive for Nora.",
         require: s => !mayaInColumn(s) && noraInColumn(s),
         tag: "COMBAT", tagClass: "danger",
-        combat: { enemy: "walker", onWin: "flee_journey_10", onLose: "death" } },
+        combat: { enemy: "walker_flee", onWin: "flee_journey_10", onLose: "death" } },
       { label: "Otto. He's the kid.",
         require: s => !mayaInColumn(s) && !noraInColumn(s),
         effect: s => {
@@ -1603,7 +1603,7 @@ window.Story = {
     text: "The creek ford. Water to your knees. The column is halfway across when the last of them breaks from the treeline behind you — two hunters, running flat out.\n\nThis is the last one. Then it's over.",
     choices: [
       { label: "Turn. Meet them in the water.", tag: "COMBAT", tagClass: "danger",
-        combat: { enemy: "hunter", onWin: "post_horde_flee", onLose: "death" } },
+        combat: { enemy: "hunter_flee", onWin: "post_horde_flee", onLose: "death" } },
     ]
   },
 

@@ -738,7 +738,7 @@ window.Scenes = (function () {
   // fresh image URLs automatically, so a commit on one device (PC)
   // shows up on another (phone) as soon as Pages rebuilds, without
   // relying on localStorage which is per-device.
-  const BUILD = "202";
+  const BUILD = "203";
 
   // Smart cache-bust: per-scene timestamp from the admin takes priority
   // (committer sees their upload immediately), then a device-wide global
@@ -915,6 +915,12 @@ window.Scenes = (function () {
     combat_runner_horde:  "fresh zombie runner sprinting out of smoke and dim muzzle flashes at a fortified camp fence at blood-red dawn, mid-lunge, snarling, other silhouettes behind, horror cinematic widescreen portrait",
     combat_bloater_horde: "massive bloated zombie pushing through a breached chainlink section of a fortified camp fence at blood-red dawn, smoke and flicker of nearby fire, swollen lumpy body, slow and heavy, horror cinematic widescreen portrait",
     combat_hunter_horde:  "fast turned zombie man in torn tactical clothing mid-sprint toward the camera at a fortified camp fence at blood-red dawn, snarling, teeth bared, smoke and silhouettes of the horde behind him, horror cinematic widescreen portrait, in the style of The Last of Us",
+    // --- Flee-context variants: Day-5 flight from the camp, dawn in
+    // the pine forest. Separate slot from the base combat portraits
+    // so the admin can art each setting without clobbering the other.
+    combat_walker_flee:   "decaying zombie walker shambling directly toward the camera through a misty pine forest at pre-dawn, cold blue-grey light filtering through the trees, drifting smoke, pine needles on the ground, cinematic horror widescreen portrait, gritty, in the style of The Last of Us",
+    combat_runner_flee:   "fresh zombie runner sprinting mid-lunge directly toward the camera through a misty pine forest at pre-dawn, snarling, teeth bared, motion blur, cold blue-grey light, drifting smoke between the pines, cinematic horror widescreen portrait, in the style of The Last of Us",
+    combat_hunter_flee:   "fast turned zombie hunter in torn tactical clothing mid-sprint toward the camera through a misty pine forest at pre-dawn, milky eyes, snarling, low predatory posture, cold blue-grey light, drifts of smoke, pine needles underfoot, cinematic horror widescreen portrait, in the style of The Last of Us",
   };
 
   // ---------- AI image scenes ----------
