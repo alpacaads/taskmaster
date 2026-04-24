@@ -354,6 +354,13 @@ window.Combat = (function () {
       ? config.engagementFlipAt
       : (engagedAllies.length ? Math.ceil(hp / 2) : 0);
 
+    // Wave fights: config.waves is an array of enemy ids that come
+    // after the opening one. The horde defense uses this to spawn a
+    // mixed queue of walkers / runners / bloaters / pairs — 10 or so
+    // enemies back-to-back with brief HP/stam breathers between.
+    const waveQueue = Array.isArray(config.waves) ? config.waves.slice() : [];
+    const totalWaves = 1 + waveQueue.length;
+
     state = {
       enemy: { ...def, hp, maxHp: hp, atk },
       onWin: config.onWin,
@@ -375,6 +382,9 @@ window.Combat = (function () {
       engagedInitial: engagedAllies.slice(),
       engagementFlipAt: engagementFlipAt,
       engagementLifted: false,
+      waveQueue: waveQueue,
+      waveIndex: 1,
+      totalWaves: totalWaves,
       startMs: Date.now(),
     };
 
@@ -417,7 +427,9 @@ window.Combat = (function () {
     const descEl = document.getElementById("enemy-desc");
     if (descEl) descEl.textContent = state.enemy.desc || "";
     const chEl = document.getElementById("combat-chapter");
-    if (chEl) chEl.textContent = "CONTACT";
+    if (chEl) chEl.textContent = state.totalWaves > 1
+      ? `WAVE ${state.waveIndex} / ${state.totalWaves}`
+      : "CONTACT";
 
     const logEl = document.getElementById("combat-log");
     logEl.innerHTML = "";
@@ -474,9 +486,7 @@ window.Combat = (function () {
     checkEngagementFlip();
     if (state.enemy.hp <= 0) {
       log(`${state.enemy.name} falls.`, "crit");
-      Sound.play("victory");
-      applyLoot(state.enemyId);
-      setTimeout(() => end("win"), 950);
+      finishOrAdvance();
       return;
     }
     // Grenade still triggers a hostile turn — they're shooting through
@@ -851,9 +861,7 @@ window.Combat = (function () {
 
     if (state.enemy.hp <= 0) {
       log(`${state.enemy.name} falls.`, "crit");
-      Sound.play("victory");
-      applyLoot(state.enemyId);
-      setTimeout(() => end("win"), 950);
+      finishOrAdvance();
       return;
     }
 
@@ -1251,9 +1259,7 @@ window.Combat = (function () {
         flashAlly("maya");
         if (state.enemy.hp <= 0) {
           log(`${state.enemy.name} falls.`, "crit");
-          Sound.play("victory");
-          applyLoot(state.enemyId);
-          setTimeout(() => end("win"), 950);
+          finishOrAdvance();
           return;
         }
       }
@@ -1301,9 +1307,7 @@ window.Combat = (function () {
         flashAlly("vega");
         if (state.enemy.hp <= 0) {
           log(`${state.enemy.name} falls.`, "crit");
-          Sound.play("victory");
-          applyLoot(state.enemyId);
-          setTimeout(() => end("win"), 950);
+          finishOrAdvance();
           return;
         }
       }
@@ -1352,6 +1356,61 @@ window.Combat = (function () {
       if (result === "win" || result === "flee") Game.goto(cfg.onWin);
       else Game.goto(cfg.onLose);
     }, linger);
+  }
+
+  // ---------- horde waves ----------
+  // Pop the next enemy off the wave queue and re-seat state.enemy
+  // without tearing down the combat screen. Also does a small breather
+  // restore (+1 HP, +1 stam) so the fight stays human over 10 rounds.
+  function advanceToNextWave() {
+    if (!state || !state.waveQueue || !state.waveQueue.length) return false;
+    const nextType = state.waveQueue.shift();
+    const def = ENEMIES[nextType];
+    if (!def) return false;
+    const hp = def.hp;
+    state.enemy = { ...def, hp, maxHp: hp, atk: def.atk };
+    state.enemyId = nextType;
+    state.waveIndex += 1;
+    // Per-enemy flags reset — each new fighter starts fresh.
+    state.telegraphPending = false;
+    state.enemyAimed = false;
+    state.enemyBracing = false;
+    state.interruptedEnemy = false;
+    state.bracing = false;
+    state.counterReady = false;
+    state.turn = 0;
+    // Breather: small restore between waves. Crucial — without it you
+    // get whittled down over 10 enemies and there's no answer.
+    const s = Game.state;
+    if (s.hp < s.hpMax)   s.hp   = Math.min(s.hpMax,   s.hp   + 1);
+    if (s.stam < s.stamMax) s.stam = Math.min(s.stamMax, s.stam + 1);
+    log(`Wave ${state.waveIndex} / ${state.totalWaves} — ${state.enemy.name} steps into the gap.`, "warn");
+    document.getElementById("enemy-art").textContent = state.enemy.art;
+    document.getElementById("enemy-name").textContent = state.enemy.name;
+    const descEl = document.getElementById("enemy-desc");
+    if (descEl) descEl.textContent = state.enemy.desc || "";
+    const chEl = document.getElementById("combat-chapter");
+    if (chEl) chEl.textContent = state.totalWaves > 1
+      ? `WAVE ${state.waveIndex} / ${state.totalWaves}`
+      : "CONTACT";
+    refreshHud();
+    updateEnemyHp();
+    refreshCombatStatus();
+    renderAllies();
+    return true;
+  }
+
+  // Shared finisher — every spot that used to call end("win") now
+  // goes through here. If there are more waves, advances; otherwise
+  // plays the victory sting and exits combat.
+  function finishOrAdvance() {
+    applyLoot(state.enemyId);
+    if (state.waveQueue && state.waveQueue.length > 0) {
+      setTimeout(() => advanceToNextWave(), 950);
+      return;
+    }
+    Sound.play("victory");
+    setTimeout(() => end("win"), 950);
   }
 
   // Player spent their turn using a stam item from inventory. No

@@ -1009,15 +1009,26 @@ window.Story = {
           s.flags.hordeDefense = true;
         },
         combat: function (s) {
-          // The party is much larger (Maya + Ren + Vega + Nora's spotting),
-          // so scale the horde up accordingly — harder fight, more of us.
-          // Camp isn't ready when you didn't warn them about the breach.
+          // Horde fight = 10 sequential enemies in a wave queue, mixed
+          // so breathers (walkers) come between harder beats (runners,
+          // pairs, a bloater). Small HP/stam restore between each
+          // wave keeps you going over the long stretch. The opening
+          // enemy is the first fighter; state.waves is everything
+          // after, in order.
+          //
+          // Camp-ready composition (exposedTraitor) is slightly easier:
+          // more walker breathers, one runner, no bloater.
+          // Camp-not-ready is meaner: more runners, a bloater closer
+          // to the middle when you're still hurt.
           const ready = !!s.flags.exposedTraitor;
+          const waves = ready
+            ? ["walker", "walker_pair", "walker", "runner",
+               "walker", "walker", "walker_pair", "walker", "walker"]
+            : ["walker", "runner", "walker_pair", "walker",
+               "runner", "walker", "bloater", "walker", "walker"];
           return {
-            enemy: "horde",
-            risky: !ready,
-            hp: ready ? 38 : 46,
-            atk: ready ? [4, 7] : [5, 8],
+            enemy: "walker",           // first wave — an easy opener
+            waves: waves,              // nine more after
             onWin: "post_horde_win",
             onLose: "post_horde_lose",
           };
