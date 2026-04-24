@@ -471,12 +471,13 @@ window.Combat = (function () {
 
     // Opening log line when an ally gets pinned down — gives the player
     // the 'one on you, one on yours' read before the first turn.
-    if (state.engagedInitial && state.engagedInitial.length) {
-      state.engagedInitial.forEach(a => {
-        const name = a === "maya" ? "Maya" : a === "ren" ? "Ren" : a === "vega" ? "Vega" : a === "nora" ? "Nora" : a;
-        log(`${name} breaks off — she's got the other one.`, "info");
-      });
-    }
+    // Pulls from the engaged set (both legacy engagedAllies AND the
+    // newer allyEngagement live there).
+    const engagedKeys = Object.keys(state.engaged || {}).filter(k => state.engaged[k]);
+    engagedKeys.forEach(a => {
+      const name = a === "maya" ? "Maya" : a === "ren" ? "Ren" : a === "vega" ? "Vega" : a === "nora" ? "Nora" : a;
+      log(`${name} breaks off — she's got the other one.`, "info");
+    });
 
     refreshHud();
     updateEnemyHp();
@@ -604,6 +605,8 @@ window.Combat = (function () {
     document.getElementById("c-hp").textContent = Math.max(0, s.hp);
     document.getElementById("c-hpmax").textContent = s.hpMax;
     document.getElementById("c-stam").textContent = s.stam;
+    const stamMaxEl = document.getElementById("c-stammax");
+    if (stamMaxEl) stamMaxEl.textContent = s.stamMax;
     document.getElementById("c-ammo").textContent = s.ammo;
     const hpPct   = Math.max(0, s.hp)   / Math.max(1, s.hpMax)   * 100;
     const stamPct = Math.max(0, s.stam) / Math.max(1, s.stamMax) * 100;
@@ -861,7 +864,9 @@ window.Combat = (function () {
     else if (action === "flee") {
       state.aimReady = false;
       Sound.play("flee");
-      // Bosses and fast / pack enemies can't be escaped.
+      // Bosses and fast / pack enemies can't be escaped — they catch
+      // you on the way out. The bite IS the enemy's swing this turn;
+      // we early-return so we don't double-tap by also running enemyTurn.
       if (state.enemy.speed >= 2 || state.enemy.pack || state.enemy.boss) {
         const bite = rand(1, 2);
         s.hp -= bite;
@@ -870,13 +875,13 @@ window.Combat = (function () {
         spawnEnemyBlood();
         screenShake();
         floatDamage(bite);
+        refreshHud();
         if (s.hp <= 0) {
-          refreshHud();
           log("You collapse.", "crit");
           Sound.play("death");
           setTimeout(() => end("lose"), 900);
-          return;
         }
+        return;
       } else {
         const fled = Math.random() < 0.55;
         if (fled) {
@@ -886,7 +891,9 @@ window.Combat = (function () {
           setTimeout(() => end("flee"), 700);
           return;
         }
-        // Failed flee — it turns your back into an opening.
+        // Failed flee — it turns your back into an opening. Same
+        // deal — the failed-escape bite IS the enemy turn. Return
+        // before the bottom-of-function enemyTurn fires.
         const bite = rand(1, 3);
         s.hp -= bite;
         log(`You stumble — it closes and tears into you. ${bite} damage.`, "enemy");
@@ -894,13 +901,13 @@ window.Combat = (function () {
         spawnEnemyBlood();
         screenShake();
         floatDamage(bite);
+        refreshHud();
         if (s.hp <= 0) {
-          refreshHud();
           log("You collapse.", "crit");
           Sound.play("death");
           setTimeout(() => end("lose"), 900);
-          return;
         }
+        return;
       }
     }
 
@@ -1496,6 +1503,10 @@ window.Combat = (function () {
     state.interruptedEnemy = false;
     state.bracing = false;
     state.counterReady = false;
+    state.desperateBrace = false;
+    state.aimReady = false;       // a held aim doesn't carry into a new fighter
+    state.playerPanicked = false; // last enemy's panic doesn't haunt the next one
+    state.noraWarn = false;       // Nora's warning was for the one that just fell
     state.turn = 0;
     state.range = "far"; // new wave — new fighter to close on
     // Breather: small restore between waves. Crucial — without it you
@@ -1524,6 +1535,21 @@ window.Combat = (function () {
   // plays the victory sting and exits combat.
   function finishOrAdvance() {
     applyLoot(state.enemyId);
+    // If the ally was still mid-fight when you finished yours, close
+    // hers out narratively too — she finishes a beat behind you. The
+    // post-combat scene narrates 'two bodies, both of theirs'; we
+    // can't have her bandit still standing.
+    if (state.allyEnemy && state.allyEnemy.hp > 0) {
+      const ae = state.allyEnemy;
+      const niceName = ae.allyKey === "maya" ? "Maya" :
+                       ae.allyKey === "ren"  ? "Ren"  :
+                       ae.allyKey === "vega" ? "Vega" : ae.allyKey;
+      log(`${niceName} finishes hers right after — a clean shot.`, "ally");
+      ae.hp = 0;
+      state.allyEnemy = null;
+      if (state.engaged) state.engaged[ae.allyKey] = false;
+      renderAllies();
+    }
     if (state.waveQueue && state.waveQueue.length > 0) {
       setTimeout(() => advanceToNextWave(), 950);
       return;
