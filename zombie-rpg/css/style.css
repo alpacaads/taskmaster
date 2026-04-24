@@ -778,6 +778,46 @@ html, body {
   from { opacity: 0.55; }
   to   { opacity: 1; }
 }
+
+/* Enemy intent preview — Slay-the-Spire-style. Shows what the enemy
+ * will do on their next hostile turn so the player can plan. */
+.enemy-intent {
+  margin-top: 6px;
+  padding: 4px 10px;
+  border-radius: 4px;
+  font-family: ui-monospace, "SF Mono", Menlo, monospace;
+  font-size: 11px;
+  letter-spacing: 1.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  display: inline-block;
+  background: rgba(230, 227, 216, 0.08);
+  color: #cfd3c8;
+  border: 1px solid rgba(230, 227, 216, 0.18);
+}
+.enemy-intent.intent-attack {
+  color: #ffb0b3;
+  border-color: rgba(217, 143, 143, 0.4);
+  background: rgba(217, 143, 143, 0.08);
+}
+.enemy-intent.intent-killshot {
+  color: #ffb0b3;
+  border-color: rgba(217, 143, 143, 0.6);
+  background: rgba(217, 143, 143, 0.16);
+  animation: pulse-chip 0.9s ease-in-out infinite alternate;
+}
+.enemy-intent.intent-telegraph {
+  color: #ffcc88;
+  border-color: rgba(255, 204, 136, 0.45);
+  background: rgba(255, 204, 136, 0.1);
+}
+.enemy-intent.intent-reload,
+.enemy-intent.intent-reel,
+.enemy-intent.intent-miss {
+  color: var(--accent-2, #c7e6b1);
+  border-color: rgba(199, 230, 177, 0.35);
+  background: rgba(199, 230, 177, 0.08);
+}
 .combat-slug .combat-inv-btn {
   margin-left: auto;
   width: 32px; height: 32px;

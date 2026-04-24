@@ -476,6 +476,52 @@ window.Combat = (function () {
     setTimeout(enemyTurn, 600);
   }
 
+  // Slay-the-Spire-style intent preview: what will the enemy do on
+  // their next hostile turn? Returns { kind, label, range? } or null
+  // when there's no live combat. Read-only — no state mutation — so
+  // we can call it as often as we want for the UI.
+  function computeEnemyIntent() {
+    if (!state || !state.enemy || state.enemy.hp <= 0) return null;
+    const e = state.enemy;
+    if (state.noraWarn) {
+      return { kind: "miss", label: "Will whiff (Nora's call)" };
+    }
+    if (state.interruptedEnemy) {
+      return { kind: "reel", label: "Reeling — no attack" };
+    }
+    if (state.telegraphPending) {
+      const lo = e.atk[0] + 2;
+      const hi = e.atk[1] + 2;
+      return { kind: "killshot", label: `⚠ Kill Shot`, range: [lo, hi] };
+    }
+    const aboveFlip = !state.engagementFlipAt || e.hp > state.engagementFlipAt;
+    if (e.telegraphEvery && state.turn > 0
+        && (state.turn % e.telegraphEvery === 0) && aboveFlip) {
+      return { kind: "telegraph", label: "Winding up…" };
+    }
+    if (e.repositionEvery && state.turn > 0
+        && (state.turn % e.repositionEvery === 0) && aboveFlip) {
+      return { kind: "reload", label: "Reloading — no attack" };
+    }
+    // Normal attack. Show the base range + the cross-fire +1 bump
+    // when a pair fight is still live.
+    let lo = e.atk[0], hi = e.atk[1];
+    const isPair = e.pack === true && e.human === true;
+    if (isPair && !state.engagementLifted) { lo += 1; hi += 1; }
+    return { kind: "attack", label: "Strike", range: [lo, hi] };
+  }
+
+  function renderEnemyIntent() {
+    const host = document.getElementById("enemy-intent");
+    if (!host) return;
+    const intent = computeEnemyIntent();
+    if (!intent) { host.hidden = true; return; }
+    const rangeTxt = intent.range ? ` ${intent.range[0]}-${intent.range[1]}` : "";
+    host.className = "enemy-intent intent-" + intent.kind;
+    host.textContent = "NEXT: " + intent.label + rangeTxt;
+    host.hidden = false;
+  }
+
   // Status chip in the combat slug — 'AIMED' when next shot is primed,
   // '⚠ TELEGRAPHED' when the enemy is winding up (player should read
   // and decide). Also toggles the Aim button's availability.
@@ -501,6 +547,7 @@ window.Combat = (function () {
       aimBtn.disabled = !canAim;
       aimBtn.hidden = !(s && s.bestRanged);
     }
+    renderEnemyIntent();
   }
 
   function refreshHud() {
