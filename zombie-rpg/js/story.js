@@ -1280,6 +1280,106 @@ window.Story = {
     choices: [ { label: "Keep moving.", next: "flee_journey_4" } ]
   },
 
+  flee_journey_4: {
+    scene: "flee_journey_parallel",
+    sceneClass: "blood",
+    chapter: "Day 5 — The Flight",
+    text: "Two screams at once, from opposite flanks.\n\nDawit — the old mechanic who fixed the camp generator every Sunday — is on his back in the brush, a walker on top of him.\n\nKline — the kid who carried water for his grandmother — is stumbling, a runner lunging for his throat.\n\nYou can only reach one.",
+    timerSeconds: 6,
+    onTimeout: "flee_journey_4_late",
+    choices: [
+      { label: "Dawit. He's closer.",
+        effect: s => {
+          s.flags.klineDied = true;
+          s.flags.fleeLosses = (s.flags.fleeLosses || 0) + 1;
+          Game.toast("Kline — lost");
+        },
+        next: "flee_journey_5" },
+      { label: "Kline. He's just a kid.",
+        effect: s => {
+          s.flags.dawitDied = true;
+          s.flags.fleeLosses = (s.flags.fleeLosses || 0) + 1;
+          Game.toast("Dawit — lost");
+        },
+        next: "flee_journey_5" },
+    ]
+  },
+
+  flee_journey_4_late: {
+    scene: "flee_journey_fallen",
+    sceneClass: "blood",
+    chapter: "Day 5 — The Flight",
+    onEnter: s => {
+      s.flags.dawitDied = true;
+      s.flags.klineDied = true;
+      s.flags.fleeLosses = (s.flags.fleeLosses || 0) + 2;
+    },
+    text: "You freeze.\n\nBy the time you pick, both screams are gone. The forest absorbs them the way forest absorbs anything.",
+    choices: [ { label: "Keep moving.", next: "flee_journey_5" } ]
+  },
+
+  flee_journey_5: {
+    scene: "flee_journey_hunter_pack",
+    sceneClass: "forest",
+    chapter: "Day 5 — The Flight",
+    text: "The column crests a low ridge. Below, a dry creek bed.\n\nAnd in the creek bed: three hunters in a loose fan, already turning their heads toward your light.",
+    choices: [
+      { label: "Turn and put them down.", tag: "COMBAT", tagClass: "danger",
+        combat: { enemy: "hunter", onWin: "flee_journey_6", onLose: "death" } },
+      { label: "Drive the column through. Shoulders down, run.",
+        effect: s => {
+          s.hp = Math.max(1, s.hp - 3);
+          s.flags.fleeLosses = (s.flags.fleeLosses || 0) + 1;
+          Game.toast("−3 ❤️ · someone in the column didn't make it");
+        },
+        next: "flee_journey_6" },
+    ]
+  },
+
+  flee_journey_6: {
+    scene: s => noraInColumn(s) ? "flee_journey_nora" : "flee_journey_mara",
+    sceneClass: "blood",
+    chapter: "Day 5 — The Flight",
+    text: s => {
+      if (noraInColumn(s)) {
+        return "Nora trips. She hits the pine needles hard, loses the hand she had on your jacket.\n\nA runner is five paces from her and closing.\n\nShe doesn't scream. She just looks at you.";
+      }
+      return "Mara — barely sixteen, one of the ones the camp took in last month — catches a root with her boot. A walker has her by the hair before she's even fully down.";
+    },
+    // Non-combatants get the shortest timer — mandatory save.
+    timerSeconds: 4,
+    onTimeout: "flee_journey_6_late",
+    choices: [
+      { label: "Dive between them. Take the runner.",
+        require: s => noraInColumn(s),
+        tag: "COMBAT", tagClass: "danger",
+        combat: { enemy: "runner", onWin: "flee_journey_7", onLose: "death" } },
+      { label: "Put the walker down before it tears.",
+        require: s => !noraInColumn(s),
+        tag: "COMBAT", tagClass: "danger",
+        combat: { enemy: "walker", onWin: "flee_journey_7", onLose: "death" } },
+    ]
+  },
+
+  flee_journey_6_late: {
+    scene: "flee_journey_fallen",
+    sceneClass: "blood",
+    chapter: "Day 5 — The Flight",
+    onEnter: s => {
+      if (noraInColumn(s)) {
+        s.flags.noraFellInFlight = true;
+        s.flags.fleeLosses = (s.flags.fleeLosses || 0) + 1;
+      } else {
+        s.flags.maraDied = true;
+        s.flags.fleeLosses = (s.flags.fleeLosses || 0) + 1;
+      }
+    },
+    text: s => s.flags.noraFellInFlight
+      ? "You move. You're not fast enough.\n\nThe column keeps walking because the column has to keep walking. You don't. You just stand there for a long time."
+      : "She was sixteen. That's all you can think, after.",
+    choices: [ { label: "Keep moving.", next: "flee_journey_7" } ]
+  },
+
   post_horde_win: {
     scene: "ending_dawn",
     sceneClass: "blood",
