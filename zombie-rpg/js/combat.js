@@ -608,7 +608,7 @@ window.Combat = (function () {
     }
     if (state.range === "close") {
       const e = state.enemy;
-      return { kind: "telegraph", label: e.human ? "🤜 IN YOUR FACE" : "🤝 HOLDING YOU CLOSE" };
+      return { kind: "telegraph", label: e.human ? "🤜 IN YOUR FACE" : "🤝 HOLDING YOU DOWN" };
     }
     // Generic 'status' slot: future effects (stunned, bleeding, etc.)
     // can push labels onto state.enemy.statusEffects and they'll show
@@ -1257,10 +1257,12 @@ window.Combat = (function () {
     }
 
     // Enemy closes the gap — swaps combat to close range. Locks out
-    // player's guns. Zombies 'grab' (narrative pressure), humans
+    // player's guns. Zombies 'grab' (holding you down), humans
     // 'close and swing' (small damage + shift to melee). Doesn't
-    // fire if already close.
-    if (state.range === "far" && e.aggressive && Math.random() < e.aggressive) {
+    // fire in the opening two hostile turns — the fight needs room
+    // to breathe before they commit to closing — and doesn't fire
+    // if already close.
+    if (state.range === "far" && e.aggressive && state.turn >= 2 && Math.random() < e.aggressive) {
       state.range = "close";
       if (e.human) {
         const clinchDmg = Math.max(1, rand(1, 2));
