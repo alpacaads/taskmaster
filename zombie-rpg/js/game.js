@@ -340,7 +340,10 @@ window.Game = (function () {
     // mechanic right now, so we gate it on the two fields being declared
     // instead of rolling out a global timer system.
     if (node.timerSeconds && node.onTimeout) {
-      startFleeTimer(node.timerSeconds, node.onTimeout);
+      const secs = typeof node.timerSeconds === "function"
+        ? node.timerSeconds(state)
+        : node.timerSeconds;
+      if (secs > 0) startFleeTimer(secs, node.onTimeout);
     }
 
     // Auto-save on new node

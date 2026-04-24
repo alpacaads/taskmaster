@@ -1155,6 +1155,131 @@ window.Story = {
     ]
   },
 
+  // ===== Day-5 flee journey: ten staggered engagements between the
+  // back gate and the creek crossing. Only nodes in this block use the
+  // timerSeconds / onTimeout countdown mechanic — deliberately scoped.
+  // Each engagement sets a "_FellInFlight" flag on the lost character
+  // so post_horde_flee narration + the final ending can pay it off.
+
+  flee_journey_1: {
+    scene: "flee_journey_runner_grab",
+    sceneClass: "blood",
+    chapter: "Day 5 — The Flight",
+    speaker: "",
+    text: "Ten minutes past the back gate. The column is bent low, breathing hard through the pines.\n\nAt the tail, Marisol — a mother of two, the one who darned your jacket last week — goes down hard. A runner has her calf in its teeth.\n\nShe screams your name.",
+    timerSeconds: 7,
+    onTimeout: "flee_journey_1_late",
+    choices: [
+      { label: "Drop the runner. Now.", tag: "COMBAT", tagClass: "danger",
+        combat: { enemy: "runner", onWin: "flee_journey_2", onLose: "death" } },
+      { label: "Keep the column moving. Don't look back.",
+        effect: s => {
+          s.flags.marisolDied = true;
+          s.flags.fleeLosses = (s.flags.fleeLosses || 0) + 1;
+          Game.toast("Marisol — lost");
+        },
+        next: "flee_journey_2" },
+    ]
+  },
+
+  flee_journey_1_late: {
+    scene: "flee_journey_fallen",
+    sceneClass: "blood",
+    chapter: "Day 5 — The Flight",
+    onEnter: s => {
+      s.flags.marisolDied = true;
+      s.flags.fleeLosses = (s.flags.fleeLosses || 0) + 1;
+    },
+    text: "Too long. The scream cuts off in the middle of your name.\n\nThe column doesn't stop. You don't either.",
+    choices: [ { label: "Keep moving.", next: "flee_journey_2" } ]
+  },
+
+  flee_journey_2: {
+    scene: "flee_journey_hunter",
+    sceneClass: "forest",
+    chapter: "Day 5 — The Flight",
+    text: "Movement in the pines ahead — low, fast, wrong-shaped. Not shambling. Stalking.\n\nOne of them broke off from the horde and ran ahead to cut the column off. Smart, for something that used to be a man.",
+    choices: [
+      { label: "Hold the line. Put it down.", tag: "COMBAT", tagClass: "danger",
+        combat: { enemy: "hunter", onWin: "flee_journey_3", onLose: "death" } },
+      { label: "Push through — don't give it a target.",
+        effect: s => {
+          s.hp = Math.max(1, s.hp - 2);
+          Game.toast("−2 ❤️ (caught a swipe)");
+        },
+        next: "flee_journey_3" },
+    ]
+  },
+
+  flee_journey_3: {
+    scene: s => mayaInColumn(s) ? "flee_journey_maya" : "flee_journey_tomas",
+    sceneClass: "blood",
+    chapter: "Day 5 — The Flight",
+    text: s => {
+      if (mayaInColumn(s)) {
+        return "A crash in the brush — Maya's voice, sharp, not scared. She's on her back in the pine needles, a walker clamped onto her jacket sleeve, her knife hand pinned under it.\n\nShe twists her head, finds you.\n\n\"Ellis —\"";
+      }
+      return "Tomás — the quiet one, the one who drew your map — goes down at the flank. A walker has him by the pack straps. He isn't a fighter. He was never a fighter.";
+    },
+    timerSeconds: s => mayaInColumn(s) ? 8 : 5,
+    onTimeout: "flee_journey_3_late",
+    choices: [
+      { label: "Cover her — punch the walker off.",
+        require: s => mayaInColumn(s),
+        tag: "COMBAT", tagClass: "danger",
+        combat: { enemy: "walker", onWin: "flee_journey_4", onLose: "death" } },
+      { label: "Pull Tomás free. Shoot the walker.",
+        require: s => !mayaInColumn(s),
+        tag: "COMBAT", tagClass: "danger",
+        combat: { enemy: "walker", onWin: "flee_journey_4", onLose: "death" } },
+      { label: "\"Get yourself free. I have to hold the line.\"",
+        require: s => mayaInColumn(s),
+        effect: s => {
+          // Maya's a fighter — 50/50 she claws her own way out.
+          if (Math.random() < 0.5) {
+            s.flags.mayaFellInFlight = true;
+            s.flags.fleeLosses = (s.flags.fleeLosses || 0) + 1;
+            Game.toast("Maya — fell");
+          } else {
+            Game.toast("Maya fought free.");
+          }
+        },
+        next: "flee_journey_4" },
+      { label: "Keep the column moving. He wouldn't want us stopping.",
+        require: s => !mayaInColumn(s),
+        effect: s => {
+          s.flags.tomasDied = true;
+          s.flags.fleeLosses = (s.flags.fleeLosses || 0) + 1;
+          Game.toast("Tomás — lost");
+        },
+        next: "flee_journey_4" },
+    ]
+  },
+
+  flee_journey_3_late: {
+    scene: "flee_journey_fallen",
+    sceneClass: "blood",
+    chapter: "Day 5 — The Flight",
+    onEnter: s => {
+      if (mayaInColumn(s)) {
+        // Timer expired — Maya gets the fighter's 50/50.
+        if (Math.random() < 0.5) {
+          s.flags.mayaFellInFlight = true;
+          s.flags.fleeLosses = (s.flags.fleeLosses || 0) + 1;
+        }
+      } else {
+        s.flags.tomasDied = true;
+        s.flags.fleeLosses = (s.flags.fleeLosses || 0) + 1;
+      }
+    },
+    text: s => {
+      if (s.flags.mayaFellInFlight) return "By the time you turn, the walker's loose on her throat. Maya doesn't make a sound. That's the worst of it.";
+      if (mayaInColumn(s)) return "She drags herself free with her teeth set and blood on her sleeve. She doesn't look at you as she passes.";
+      return "Tomás goes quiet halfway through a scream. You don't turn around.";
+    },
+    choices: [ { label: "Keep moving.", next: "flee_journey_4" } ]
+  },
+
   post_horde_win: {
     scene: "ending_dawn",
     sceneClass: "blood",
