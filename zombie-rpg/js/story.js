@@ -1699,8 +1699,41 @@ window.Story = {
         }
       } else if (s.flags.vegaStayedBehind) {
         opener = "Vega stayed. Somewhere behind you — four minutes back, then five, then gone — her rifle was still working. Then it wasn't. The column kept walking. She'd have wanted that.\n\n";
+      } else if (s.flags.vegaSaved && s.flags.vegaFellInFlight) {
+        opener = "Nobody stayed at the gate — but the forest took its price anyway. Vega went down on the road, tangled in three of them with her carbine dry. She didn't call for help. She never would have.\n\n";
       } else if (s.flags.vegaSaved) {
         opener = "Nobody stayed. Vega walks the column's flank with her rifle low and her jaw tight. Every so often she glances back, checking no one's lagging. Nobody is.\n\n";
+      }
+      // Flight losses — in-column deaths between the gate and the creek.
+      // Layered after the rearguard opener so the rearguard beat still
+      // sets the tone. Named characters get their own lines; generic
+      // stranger losses get a summary body-count.
+      let flightLosses = "";
+      if (s.flags.mayaFellInFlight) {
+        flightLosses += "Maya went down in the pines, a walker on her before she could bring her knife up. You didn't see the end of it. You made yourself not look.\n\n";
+      }
+      if (s.flags.renFellInFlight) {
+        flightLosses += "Ren wouldn't leave the wounded man she was working on. You reached them a heartbeat late. Both of them.\n\n";
+      }
+      if (s.flags.noraFellInFlight) {
+        flightLosses += "Nora didn't make the creek. You still feel the absence where her hand should be.\n\n";
+      }
+      const strangers = [
+        s.flags.marisolDied && "Marisol",
+        s.flags.tomasDied && "Tomás",
+        s.flags.dawitDied && "Dawit",
+        s.flags.klineDied && "Kline",
+        s.flags.maraDied && "Mara",
+        s.flags.keekDied && "a man whose name you never caught",
+        s.flags.ezraDied && "Ezra",
+        s.flags.inesDied && "Ines",
+        s.flags.ottoDied && "Otto",
+      ].filter(Boolean);
+      if (strangers.length) {
+        const names = strangers.length === 1 ? strangers[0]
+                    : strangers.length === 2 ? strangers[0] + " and " + strangers[1]
+                    : strangers.slice(0, -1).join(", ") + ", and " + strangers[strangers.length - 1];
+        flightLosses += "Between the gate and the creek, the forest took " + names + ". You remember each one's face. You'll keep remembering.\n\n";
       }
       // Nora's voice in the column when someone didn't make it. One
       // small beat — she asks once, and you have to answer. Skip for
@@ -1735,8 +1768,8 @@ window.Story = {
       // Acknowledge survivors who made it out. Skip if they're the
       // romance lead (already covered) or they were the one who stayed.
       let aside = "";
-      const mayaAlive = s.flags.maya && !s.flags.mayaSacrificed && !(s.romance === "maya" && s.flags.lovedMaya);
-      const renAlive  = !s.flags.renSacrificed && !(s.romance === "ren"  && s.flags.lovedRen);
+      const mayaAlive = s.flags.maya && !s.flags.mayaSacrificed && !s.flags.mayaFellInFlight && !(s.romance === "maya" && s.flags.lovedMaya);
+      const renAlive  = !s.flags.renSacrificed && !s.flags.renFellInFlight && !(s.romance === "ren"  && s.flags.lovedRen);
       if (mayaAlive && renAlive) {
         aside = "\n\nMaya walks the flank, rifle low, eyes on the trees. Ren threads through the column with her med kit, bandaging blisters, catching stragglers. Neither of them has stopped moving since the gate.";
       } else if (mayaAlive) {
@@ -1744,17 +1777,19 @@ window.Story = {
       } else if (renAlive) {
         aside = "\n\nRen threads through the column, med kit over her shoulder, bandaging blisters, catching stragglers. When she passes you she squeezes your arm once and keeps going.";
       }
-      return opener + body + aside + noraTail;
+      return opener + flightLosses + body + aside + noraTail;
     },
     choices: [
       { label: "— THE END —", next: function(s) {
-        if (s.flags.mayaSacrificed) return "ending_final_maya_fell";
-        if (s.flags.renSacrificed)  return "ending_final_ren_fell";
+        // Sacrifices at the gate take precedence; a rearguard loss is
+        // a different grief than a flight loss. Then flight deaths of
+        // named characters, then Vega-at-gate, then the default road.
+        if (s.flags.mayaSacrificed || s.flags.mayaFellInFlight) return "ending_final_maya_fell";
+        if (s.flags.renSacrificed  || s.flags.renFellInFlight)  return "ending_final_ren_fell";
         if (s.flags.vegaStayedBehind && s.flags.gaveGrenade) return "vega_epilogue";
-        // Vega fell — image + memorial text plays on every path. On
-        // romance paths it chains through to lovers_road; on no-
-        // romance it's the terminal card.
-        if (s.flags.vegaStayedBehind) return "ending_final_vega_fell";
+        // Vega fell — at the gate, or on the road. Image + memorial
+        // text plays on every path.
+        if (s.flags.vegaStayedBehind || s.flags.vegaFellInFlight) return "ending_final_vega_fell";
         return s.romance ? "ending_final_lovers_road" : "ending_final_escape";
       } },
     ]
