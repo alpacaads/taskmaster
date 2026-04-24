@@ -42,7 +42,7 @@ window.Combat = (function () {
     // Mini-boss: the thing that was sealed inside the meat locker.
     // Mass of ruptured bodies fused together — slow, heavy, armoured,
     // but headshots (aimed) punch through.
-    freezer_abom: { name: "Meatlocker Abomination", art: "🧟💀", hp: 14, atk: [3, 5], speed: 1, desc: "Grown together in the cold. It shouldn't still be moving.", savageRate: 0.2, boss: true, smallArmsResist: 3, headshotBonus: 4, heavySwing: true, aggressive: 0.4 },
+    freezer_abom: { name: "Meatlocker Abomination", art: "🧟💀", hp: 60, atk: [3, 5], speed: 1, desc: "Grown together in the cold. It shouldn't still be moving.", savageRate: 0.2, boss: true, smallArmsResist: 3, headshotBonus: 4, heavySwing: true, aggressive: 0.4 },
     // Calder turned — fast, sturdy, 9mm bounces off, but he's not quite
     // armoured against a crowbar to the skull.
     traitor:      { name: "Calder (Turned)", art: "🧟‍♂️", hp: 20, atk: [4, 6], speed: 2, desc: "Not Calder any more. Something wearing his face.", savageRate: 0.28, boss: true, smallArmsResist: 2, meleeVulnerable: 2, telegraphEvery: 4, aggressive: 0.4 },

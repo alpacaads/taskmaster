@@ -236,6 +236,24 @@ window.Sound = (function () {
     ambientScene = null;
   }
 
+  // ---- Scene-fit ambient pads ----
+  // Each scene gets a small chord of detuned sines (warm pad), and an
+  // optional "air" element appropriate to the setting:
+  //   forest → very low band-passed wind, soft & moving
+  //   night  → distant low rumble + a very faint cricket pulse
+  //   city   → distant traffic rumble (low-passed brown-ish noise)
+  //   indoor → barely-audible sine room hum (no square buzz)
+  //   blood  → dissonant low pad + sub pulse
+  // Volumes are intentionally low (≤ 0.05) so combat SFX cut through.
+  const SCENE_CHORDS = {
+    // Pitches in Hz. Stack of three keeps the harmony soft.
+    night:  [55,   82.4, 110],     // A1 + E2 + A2 — minor, restful
+    forest: [65.4, 98,   146.8],   // C2 + G2 + D3 — open, natural
+    city:   [61.7, 92.5, 138.6],   // B1 + F#2 + C#3 — slight tension
+    indoor: [98],                  // G2 — single soft hum
+    blood:  [49,   58.3, 73.4],    // G1 + Bb1 + D2 — dread, dissonant
+  };
+
   function setAmbience(scene) {
     if (!ensure()) return;
     if (scene === ambientScene) return;
@@ -244,28 +262,56 @@ window.Sound = (function () {
     if (muted || !scene) return;
 
     const t0 = now();
-    // Pad drone — two detuned sines in the sub/low range
-    const base = { night: 55, forest: 68, city: 62, indoor: 96, blood: 44 }[scene] || 64;
+    const chord = SCENE_CHORDS[scene] || SCENE_CHORDS.night;
 
-    const mk = (f, detune, vol, type = "sine") => {
+    // Soft drone stack — detune each voice slightly so the chord
+    // breathes instead of phasing. Each voice lowpass-filtered to keep
+    // it warm and out of the way of dialogue / SFX.
+    chord.forEach((freq, i) => {
       const o = ctx.createOscillator();
       const g = ctx.createGain();
-      o.type = type;
-      o.frequency.value = f;
-      o.detune.value = detune;
+      const f = ctx.createBiquadFilter();
+      o.type = "sine";
+      o.frequency.value = freq;
+      o.detune.value = (i - 1) * 4; // ±4 cents around center voice
+      f.type = "lowpass";
+      f.frequency.value = 800;
+      f.Q.value = 0.6;
+      const target = scene === "indoor" ? 0.02 : (i === 0 ? 0.04 : 0.025);
       g.gain.setValueAtTime(0, t0);
-      g.gain.linearRampToValueAtTime(vol, t0 + 1.5);
-      o.connect(g); g.connect(master);
+      g.gain.linearRampToValueAtTime(target, t0 + 2.0);
+      o.connect(f); f.connect(g); g.connect(master);
       o.start(t0);
       ambientNodes.push(o);
-      return { o, g };
-    };
+    });
 
-    mk(base,     -6, 0.05);
-    mk(base * 2, +8, 0.025);
-
-    // Slow LFO on a filtered noise bed for wind / dread
-    if (scene === "night" || scene === "forest" || scene === "blood") {
+    // ---- Scene-specific air ----
+    if (scene === "forest") {
+      // Distant wind through pines: noise → narrow band-pass + slow LFO.
+      // Much quieter and more focused than the old wide lowpass bed.
+      const len = ctx.sampleRate * 3;
+      const buf = ctx.createBuffer(1, len, ctx.sampleRate);
+      const d = buf.getChannelData(0);
+      for (let i = 0; i < len; i++) d[i] = Math.random() * 2 - 1;
+      const src = ctx.createBufferSource();
+      src.buffer = buf; src.loop = true;
+      const f = ctx.createBiquadFilter();
+      f.type = "bandpass"; f.frequency.value = 320; f.Q.value = 6;
+      const g = ctx.createGain();
+      g.gain.setValueAtTime(0, t0);
+      g.gain.linearRampToValueAtTime(0.018, t0 + 3);
+      const lfo = ctx.createOscillator();
+      const lfoGain = ctx.createGain();
+      lfo.frequency.value = 0.08;
+      lfoGain.gain.value = 0.012;
+      lfo.connect(lfoGain); lfoGain.connect(g.gain);
+      src.connect(f); f.connect(g); g.connect(master);
+      src.start(t0); lfo.start(t0);
+      ambientNodes.push(src, lfo);
+    }
+    else if (scene === "night") {
+      // A thin distant cricket-like pulse — sine LFO modulating a
+      // narrow bandpass on noise. Very low, just texture.
       const len = ctx.sampleRate * 2;
       const buf = ctx.createBuffer(1, len, ctx.sampleRate);
       const d = buf.getChannelData(0);
@@ -273,32 +319,54 @@ window.Sound = (function () {
       const src = ctx.createBufferSource();
       src.buffer = buf; src.loop = true;
       const f = ctx.createBiquadFilter();
-      f.type = "lowpass"; f.frequency.value = scene === "blood" ? 260 : 380; f.Q.value = 0.8;
+      f.type = "bandpass"; f.frequency.value = 4800; f.Q.value = 18;
       const g = ctx.createGain();
-      g.gain.setValueAtTime(0, t0);
-      g.gain.linearRampToValueAtTime(scene === "blood" ? 0.08 : 0.05, t0 + 2.5);
+      g.gain.value = 0;
       const lfo = ctx.createOscillator();
       const lfoGain = ctx.createGain();
-      lfo.frequency.value = 0.15;
-      lfoGain.gain.value = scene === "blood" ? 0.04 : 0.025;
+      lfo.type = "sine";
+      lfo.frequency.value = 4.5;
+      lfoGain.gain.value = 0.012;
       lfo.connect(lfoGain); lfoGain.connect(g.gain);
       src.connect(f); f.connect(g); g.connect(master);
       src.start(t0); lfo.start(t0);
       ambientNodes.push(src, lfo);
     }
-
-    // Indoor: subtle fluorescent buzz
-    if (scene === "indoor") {
+    else if (scene === "city") {
+      // Distant low traffic rumble — heavily lowpassed noise, very low.
+      const len = ctx.sampleRate * 3;
+      const buf = ctx.createBuffer(1, len, ctx.sampleRate);
+      const d = buf.getChannelData(0);
+      for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * 0.5;
+      const src = ctx.createBufferSource();
+      src.buffer = buf; src.loop = true;
+      const f = ctx.createBiquadFilter();
+      f.type = "lowpass"; f.frequency.value = 140; f.Q.value = 0.7;
+      const g = ctx.createGain();
+      g.gain.setValueAtTime(0, t0);
+      g.gain.linearRampToValueAtTime(0.022, t0 + 2.5);
+      src.connect(f); f.connect(g); g.connect(master);
+      src.start(t0);
+      ambientNodes.push(src);
+    }
+    else if (scene === "blood") {
+      // Sub pulse — very low sine modulated slowly for dread.
       const o = ctx.createOscillator();
       const g = ctx.createGain();
-      o.type = "square";
-      o.frequency.value = 118;
-      g.gain.setValueAtTime(0, t0);
-      g.gain.linearRampToValueAtTime(0.012, t0 + 1.5);
+      const lfo = ctx.createOscillator();
+      const lfoGain = ctx.createGain();
+      o.type = "sine";
+      o.frequency.value = 36;
+      lfo.frequency.value = 0.22;
+      lfoGain.gain.value = 0.018;
+      g.gain.value = 0.022;
+      lfo.connect(lfoGain); lfoGain.connect(g.gain);
       o.connect(g); g.connect(master);
-      o.start(t0);
-      ambientNodes.push(o);
+      o.start(t0); lfo.start(t0);
+      ambientNodes.push(o, lfo);
     }
+    // 'indoor' has only the soft drone — no extra air, since the
+    // square fluorescent buzz was the worst offender.
   }
 
   function toggleMute() {
