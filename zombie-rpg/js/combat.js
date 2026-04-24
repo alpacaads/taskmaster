@@ -17,30 +17,44 @@ window.Combat = (function () {
   //   shaky           : player's hit chance -N% against this enemy (narrative weight, e.g. Mrs. Cho)
   //   enemyCanAim     : sometimes skips attack to line up — next hit is a crit
   //   enemyCanBrace   : sometimes braces — halves damage to it for one player turn
+  //   aggressive      : chance (0..1) on a hostile turn to close the gap instead of attacking.
+  //                     At close range guns lock out and you have to melee — tense narrative for zombies.
   const ENEMIES = {
     // Ordinary walker: easy melee food, slight small-arms resist (one
     // round often isn't enough, aim for the head).
-    walker:       { name: "Walker",      art: "🧟",    hp: 4,  atk: [2, 3], speed: 1, desc: "Slow. Hungry. Relentless.", smallArmsResist: 1, headshotBonus: 2 },
+    walker:       { name: "Walker",      art: "🧟",    hp: 4,  atk: [2, 3], speed: 1, desc: "Slow. Hungry. Relentless.", smallArmsResist: 1, headshotBonus: 2, aggressive: 0.35 },
     // Mrs. Cho: she used to feed your cat. Shaky hands.
-    walker_cho:   { name: "Mrs. Cho",    art: "🧟‍♀️", hp: 3,  atk: [2, 3], speed: 1, desc: "She used to feed your cat.", shaky: 0.2, smallArmsResist: 1, headshotBonus: 2 },
+    walker_cho:   { name: "Mrs. Cho",    art: "🧟‍♀️", hp: 3,  atk: [2, 3], speed: 1, desc: "She used to feed your cat.", shaky: 0.2, smallArmsResist: 1, headshotBonus: 2, aggressive: 0.25 },
     walker_pair:  { name: "Two Walkers", art: "🧟🧟",  hp: 8,  atk: [2, 4], speed: 1, desc: "They move together.", pack: true, smallArmsResist: 1, headshotBonus: 2 },
     // Runners are accurate and fast — they make you panic, hurting your
     // own hit chance for a turn, but their bite isn't what kills you.
-    runner:       { name: "Runner",      art: "🧟‍♂️", hp: 4,  atk: [3, 4], speed: 2, desc: "Fresh. Fast. Furious.", panic: 0.3 },
+    runner:       { name: "Runner",      art: "🧟‍♂️", hp: 4,  atk: [3, 4], speed: 2, desc: "Fresh. Fast. Furious.", panic: 0.3, aggressive: 0.5 },
     // Bloater: slow clumsy giant — easy to dodge, hard to hurt, big hit.
-    bloater:      { name: "Bloater",     art: "🧟💀",  hp: 12, atk: [3, 5], speed: 1, desc: "A swollen, leaking thing.", smallArmsResist: 2, heavySwing: true },
+    bloater:      { name: "Bloater",     art: "🧟💀",  hp: 12, atk: [3, 5], speed: 1, desc: "A swollen, leaking thing.", smallArmsResist: 2, heavySwing: true, aggressive: 0.2 },
     bandit:       { name: "Bandit",      art: "🧔🔫",  hp: 10, atk: [3, 4], speed: 2, desc: "Smart. Armed. Desperate.", human: true, dodge: 0.22, telegraphEvery: 3 },
-    // Two bandits — hardest humans in the game. They aim at you AND
-    // they brace. Smart, disciplined, burn your resources.
+    // Older / Younger bandit — named variants for the ambush so the
+    // two-person fight reads like two people, not one HP pool.
+    bandit_older:   { name: "Older Bandit",   art: "🧔🔫",  hp: 10, atk: [3, 5], speed: 2, desc: "Hand-tattoos. Steady aim. He's done this before.", human: true, dodge: 0.25, telegraphEvery: 3 },
+    bandit_younger: { name: "Younger Bandit", art: "🧑🔫",  hp: 9,  atk: [3, 4], speed: 2, desc: "Skinny. Shaking. More dangerous for it.", human: true, dodge: 0.2, telegraphEvery: 3, panic: 0.15 },
+    // Kept for legacy / save-compat. No story node references it now.
     bandit_pair:  { name: "Two Bandits",  art: "🧔🔫🧔", hp: 24, atk: [3, 5], speed: 2, desc: "Smart. Armed. Coordinated.", human: true, pack: true, dodge: 0.25, repositionEvery: 4, telegraphEvery: 3, enemyCanAim: true, enemyCanBrace: true, panic: 0.15 },
     horde:        { name: "The Horde",   art: "🧟🧟🧟", hp: 16, atk: [3, 5], speed: 1, desc: "A tide of the dead.", smallArmsResist: 1, headshotBonus: 2 },
     // Mini-boss: the thing that was sealed inside the meat locker.
     // Mass of ruptured bodies fused together — slow, heavy, armoured,
     // but headshots (aimed) punch through.
-    freezer_abom: { name: "Meatlocker Abomination", art: "🧟💀", hp: 14, atk: [3, 5], speed: 1, desc: "Grown together in the cold. It shouldn't still be moving.", savageRate: 0.2, boss: true, smallArmsResist: 3, headshotBonus: 4, heavySwing: true },
+    freezer_abom: { name: "Meatlocker Abomination", art: "🧟💀", hp: 14, atk: [3, 5], speed: 1, desc: "Grown together in the cold. It shouldn't still be moving.", savageRate: 0.2, boss: true, smallArmsResist: 3, headshotBonus: 4, heavySwing: true, aggressive: 0.4 },
     // Calder turned — fast, sturdy, 9mm bounces off, but he's not quite
     // armoured against a crowbar to the skull.
-    traitor:      { name: "Calder (Turned)", art: "🧟‍♂️", hp: 20, atk: [4, 6], speed: 2, desc: "Not Calder any more. Something wearing his face.", savageRate: 0.28, boss: true, smallArmsResist: 2, meleeVulnerable: 2, telegraphEvery: 4 },
+    traitor:      { name: "Calder (Turned)", art: "🧟‍♂️", hp: 20, atk: [4, 6], speed: 2, desc: "Not Calder any more. Something wearing his face.", savageRate: 0.28, boss: true, smallArmsResist: 2, meleeVulnerable: 2, telegraphEvery: 4, aggressive: 0.4 },
+    // Hunter — 'Calder type' roaming the horde. Fast, sturdy, 9mm
+    // bounces off, melee breaks them. Named so the player can read it.
+    hunter:       { name: "Hunter",      art: "🧟‍♂️", hp: 12, atk: [3, 5], speed: 2, desc: "Turned, but it remembers how to hunt.", smallArmsResist: 2, meleeVulnerable: 2, telegraphEvery: 4, aggressive: 0.55 },
+    // ---- Horde variants: same stats as the base enemies, own ids
+    // so the combat backdrop art can be unique per wave. ----
+    walker_horde:  { name: "Walker",   art: "🧟",    hp: 4,  atk: [2, 3], speed: 1, desc: "Slow. Hungry. Relentless.", smallArmsResist: 1, headshotBonus: 2, aggressive: 0.35 },
+    runner_horde:  { name: "Runner",   art: "🧟‍♂️", hp: 4,  atk: [3, 4], speed: 2, desc: "Fresh. Fast. Furious.", panic: 0.3, aggressive: 0.5 },
+    bloater_horde: { name: "Bloater",  art: "🧟💀",  hp: 12, atk: [3, 5], speed: 1, desc: "A swollen, leaking thing.", smallArmsResist: 2, heavySwing: true, aggressive: 0.2 },
+    hunter_horde:  { name: "Hunter",   art: "🧟‍♂️", hp: 12, atk: [3, 5], speed: 2, desc: "Turned, but it remembers how to hunt.", smallArmsResist: 2, meleeVulnerable: 2, telegraphEvery: 4, aggressive: 0.55 },
   };
 
   // ---------- Loot tables ----------
@@ -336,6 +350,33 @@ window.Combat = (function () {
     }, 650);
   }
 
+  // Swap the combat backdrop to the one keyed for a specific enemy.
+  // Admin override beats everything; otherwise probe the committed
+  // file async and swap on load so a 404 just leaves the scene image.
+  // Called at combat start and every time we advance to a new wave.
+  function setCombatBackdrop(enemyId) {
+    const combatScreen = document.getElementById("combat-screen");
+    if (!combatScreen) return;
+    const combatKey = "combat_" + enemyId;
+    const override = window.__OVERRIDES && window.__OVERRIDES[combatKey];
+    if (override) {
+      combatScreen.style.setProperty("--combat-backdrop", `url("${override}")`);
+      return;
+    }
+    const probe = new Image();
+    probe.onload = () => {
+      if (state && state.enemyId === enemyId) {
+        combatScreen.style.setProperty(
+          "--combat-backdrop",
+          `url("${probe.src}")`
+        );
+      }
+    };
+    probe.src = window.sceneImageURL
+      ? window.sceneImageURL(combatKey)
+      : "images/" + combatKey + ".jpg";
+  }
+
   // ---------- lifecycle ----------
   function start(config) {
     const def = ENEMIES[config.enemy];
@@ -429,28 +470,7 @@ window.Combat = (function () {
       scnImg && scnImg.src ? `url("${scnImg.src}")` : "none"
     );
 
-    // If there's a combat-specific image for this enemy (uploaded in
-    // admin OR committed under images/combat_<id>.jpg), swap to it.
-    // Admin override beats everything; otherwise probe the committed
-    // file async and swap on load so a 404 just leaves the scene image.
-    const combatKey = "combat_" + config.enemy;
-    const override = window.__OVERRIDES && window.__OVERRIDES[combatKey];
-    if (override) {
-      combatScreen.style.setProperty("--combat-backdrop", `url("${override}")`);
-    } else {
-      const probe = new Image();
-      probe.onload = () => {
-        if (state && state.enemyId === config.enemy) {
-          combatScreen.style.setProperty(
-            "--combat-backdrop",
-            `url("${probe.src}")`
-          );
-        }
-      };
-      probe.src = window.sceneImageURL
-        ? window.sceneImageURL(combatKey)
-        : "images/" + combatKey + ".jpg";
-    }
+    setCombatBackdrop(config.enemy);
 
     document.getElementById("enemy-art").textContent = state.enemy.art;
     document.getElementById("enemy-name").textContent = state.enemy.name;
@@ -543,6 +563,10 @@ window.Combat = (function () {
     if (state.enemyBracing) {
       return { kind: "reload", label: "🛡 BRACED" };
     }
+    if (state.range === "close") {
+      const e = state.enemy;
+      return { kind: "telegraph", label: e.human ? "🤜 IN YOUR FACE" : "🤝 HOLDING YOU CLOSE" };
+    }
     // Generic 'status' slot: future effects (stunned, bleeding, etc.)
     // can push labels onto state.enemy.statusEffects and they'll show
     // here without more plumbing.
@@ -588,14 +612,33 @@ window.Combat = (function () {
       aimBtn.disabled = !canAim;
       aimBtn.hidden = !(s && s.bestRanged);
     }
-    // Close / Strike toggle: at 'far' the player sees Close; once
-    // they've closed, Strike replaces it.
+    // Close / Break / Strike toggle:
+    //   FAR:   [Close] + Fire/Aim available.
+    //   CLOSE: [Break] + Strike; Fire/Aim locked out.
     const closeBtn = document.getElementById("combat-btn-close");
     const meleeBtn = document.getElementById("combat-btn-melee");
-    if (closeBtn && meleeBtn) {
+    const fireBtn  = document.querySelector(".combat-btn[onclick*=\"'shoot'\"]");
+    const aimBtnEl = document.getElementById("combat-btn-aim");
+    if (closeBtn) {
       const isFar = state && state.range === "far";
-      closeBtn.hidden = !isFar;
-      meleeBtn.hidden = !!isFar;
+      closeBtn.hidden = false;
+      closeBtn.dataset.mode = isFar ? "close" : "break";
+      const label = closeBtn.querySelector(".label");
+      if (label) label.textContent = isFar ? "Close" : "Break";
+      closeBtn.setAttribute("onclick",
+        `Combat.act('${isFar ? "close" : "break"}')`);
+    }
+    if (meleeBtn) {
+      const isClose = state && state.range === "close";
+      meleeBtn.hidden = !isClose;
+    }
+    if (fireBtn) {
+      const isClose = state && state.range === "close";
+      fireBtn.disabled = !!isClose;
+    }
+    if (aimBtnEl) {
+      const isClose = state && state.range === "close";
+      if (isClose) aimBtnEl.disabled = true;
     }
     renderEnemyStatus();
   }
@@ -758,6 +801,12 @@ window.Combat = (function () {
       refreshCombatStatus();
     }
     else if (action === "shoot") {
+      // At close range the gun won't come up — they're too in your
+      // face. You have to break the distance or swing.
+      if (state.range === "close") {
+        Game.toast("Too close — swap to melee.");
+        return;
+      }
       state.counterReady = false;
       s.ammo -= 1;
       Sound.play("gunshot");
@@ -824,6 +873,7 @@ window.Combat = (function () {
       // No damage this turn. Skip your defense, line up the shot.
       // Next fire is a guaranteed crit for +3 damage. Any non-fire
       // action breaks the sight line.
+      if (state.range === "close") { Game.toast("No room to aim — break away first."); return; }
       if (!s.bestRanged) { Game.toast("No firearm"); Sound.play("drySnap"); return; }
       if (s.ammo <= 0)   { Game.toast("No shot to aim"); Sound.play("drySnap"); return; }
       state.counterReady = false;
@@ -844,6 +894,20 @@ window.Combat = (function () {
       state.range = "close";
       log("You break for the gap — closing the distance.", "info");
       Sound.play("flee");
+      refreshCombatStatus();
+    }
+    else if (action === "break") {
+      // Break away from the clinch — puts distance back in so you
+      // can bring a gun to bear. Costs the turn; enemy swings as you
+      // fall back. 50% of the time they clip you on the way out.
+      if (state.range === "far") { Game.toast("Already at distance."); return; }
+      state.aimReady = false;
+      state.counterReady = false;
+      state.range = "far";
+      log("You shove off, put distance back in.", "info");
+      Sound.play("flee");
+      // A small parting-shot bite is baked into the enemyTurn that
+      // follows (they swing as you retreat). No special damage here.
       refreshCombatStatus();
     }
     else if (action === "brace") {
@@ -1143,6 +1207,41 @@ window.Combat = (function () {
         && (e.hp > Math.ceil(e.maxHp / 2))) {
       log(`They pull back behind cover to reload. No shot from them this turn.`, "info");
       Sound.play("brace");
+      companionTurn();
+      state.turn += 1;
+      renderAllies();
+      return;
+    }
+
+    // Enemy closes the gap — swaps combat to close range. Locks out
+    // player's guns. Zombies 'grab' (narrative pressure), humans
+    // 'close and swing' (small damage + shift to melee). Doesn't
+    // fire if already close.
+    if (state.range === "far" && e.aggressive && Math.random() < e.aggressive) {
+      state.range = "close";
+      if (e.human) {
+        const clinchDmg = Math.max(1, rand(1, 2));
+        s.hp -= clinchDmg;
+        log(`${e.name} drives in close and swings — ${clinchDmg} damage. Gun's useless at this range.`, "enemy");
+        Sound.play("damage");
+        spawnEnemyBlood();
+        floatDamage(clinchDmg);
+        screenShake();
+        refreshHud();
+        if (s.hp <= 0) {
+          log("You collapse.", "crit");
+          Sound.play("death");
+          setTimeout(() => end("lose"), 900);
+          return;
+        }
+      } else {
+        log(`${e.name} lurches in, grabs at you. You can't bring the gun up.`, "enemy");
+        Sound.play("groan");
+      }
+      // Close-related windows close — telegraph / aim can't carry.
+      state.telegraphPending = false;
+      state.enemyAimed = false;
+      refreshCombatStatus();
       companionTurn();
       state.turn += 1;
       renderAllies();
@@ -1519,6 +1618,7 @@ window.Combat = (function () {
     document.getElementById("enemy-name").textContent = state.enemy.name;
     const descEl = document.getElementById("enemy-desc");
     if (descEl) descEl.textContent = state.enemy.desc || "";
+    setCombatBackdrop(nextType);
     const chEl = document.getElementById("combat-chapter");
     if (chEl) chEl.textContent = state.totalWaves > 1
       ? `WAVE ${state.waveIndex} / ${state.totalWaves}`

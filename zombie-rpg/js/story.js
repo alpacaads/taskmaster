@@ -413,21 +413,22 @@ window.Story = {
         next: "after_ambush_mercy" },
       { label: "Fight — you need these supplies", tag: "COMBAT", tagClass: "danger",
         combat: function (s) {
-          // Two bandits. If Maya's with you it's a parallel fight —
-          // you take one, she takes the other, she can't help until
-          // she finishes hers. Solo you fight them one at a time.
+          // Two people, two fights. With Maya she engages the Older one
+          // (experienced — she matches him), you take the Younger.
+          // Solo you fight both in sequence: Younger first (rattled),
+          // Older second (steadier).
           if (s.companion === "Maya") {
             return {
-              enemy: "bandit",
-              allyEngagement: { ally: "maya", enemy: "bandit" },
+              enemy: "bandit_younger",
+              allyEngagement: { ally: "maya", enemy: "bandit_older" },
               risky: !s.flags.restedInCar,
               onWin: "after_ambush_fight",
               onLose: "death",
             };
           }
           return {
-            enemy: "bandit",
-            waves: ["bandit"],
+            enemy: "bandit_younger",
+            waves: ["bandit_older"],
             risky: !s.flags.restedInCar,
             onWin: "after_ambush_fight",
             onLose: "death",
@@ -458,19 +459,20 @@ window.Story = {
     choices: [
       { label: "Fight for your life", tag: "COMBAT", tagClass: "danger",
         effect: s => { s.flags.carriedNora = true; },
-        // Two bandits. Parallel with Maya; sequential if solo.
+        // Older / Younger bandit — Maya takes the Older one, you face
+        // the Younger; or solo, Younger then Older back to back.
         combat: function (s) {
           if (s.companion === "Maya") {
             return {
-              enemy: "bandit",
-              allyEngagement: { ally: "maya", enemy: "bandit" },
+              enemy: "bandit_younger",
+              allyEngagement: { ally: "maya", enemy: "bandit_older" },
               onWin: "sacrifice_loot",
               onLose: "death",
             };
           }
           return {
-            enemy: "bandit",
-            waves: ["bandit"],
+            enemy: "bandit_younger",
+            waves: ["bandit_older"],
             onWin: "sacrifice_loot",
             onLose: "death",
           };
@@ -1022,26 +1024,36 @@ window.Story = {
           s.flags.hordeDefense = true;
         },
         combat: function (s) {
-          // Horde fight = 10 sequential enemies, weighted heavily
-          // toward pairs / runners / bloaters so the player can't
-          // just one-shot single walkers all the way through with
-          // the party hosing the line. Breathers exist (single
-          // walkers) but they're the minority, not the spine.
+          // Horde fight = 25 sequential enemies. Each one is a
+          // distinct engagement — walkers, runners, bloaters, hunters
+          // (Calder-types) — using _horde enemy ids so each has its
+          // own combat backdrop image slot. Composition is mixed so
+          // every mechanic (aim / brace / melee / close / panic) gets
+          // play time across the stretch.
           //
-          // Camp-ready (exposedTraitor): better positioning, you
-          // see the threats coming. Mostly pairs + runners, one
-          // bloater, two single-walker breathers.
-          // Camp-not-ready: meaner everywhere — more runners
-          // (panic chains), two bloaters, one 'runner+pair'
-          // double-team mid-stretch.
+          // Camp-ready (exposedTraitor): you saw threats early. More
+          // walker breathers, fewer runners, two bloaters, one hunter.
+          // Camp-not-ready: tighter everywhere — more runners for
+          // panic chains, three bloaters, two hunters, zero breathers.
           const ready = !!s.flags.exposedTraitor;
           const waves = ready
-            ? ["walker_pair", "runner", "walker_pair", "walker",
-               "bloater", "walker_pair", "runner", "walker_pair", "walker"]
-            : ["runner", "walker_pair", "runner", "bloater",
-               "walker_pair", "runner", "walker_pair", "bloater", "walker_pair"];
+            ? // 25 enemies — first is opener, next 24 are waves
+              // Mix: 13 walkers, 6 runners, 4 bloaters, 2 hunters
+              ["walker_horde", "runner_horde", "walker_horde", "walker_horde",
+               "bloater_horde", "walker_horde", "runner_horde", "walker_horde",
+               "walker_horde", "bloater_horde", "runner_horde", "walker_horde",
+               "hunter_horde", "walker_horde", "bloater_horde", "runner_horde",
+               "walker_horde", "walker_horde", "runner_horde", "bloater_horde",
+               "walker_horde", "hunter_horde", "walker_horde", "runner_horde"]
+            : // Meaner: 8 walkers, 9 runners, 5 bloaters, 3 hunters
+              ["runner_horde", "walker_horde", "runner_horde", "bloater_horde",
+               "walker_horde", "runner_horde", "hunter_horde", "bloater_horde",
+               "runner_horde", "walker_horde", "runner_horde", "bloater_horde",
+               "hunter_horde", "walker_horde", "runner_horde", "bloater_horde",
+               "walker_horde", "runner_horde", "hunter_horde", "walker_horde",
+               "bloater_horde", "runner_horde", "walker_horde", "runner_horde"];
           return {
-            enemy: ready ? "walker_pair" : "walker_pair",  // both open with a pair, not a single walker
+            enemy: ready ? "walker_horde" : "walker_horde",
             waves: waves,
             onWin: "post_horde_win",
             onLose: "post_horde_lose",

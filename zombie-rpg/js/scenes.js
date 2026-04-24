@@ -738,7 +738,7 @@ window.Scenes = (function () {
   // fresh image URLs automatically, so a commit on one device (PC)
   // shows up on another (phone) as soon as Pages rebuilds, without
   // relying on localStorage which is per-device.
-  const BUILD = "194";
+  const BUILD = "195";
 
   // Smart cache-bust: per-scene timestamp from the admin takes priority
   // (committer sees their upload immediately), then a device-wide global
@@ -885,10 +885,20 @@ window.Scenes = (function () {
     combat_runner:       "fresh zombie runner sprinting straight at the camera mid-lunge, snarling, dark city street, motion blur, cinematic horror portrait",
     combat_bloater:      "massive bloated zombie with lumpy mutated body, hunched posture, advancing slowly in a dim ruined hospital corridor, cinematic horror portrait",
     combat_bandit:       "armed human bandit raising a shotgun at the camera, pine forest at dusk, fog, gritty cinematic portrait",
+    combat_bandit_older: "older human bandit with hand tattoos raising a scoped rifle at the camera with steady hands, pine forest at dusk, fog, gritty cinematic widescreen portrait",
+    combat_bandit_younger: "skinny younger human bandit with frightened eyes raising a shotgun at the camera with shaking hands, pine forest at dusk, fog, gritty cinematic widescreen portrait",
     combat_bandit_pair:  "two armed human bandits in a pine forest at dusk — one directly facing the camera raising a shotgun, the other off to one side half-turned exchanging fire with a red-haired woman in an olive army jacket with a rifle just off-frame, muzzle flash, fog, dramatic lighting, gritty cinematic widescreen portrait",
     combat_horde:        "massive zombie horde pouring toward the camera down an abandoned highway at blood-red dawn, hundreds of silhouettes, cinematic wide shot",
     combat_freezer_abom: "grotesque zombie abomination covered in fungal tumor growths bursting from an industrial meat locker freezer, steaming breath, dim flickering fluorescent light, cinematic horror in the style of The Last of Us bloater",
     combat_traitor:      "man mid-zombification, fresh black bite mark on forearm with sleeve pushed up, eyes fogging milky white, teeth bared, tense confrontation at a chainlink fence at night, moonlight, cinematic horror portrait",
+    combat_hunter:       "fast aggressive turned zombie man in torn tactical clothing, eyes milky, teeth bared, snarling in a half-crouch ready to pounce, blood-red dawn smoke haze behind him, at the splintered edge of a fortified camp fence, cinematic horror portrait, in the style of The Last of Us",
+    // --- Horde-context variants: each wave in the horde defense gets
+    // its own backdrop slot, keyed combat_<enemy>_horde. Narrative feel:
+    // chaos of dawn at the wall, smoke, silhouettes, blood-red sky. ---
+    combat_walker_horde:  "decaying zombie walker shambling out of smoke at blood-red pre-dawn, the silhouette of a fortified camp fence and sandbags behind, ash falling, horror cinematic widescreen portrait, gritty",
+    combat_runner_horde:  "fresh zombie runner sprinting out of smoke and dim muzzle flashes at a fortified camp fence at blood-red dawn, mid-lunge, snarling, other silhouettes behind, horror cinematic widescreen portrait",
+    combat_bloater_horde: "massive bloated zombie pushing through a breached chainlink section of a fortified camp fence at blood-red dawn, smoke and flicker of nearby fire, swollen lumpy body, slow and heavy, horror cinematic widescreen portrait",
+    combat_hunter_horde:  "fast turned zombie man in torn tactical clothing mid-sprint toward the camera at a fortified camp fence at blood-red dawn, snarling, teeth bared, smoke and silhouettes of the horde behind him, horror cinematic widescreen portrait, in the style of The Last of Us",
   };
 
   // ---------- AI image scenes ----------
