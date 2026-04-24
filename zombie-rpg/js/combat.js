@@ -14,25 +14,27 @@ window.Combat = (function () {
     walker_pair:  { name: "Two Walkers", art: "🧟🧟",  hp: 8,  atk: [2, 4], speed: 1, desc: "They move together.", pack: true },
     runner:       { name: "Runner",      art: "🧟‍♂️", hp: 4,  atk: [3, 4], speed: 2, desc: "Fresh. Fast. Furious." },
     bloater:      { name: "Bloater",     art: "🧟💀",  hp: 9,  atk: [3, 5], speed: 1, desc: "A swollen, leaking thing." },
-    bandit:       { name: "Bandit",      art: "🧔🔫",  hp: 6,  atk: [3, 4], speed: 2, desc: "Smart. Armed. Desperate.", human: true, dodge: 0.22, telegraphEvery: 3 },
+    bandit:       { name: "Bandit",      art: "🧔🔫",  hp: 10, atk: [3, 4], speed: 2, desc: "Smart. Armed. Desperate.", human: true, dodge: 0.22, telegraphEvery: 3 },
     // Two bandits — one engaged with an ally (if present), one on you.
     // Modelled as a single HP pool so combat stays simple, but the
     // engagement lifts at engagementFlipAt (see start()) — when that
     // triggers, the ally rejoins the fight. Extra damage while engaged
     // represents the second bandit taking shots at you.
+    // HP sized so a full fight runs ~6-7 turns, enough for the
+    // telegraph / interrupt / aim / brace loop to come into play.
     // dodge: human reflex — their smart repositioning makes your melee
     // whiff sometimes (ducking behind cover). repositionEvery: every
     // Nth hostile turn, one of them pulls back instead of attacking —
     // no damage that turn, but no free hits either. telegraphEvery:
     // every Nth turn they wind up a big shot — the hero has a window
     // to interrupt or brace.
-    bandit_pair:  { name: "Two Bandits",  art: "🧔🔫🧔", hp: 16, atk: [3, 5], speed: 2, desc: "Smart. Armed. Coordinated.", human: true, pack: true, dodge: 0.25, repositionEvery: 4, telegraphEvery: 3 },
+    bandit_pair:  { name: "Two Bandits",  art: "🧔🔫🧔", hp: 24, atk: [3, 5], speed: 2, desc: "Smart. Armed. Coordinated.", human: true, pack: true, dodge: 0.25, repositionEvery: 4, telegraphEvery: 3 },
     horde:        { name: "The Horde",   art: "🧟🧟🧟", hp: 16, atk: [3, 5], speed: 1, desc: "A tide of the dead." },
     // Mini-boss: the thing that was sealed inside the meat locker.
     // Mass of ruptured bodies fused together — slow, heavy, high HP.
     freezer_abom: { name: "Meatlocker Abomination", art: "🧟💀", hp: 11, atk: [3, 5], speed: 1, desc: "Grown together in the cold. It shouldn't still be moving.", savageRate: 0.2, boss: true },
     // The traitor has turned — boss: high HP, hard-hitting, savage often.
-    traitor:      { name: "Calder (Turned)", art: "🧟‍♂️", hp: 14, atk: [4, 6], speed: 2, desc: "Not Calder any more. Something wearing his face.", savageRate: 0.28, boss: true },
+    traitor:      { name: "Calder (Turned)", art: "🧟‍♂️", hp: 20, atk: [4, 6], speed: 2, desc: "Not Calder any more. Something wearing his face.", savageRate: 0.28, boss: true },
   };
 
   // ---------- Loot tables ----------
@@ -476,49 +478,35 @@ window.Combat = (function () {
     setTimeout(enemyTurn, 600);
   }
 
-  // Slay-the-Spire-style intent preview: what will the enemy do on
-  // their next hostile turn? Returns { kind, label, range? } or null
-  // when there's no live combat. Read-only — no state mutation — so
-  // we can call it as often as we want for the UI.
-  function computeEnemyIntent() {
+  // Enemy status chip — shows the enemy's CURRENT reactive state
+  // (lined up after a telegraph, reeling after an interrupt, etc.).
+  // Deliberately does NOT preview upcoming damage / strikes — that's
+  // for the player to discover via combat, not read off the UI.
+  function computeEnemyStatus() {
     if (!state || !state.enemy || state.enemy.hp <= 0) return null;
-    const e = state.enemy;
-    if (state.noraWarn) {
-      return { kind: "miss", label: "Will whiff (Nora's call)" };
-    }
     if (state.interruptedEnemy) {
-      return { kind: "reel", label: "Reeling — no attack" };
+      return { kind: "reel", label: "💢 REELING" };
     }
     if (state.telegraphPending) {
-      const lo = e.atk[0] + 2;
-      const hi = e.atk[1] + 2;
-      return { kind: "killshot", label: `⚠ Kill Shot`, range: [lo, hi] };
+      return { kind: "killshot", label: "🎯 LINED UP ON YOU" };
     }
-    const aboveFlip = !state.engagementFlipAt || e.hp > state.engagementFlipAt;
-    if (e.telegraphEvery && state.turn > 0
-        && (state.turn % e.telegraphEvery === 0) && aboveFlip) {
-      return { kind: "telegraph", label: "Winding up…" };
+    // Generic 'status' slot: future effects (stunned, bleeding, etc.)
+    // can push labels onto state.enemy.statusEffects and they'll show
+    // here without more plumbing.
+    const fx = state && state.enemy && state.enemy.statusEffects;
+    if (Array.isArray(fx) && fx.length) {
+      return { kind: "fx", label: fx.join(" · ") };
     }
-    if (e.repositionEvery && state.turn > 0
-        && (state.turn % e.repositionEvery === 0) && aboveFlip) {
-      return { kind: "reload", label: "Reloading — no attack" };
-    }
-    // Normal attack. Show the base range + the cross-fire +1 bump
-    // when a pair fight is still live.
-    let lo = e.atk[0], hi = e.atk[1];
-    const isPair = e.pack === true && e.human === true;
-    if (isPair && !state.engagementLifted) { lo += 1; hi += 1; }
-    return { kind: "attack", label: "Strike", range: [lo, hi] };
+    return null;
   }
 
-  function renderEnemyIntent() {
+  function renderEnemyStatus() {
     const host = document.getElementById("enemy-intent");
     if (!host) return;
-    const intent = computeEnemyIntent();
-    if (!intent) { host.hidden = true; return; }
-    const rangeTxt = intent.range ? ` ${intent.range[0]}-${intent.range[1]}` : "";
-    host.className = "enemy-intent intent-" + intent.kind;
-    host.textContent = "NEXT: " + intent.label + rangeTxt;
+    const st = computeEnemyStatus();
+    if (!st) { host.hidden = true; return; }
+    host.className = "enemy-intent intent-" + st.kind;
+    host.textContent = st.label;
     host.hidden = false;
   }
 
@@ -547,7 +535,7 @@ window.Combat = (function () {
       aimBtn.disabled = !canAim;
       aimBtn.hidden = !(s && s.bestRanged);
     }
-    renderEnemyIntent();
+    renderEnemyStatus();
   }
 
   function refreshHud() {
