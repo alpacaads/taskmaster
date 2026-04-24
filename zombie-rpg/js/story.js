@@ -1130,12 +1130,12 @@ window.Story = {
           if (s.bonds) s.bonds.vega = (s.bonds.vega || 0) + 1;
           Game.toast("Vega's trust +1");
         },
-        next: "post_horde_flee" },
+        next: "flee_journey_1" },
       { label: "\"Go, Vega. We'll see you on the road.\"",
         effect: s => {
           s.flags.vegaStayedBehind = true;
         },
-        next: "post_horde_flee" },
+        next: "flee_journey_1" },
       { label: "\"Maya. Come back to me.\"",
         require: s => (s.companion === "Maya" || s.flags.maya) && s.romance === "maya" && s.flags.lovedMaya,
         effect: s => {
@@ -1143,7 +1143,7 @@ window.Story = {
           s.flags.vegaSaved = true;
           s.flags.vegaSurvived = true;
         },
-        next: "post_horde_flee" },
+        next: "flee_journey_1" },
       { label: "\"Ren. Stay with them. I'll find you.\"",
         require: s => s.romance === "ren" && s.flags.lovedRen,
         effect: s => {
@@ -1151,7 +1151,7 @@ window.Story = {
           s.flags.vegaSaved = true;
           s.flags.vegaSurvived = true;
         },
-        next: "post_horde_flee" },
+        next: "flee_journey_1" },
     ]
   },
 
@@ -1378,6 +1378,233 @@ window.Story = {
       ? "You move. You're not fast enough.\n\nThe column keeps walking because the column has to keep walking. You don't. You just stand there for a long time."
       : "She was sixteen. That's all you can think, after.",
     choices: [ { label: "Keep moving.", next: "flee_journey_7" } ]
+  },
+
+  flee_journey_7: {
+    scene: s => vegaInColumn(s) ? "flee_journey_vega" : "flee_journey_runner_pair",
+    sceneClass: "blood",
+    chapter: "Day 5 — The Flight",
+    text: s => {
+      if (vegaInColumn(s)) {
+        return "You look back. Vega's fallen to the rear, carbine barking in short controlled bursts — and she's tangled. Three walkers in close on her, a fourth lurching in from the trees.\n\nShe doesn't call for help. She never would.";
+      }
+      return "Two runners break from the pines at the column's flank, sprinting low. No finesse, just speed. The column recoils.";
+    },
+    timerSeconds: s => vegaInColumn(s) ? 8 : 6,
+    onTimeout: "flee_journey_7_late",
+    choices: [
+      { label: "Fall back to her. Cover fire.",
+        require: s => vegaInColumn(s),
+        tag: "COMBAT", tagClass: "danger",
+        combat: { enemy: "hunter", onWin: "flee_journey_8", onLose: "death" } },
+      { label: "Trust her. Keep the column moving.",
+        require: s => vegaInColumn(s),
+        effect: s => {
+          if (Math.random() < 0.5) {
+            s.flags.vegaFellInFlight = true;
+            s.flags.fleeLosses = (s.flags.fleeLosses || 0) + 1;
+            Game.toast("Vega — fell");
+          } else {
+            Game.toast("Vega cut her way free.");
+          }
+        },
+        next: "flee_journey_8" },
+      { label: "Meet them. Drop both.",
+        require: s => !vegaInColumn(s),
+        tag: "COMBAT", tagClass: "danger",
+        combat: { enemy: "runner", onWin: "flee_journey_8", onLose: "death" } },
+    ]
+  },
+
+  flee_journey_7_late: {
+    scene: "flee_journey_fallen",
+    sceneClass: "blood",
+    chapter: "Day 5 — The Flight",
+    onEnter: s => {
+      if (vegaInColumn(s)) {
+        if (Math.random() < 0.5) {
+          s.flags.vegaFellInFlight = true;
+          s.flags.fleeLosses = (s.flags.fleeLosses || 0) + 1;
+        }
+      } else {
+        s.hp = Math.max(1, s.hp - 2);
+        s.flags.fleeLosses = (s.flags.fleeLosses || 0) + 1;
+      }
+    },
+    text: s => {
+      if (s.flags.vegaFellInFlight) return "By the time the shots behind you stop, they stop for good.";
+      if (vegaInColumn(s)) return "Vega's rifle coughs twice more, then goes silent, then — three minutes later — coughs again. She's catching up. She's still on her feet.";
+      return "The runners tear through the line before anyone braces. Someone goes down. You keep everyone else moving.";
+    },
+    choices: [ { label: "Keep moving.", next: "flee_journey_8" } ]
+  },
+
+  flee_journey_8: {
+    scene: s => renInColumn(s) ? "flee_journey_ren" : "flee_journey_ezra",
+    sceneClass: "blood",
+    chapter: "Day 5 — The Flight",
+    text: s => {
+      if (renInColumn(s)) {
+        return "Ren is kneeling beside one of the walking wounded — a man from the kitchen crew whose leg opened up a mile back. She has his belt around his thigh as a tourniquet.\n\nA walker is six paces away and closing on them both.\n\nRen isn't moving. She's trying to keep him alive.";
+      }
+      return "Ezra — the scout who taught you to read trail sign — goes down in a heap, clutching his side. A runner is on him in two heartbeats.";
+    },
+    timerSeconds: s => renInColumn(s) ? 6 : 5,
+    onTimeout: "flee_journey_8_late",
+    choices: [
+      { label: "Cover her. Drop the walker.",
+        require: s => renInColumn(s),
+        tag: "COMBAT", tagClass: "danger",
+        combat: { enemy: "walker", onWin: "flee_journey_9", onLose: "death" } },
+      { label: "\"Ren — he's gone. Leave him.\"",
+        require: s => renInColumn(s),
+        effect: s => {
+          // Ren obeys — she abandons the dying man to save herself.
+          // The wounded man counts as a loss; Ren survives.
+          s.flags.keekDied = true;
+          s.flags.fleeLosses = (s.flags.fleeLosses || 0) + 1;
+          s.flags.renLeftPatient = true;
+          Game.toast("She left him. She won't forget it.");
+        },
+        next: "flee_journey_9" },
+      { label: "Cut the runner off Ezra.",
+        require: s => !renInColumn(s),
+        tag: "COMBAT", tagClass: "danger",
+        combat: { enemy: "runner", onWin: "flee_journey_9", onLose: "death" } },
+    ]
+  },
+
+  flee_journey_8_late: {
+    scene: "flee_journey_fallen",
+    sceneClass: "blood",
+    chapter: "Day 5 — The Flight",
+    onEnter: s => {
+      if (renInColumn(s)) {
+        s.flags.renFellInFlight = true;
+        s.flags.keekDied = true;
+        s.flags.fleeLosses = (s.flags.fleeLosses || 0) + 2;
+      } else {
+        s.flags.ezraDied = true;
+        s.flags.fleeLosses = (s.flags.fleeLosses || 0) + 1;
+      }
+    },
+    text: s => s.flags.renFellInFlight
+      ? "She wouldn't leave him. She never would have. You get there a second too late for both of them."
+      : "Ezra goes still before you can reach him. You turn the column away from the sound.",
+    choices: [ { label: "Keep moving.", next: "flee_journey_9" } ]
+  },
+
+  flee_journey_9: {
+    scene: "flee_journey_parallel2",
+    sceneClass: "blood",
+    chapter: "Day 5 — The Flight",
+    text: s => {
+      if (mayaInColumn(s) && noraInColumn(s)) {
+        return "Two different kinds of scream.\n\nMaya — to your left, teeth bared, driven back step by step by a hunter she can't quite shake.\n\nNora — to your right, in the grass, not screaming, hands over her head, a walker dragging itself toward her.\n\nYou pick. You live with it.";
+      }
+      if (mayaInColumn(s)) {
+        return "Maya's pinned against a pine trunk, a hunter ducking under her rifle, too close for the barrel.\n\nShe's good. She might not be good enough.";
+      }
+      if (noraInColumn(s)) {
+        return "Nora. Fallen. A walker's hand already closing on her ankle.\n\nShe's looking at you.";
+      }
+      // Nobody named left — two strangers.
+      return "Two strangers go down at the same moment — Ines, the camp gardener, and Otto, the boy who mended fences.\n\nYou can only save one.";
+    },
+    timerSeconds: 5,
+    onTimeout: "flee_journey_9_late",
+    choices: [
+      { label: "Nora. Always Nora.",
+        require: s => mayaInColumn(s) && noraInColumn(s),
+        effect: s => {
+          // Maya gets the fighter's 50/50.
+          if (Math.random() < 0.5) {
+            s.flags.mayaFellInFlight = true;
+            s.flags.fleeLosses = (s.flags.fleeLosses || 0) + 1;
+            Game.toast("Maya — fell");
+          } else {
+            Game.toast("Maya cut herself free.");
+          }
+        },
+        next: "flee_journey_10" },
+      { label: "Maya. She can't fight alone forever.",
+        require: s => mayaInColumn(s) && noraInColumn(s),
+        effect: s => {
+          // Nora can't survive alone. Hard loss.
+          s.flags.noraFellInFlight = true;
+          s.flags.fleeLosses = (s.flags.fleeLosses || 0) + 1;
+          Game.toast("Nora — lost");
+        },
+        next: "flee_journey_10" },
+      { label: "Pull the hunter off her.",
+        require: s => mayaInColumn(s) && !noraInColumn(s),
+        tag: "COMBAT", tagClass: "danger",
+        combat: { enemy: "hunter", onWin: "flee_journey_10", onLose: "death" } },
+      { label: "Dive for Nora.",
+        require: s => !mayaInColumn(s) && noraInColumn(s),
+        tag: "COMBAT", tagClass: "danger",
+        combat: { enemy: "walker", onWin: "flee_journey_10", onLose: "death" } },
+      { label: "Otto. He's the kid.",
+        require: s => !mayaInColumn(s) && !noraInColumn(s),
+        effect: s => {
+          s.flags.inesDied = true;
+          s.flags.fleeLosses = (s.flags.fleeLosses || 0) + 1;
+          Game.toast("Ines — lost");
+        },
+        next: "flee_journey_10" },
+      { label: "Ines. She has people waiting.",
+        require: s => !mayaInColumn(s) && !noraInColumn(s),
+        effect: s => {
+          s.flags.ottoDied = true;
+          s.flags.fleeLosses = (s.flags.fleeLosses || 0) + 1;
+          Game.toast("Otto — lost");
+        },
+        next: "flee_journey_10" },
+    ]
+  },
+
+  flee_journey_9_late: {
+    scene: "flee_journey_fallen",
+    sceneClass: "blood",
+    chapter: "Day 5 — The Flight",
+    onEnter: s => {
+      if (noraInColumn(s)) {
+        // Non-combatant can't survive alone — she dies on timeout.
+        s.flags.noraFellInFlight = true;
+        s.flags.fleeLosses = (s.flags.fleeLosses || 0) + 1;
+      }
+      if (mayaInColumn(s)) {
+        // Maya gets her 50/50.
+        if (Math.random() < 0.5) {
+          s.flags.mayaFellInFlight = true;
+          s.flags.fleeLosses = (s.flags.fleeLosses || 0) + 1;
+        }
+      }
+      if (!mayaInColumn(s) && !noraInColumn(s)) {
+        s.flags.inesDied = true;
+        s.flags.ottoDied = true;
+        s.flags.fleeLosses = (s.flags.fleeLosses || 0) + 2;
+      }
+    },
+    text: s => s.flags.noraFellInFlight && s.flags.mayaFellInFlight
+      ? "You froze. Both gone."
+      : s.flags.noraFellInFlight
+      ? "You froze. Nora's gone. You'll carry that."
+      : s.flags.mayaFellInFlight
+      ? "You froze. Maya's down. You'll carry that."
+      : "You froze for a heartbeat too long. Two names you won't say out loud tonight.",
+    choices: [ { label: "Keep moving.", next: "flee_journey_10" } ]
+  },
+
+  flee_journey_10: {
+    scene: "flee_journey_final",
+    sceneClass: "blood",
+    chapter: "Day 5 — The Flight",
+    text: "The creek ford. Water to your knees. The column is halfway across when the last of them breaks from the treeline behind you — two hunters, running flat out.\n\nThis is the last one. Then it's over.",
+    choices: [
+      { label: "Turn. Meet them in the water.", tag: "COMBAT", tagClass: "danger",
+        combat: { enemy: "hunter", onWin: "post_horde_flee", onLose: "death" } },
+    ]
   },
 
   post_horde_win: {
