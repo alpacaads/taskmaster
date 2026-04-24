@@ -173,6 +173,8 @@ window.Combat = (function () {
   function noraPresent() {
     const s = Game.state;
     if (s.companion2 !== "Nora") return false;
+    // Sacrificed at the gate or fell on the road — gone for good.
+    if (s.flags && s.flags.noraFellInFlight) return false;
     // Horde defense happens at camp — she's hidden in the medbay but
     // still spotting for you, so the bonus applies.
     if (s.flags && s.flags.hordeDefense) return true;
@@ -290,6 +292,8 @@ window.Combat = (function () {
 
   function mayaPresent() {
     const s = Game.state;
+    // She's gone if she stayed at the gate or fell on the flight road.
+    if (s.flags && (s.flags.mayaSacrificed || s.flags.mayaFellInFlight)) return false;
     if (s.flags && s.flags.hordeDefense) return !!s.flags.maya;
     if (s.flags && "missionPartner" in s.flags) {
       return s.flags.missionPartner === "maya";
@@ -298,6 +302,7 @@ window.Combat = (function () {
   }
   function renPresent() {
     const s = Game.state;
+    if (s.flags && (s.flags.renSacrificed || s.flags.renFellInFlight)) return false;
     if (s.flags && s.flags.hordeDefense) return true; // camp medic, always here
     if (s.flags && "missionPartner" in s.flags) {
       return s.flags.missionPartner === "ren";
@@ -308,6 +313,7 @@ window.Combat = (function () {
   // cavalry" path, and stands on the wall for the horde defense.
   function vegaPresent() {
     const s = Game.state;
+    if (s.flags && (s.flags.vegaStayedBehind || s.flags.vegaFellInFlight)) return false;
     if (s.flags && s.flags.hordeDefense) return true;
     if (!s.flags || !s.flags.toldVega) return false;
     return !!state && state.enemyId === "traitor";
