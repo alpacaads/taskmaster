@@ -8,33 +8,39 @@
 //   turns, Ren patches +1 HP every 4 turns. Uses existing flags.
 window.Combat = (function () {
 
+  // Enemy traits (what the stat keys mean):
+  //   smallArmsResist : reduce ranged damage by N (min 1 damage still lands)
+  //   meleeVulnerable : add N to every successful melee hit
+  //   headshotBonus   : add N to aimed shots AND crit melee
+  //   heavySwing      : dodge player's swings less reliably (bonus to your strike hit) — slow clumsy enemies
+  //   panic           : chance (0..1) that a successful enemy hit jitters you — your next shot / swing has +25% miss
+  //   shaky           : player's hit chance -N% against this enemy (narrative weight, e.g. Mrs. Cho)
+  //   enemyCanAim     : sometimes skips attack to line up — next hit is a crit
+  //   enemyCanBrace   : sometimes braces — halves damage to it for one player turn
   const ENEMIES = {
-    walker:       { name: "Walker",      art: "🧟",    hp: 4,  atk: [2, 3], speed: 1, desc: "Slow. Hungry. Relentless." },
-    walker_cho:   { name: "Mrs. Cho",    art: "🧟‍♀️", hp: 3,  atk: [2, 3], speed: 1, desc: "She used to feed your cat." },
-    walker_pair:  { name: "Two Walkers", art: "🧟🧟",  hp: 8,  atk: [2, 4], speed: 1, desc: "They move together.", pack: true },
-    runner:       { name: "Runner",      art: "🧟‍♂️", hp: 4,  atk: [3, 4], speed: 2, desc: "Fresh. Fast. Furious." },
-    bloater:      { name: "Bloater",     art: "🧟💀",  hp: 9,  atk: [3, 5], speed: 1, desc: "A swollen, leaking thing." },
+    // Ordinary walker: easy melee food, slight small-arms resist (one
+    // round often isn't enough, aim for the head).
+    walker:       { name: "Walker",      art: "🧟",    hp: 4,  atk: [2, 3], speed: 1, desc: "Slow. Hungry. Relentless.", smallArmsResist: 1, headshotBonus: 2 },
+    // Mrs. Cho: she used to feed your cat. Shaky hands.
+    walker_cho:   { name: "Mrs. Cho",    art: "🧟‍♀️", hp: 3,  atk: [2, 3], speed: 1, desc: "She used to feed your cat.", shaky: 0.2, smallArmsResist: 1, headshotBonus: 2 },
+    walker_pair:  { name: "Two Walkers", art: "🧟🧟",  hp: 8,  atk: [2, 4], speed: 1, desc: "They move together.", pack: true, smallArmsResist: 1, headshotBonus: 2 },
+    // Runners are accurate and fast — they make you panic, hurting your
+    // own hit chance for a turn, but their bite isn't what kills you.
+    runner:       { name: "Runner",      art: "🧟‍♂️", hp: 4,  atk: [3, 4], speed: 2, desc: "Fresh. Fast. Furious.", panic: 0.3 },
+    // Bloater: slow clumsy giant — easy to dodge, hard to hurt, big hit.
+    bloater:      { name: "Bloater",     art: "🧟💀",  hp: 12, atk: [3, 5], speed: 1, desc: "A swollen, leaking thing.", smallArmsResist: 2, heavySwing: true },
     bandit:       { name: "Bandit",      art: "🧔🔫",  hp: 10, atk: [3, 4], speed: 2, desc: "Smart. Armed. Desperate.", human: true, dodge: 0.22, telegraphEvery: 3 },
-    // Two bandits — one engaged with an ally (if present), one on you.
-    // Modelled as a single HP pool so combat stays simple, but the
-    // engagement lifts at engagementFlipAt (see start()) — when that
-    // triggers, the ally rejoins the fight. Extra damage while engaged
-    // represents the second bandit taking shots at you.
-    // HP sized so a full fight runs ~6-7 turns, enough for the
-    // telegraph / interrupt / aim / brace loop to come into play.
-    // dodge: human reflex — their smart repositioning makes your melee
-    // whiff sometimes (ducking behind cover). repositionEvery: every
-    // Nth hostile turn, one of them pulls back instead of attacking —
-    // no damage that turn, but no free hits either. telegraphEvery:
-    // every Nth turn they wind up a big shot — the hero has a window
-    // to interrupt or brace.
-    bandit_pair:  { name: "Two Bandits",  art: "🧔🔫🧔", hp: 24, atk: [3, 5], speed: 2, desc: "Smart. Armed. Coordinated.", human: true, pack: true, dodge: 0.25, repositionEvery: 4, telegraphEvery: 3 },
-    horde:        { name: "The Horde",   art: "🧟🧟🧟", hp: 16, atk: [3, 5], speed: 1, desc: "A tide of the dead." },
+    // Two bandits — hardest humans in the game. They aim at you AND
+    // they brace. Smart, disciplined, burn your resources.
+    bandit_pair:  { name: "Two Bandits",  art: "🧔🔫🧔", hp: 24, atk: [3, 5], speed: 2, desc: "Smart. Armed. Coordinated.", human: true, pack: true, dodge: 0.25, repositionEvery: 4, telegraphEvery: 3, enemyCanAim: true, enemyCanBrace: true, panic: 0.15 },
+    horde:        { name: "The Horde",   art: "🧟🧟🧟", hp: 16, atk: [3, 5], speed: 1, desc: "A tide of the dead.", smallArmsResist: 1, headshotBonus: 2 },
     // Mini-boss: the thing that was sealed inside the meat locker.
-    // Mass of ruptured bodies fused together — slow, heavy, high HP.
-    freezer_abom: { name: "Meatlocker Abomination", art: "🧟💀", hp: 11, atk: [3, 5], speed: 1, desc: "Grown together in the cold. It shouldn't still be moving.", savageRate: 0.2, boss: true },
-    // The traitor has turned — boss: high HP, hard-hitting, savage often.
-    traitor:      { name: "Calder (Turned)", art: "🧟‍♂️", hp: 20, atk: [4, 6], speed: 2, desc: "Not Calder any more. Something wearing his face.", savageRate: 0.28, boss: true },
+    // Mass of ruptured bodies fused together — slow, heavy, armoured,
+    // but headshots (aimed) punch through.
+    freezer_abom: { name: "Meatlocker Abomination", art: "🧟💀", hp: 14, atk: [3, 5], speed: 1, desc: "Grown together in the cold. It shouldn't still be moving.", savageRate: 0.2, boss: true, smallArmsResist: 3, headshotBonus: 4, heavySwing: true },
+    // Calder turned — fast, sturdy, 9mm bounces off, but he's not quite
+    // armoured against a crowbar to the skull.
+    traitor:      { name: "Calder (Turned)", art: "🧟‍♂️", hp: 20, atk: [4, 6], speed: 2, desc: "Not Calder any more. Something wearing his face.", savageRate: 0.28, boss: true, smallArmsResist: 2, meleeVulnerable: 2, telegraphEvery: 4 },
   };
 
   // ---------- Loot tables ----------
@@ -487,8 +493,14 @@ window.Combat = (function () {
     if (state.interruptedEnemy) {
       return { kind: "reel", label: "💢 REELING" };
     }
+    if (state.enemyAimed) {
+      return { kind: "killshot", label: "🎯 SIGHTED ON YOU" };
+    }
     if (state.telegraphPending) {
       return { kind: "killshot", label: "🎯 LINED UP ON YOU" };
+    }
+    if (state.enemyBracing) {
+      return { kind: "reload", label: "🛡 BRACED" };
     }
     // Generic 'status' slot: future effects (stunned, bleeding, etc.)
     // can push labels onto state.enemy.statusEffects and they'll show
@@ -649,7 +661,11 @@ window.Combat = (function () {
       const critChance = desperateMelee ? 0 : (counter ? 1 : (0.12 + noraCritBump()));
       const crit = Math.random() < critChance;
       const counterBonus = counter ? 3 : 0;
-      const dmg = base + weaponBonus + noraBonus() + counterBonus + interruptBonus;
+      const headshotBonus = crit ? (state.enemy.headshotBonus || 0) : 0;
+      const meleeVulnerable = state.enemy.meleeVulnerable || 0;
+      let dmg = base + weaponBonus + noraBonus() + counterBonus + interruptBonus + headshotBonus + meleeVulnerable;
+      // Enemy braced its last turn? Halve this swing's impact.
+      if (state.enemyBracing) { dmg = Math.max(1, Math.floor(dmg / 2)); state.enemyBracing = false; }
       const total = crit ? dmg + 2 : dmg;
       const weaponPhr = weaponPhrase(s.bestMelee ? s.bestMelee.name : "Crowbar");
       // Interrupts always land — you caught him setting up. Counter-
@@ -710,9 +726,13 @@ window.Combat = (function () {
         }
       }
       // Aimed shots and interrupts always land. Otherwise the speed-2
-      // enemies (bandits, runners) still have their miss roll.
-      const baseHit = state.enemy.speed === 2 ? 0.75 : 0.9;
-      const hit = aimed || interrupted || Math.random() < baseHit;
+      // enemies (bandits, runners) still have their miss roll, and
+      // 'shaky' / 'panicked' states drop your accuracy further.
+      let baseHit = state.enemy.speed === 2 ? 0.75 : 0.9;
+      baseHit -= (state.enemy.shaky || 0);          // hard to shoot someone you knew
+      if (state.playerPanicked) baseHit -= 0.25;    // runner bit scared you
+      const hit = aimed || interrupted || Math.random() < Math.max(0.3, baseHit);
+      state.playerPanicked = false; // consumed either way
       if (!hit) {
         log("The shot misses. The sound draws more attention.", "info");
         spawnMark("miss");
@@ -721,7 +741,14 @@ window.Combat = (function () {
         const weaponBonus = s.bestRanged ? s.bestRanged.bonus : 0;
         const aimBonus = aimed ? 3 : 0;
         const interruptBonus = interrupted ? 2 : 0;
-        const dmg = baseRoll + weaponBonus + noraBonus() + aimBonus + interruptBonus;
+        // Aimed shots + interrupts = headshots. Big bonus on armoured
+        // enemies (abomination, traitor). Otherwise small-arms resist
+        // shaves some damage off the bullet.
+        const headshot = (aimed || interrupted) ? (state.enemy.headshotBonus || 0) : 0;
+        const armour = state.enemy.smallArmsResist || 0;
+        let dmg = baseRoll + weaponBonus + noraBonus() + aimBonus + interruptBonus + headshot;
+        dmg = Math.max(1, dmg - armour);
+        if (state.enemyBracing) { dmg = Math.max(1, Math.floor(dmg / 2)); state.enemyBracing = false; }
         state.enemy.hp -= dmg;
         const weaponPhr = weaponPhrase(s.bestRanged ? s.bestRanged.name : "Handgun");
         let line;
@@ -808,6 +835,14 @@ window.Combat = (function () {
           return;
         }
       }
+    }
+
+    // Passive stamina regen inside combat: if your action didn't cost
+    // stam (shoot / aim / flee / pass), you catch a breath. Capped at
+    // stamMax. Makes long fights survivable without making brace free.
+    const breathingActions = new Set(["shoot", "aim", "flee"]);
+    if (breathingActions.has(action) && s.stam < s.stamMax) {
+      s.stam = Math.min(s.stamMax, s.stam + 1);
     }
 
     refreshHud();
@@ -998,14 +1033,28 @@ window.Combat = (function () {
       return;
     }
 
-    // Telegraph turn — smart humans wind up a big shot. No damage
-    // this turn; the player's next action is a reading call (strike /
-    // shoot to interrupt, brace to absorb, or ignore and eat it).
-    if (e.telegraphEvery && !state.telegraphPending && state.turn > 0
-        && (state.turn % e.telegraphEvery === 0)
+    // Telegraph turn — smart humans wind up. If the enemy can also
+    // aim and brace (bandit_pair), pick randomly between: telegraph
+    // a kill shot, line up an aimed shot (next hit auto-crit, +3
+    // damage), or brace behind cover (halves player damage next
+    // turn, no attack either).
+    if (e.telegraphEvery && !state.telegraphPending && !state.enemyAimed && !state.enemyBracing
+        && state.turn > 0 && (state.turn % e.telegraphEvery === 0)
         && (!state.engagementFlipAt || e.hp > state.engagementFlipAt)) {
-      state.telegraphPending = true;
-      log(`${e.name} steadies — lining up the kill shot.`, "warn");
+      const opts = ["telegraph"];
+      if (e.enemyCanAim) opts.push("aim");
+      if (e.enemyCanBrace) opts.push("brace");
+      const pick = opts[Math.floor(Math.random() * opts.length)];
+      if (pick === "aim") {
+        state.enemyAimed = true;
+        log(`${e.name} drops into cover and lines up the shot. Sight picture locked.`, "warn");
+      } else if (pick === "brace") {
+        state.enemyBracing = true;
+        log(`${e.name} pulls into cover. They're playing it safe this turn.`, "info");
+      } else {
+        state.telegraphPending = true;
+        log(`${e.name} steadies — lining up the kill shot.`, "warn");
+      }
       Sound.play("tense");
       refreshCombatStatus();
       companionTurn();
@@ -1030,8 +1079,10 @@ window.Combat = (function () {
 
     let dmg = rand(e.atk[0], e.atk[1]);
     // Rare savage hit — ignores 1 of brace.
-    const savage = Math.random() < 0.12;
+    let savage = Math.random() < 0.12;
     if (savage) dmg += 2;
+    // Enemy lined up the shot last turn — auto-savage, +3 damage.
+    if (state.enemyAimed) { dmg += 3; savage = true; }
     // Party-vs-party pressure. For pair enemies (two bandits) before
     // the engagement flip, add +1: either the ally is tied up and the
     // second bandit is stealing shots at you, or you're solo and
@@ -1058,7 +1109,8 @@ window.Combat = (function () {
     // a floor so the fight still matters. Brace also adds a flat
     // dodge bump for the turn you plant your feet (reduced when
     // desperate).
-    const baseHit = e.human ? 0.82 : 0.92;
+    // Bloater-style 'heavySwing' enemies are slow — you dodge more.
+    const baseHit = e.human ? 0.82 : (e.heavySwing ? 0.7 : 0.92);
     const braceDodge = state.bracing ? (desperate ? 0.12 : 0.25) : 0;
     const hitChance = Math.max(0.3, baseHit - mayaDodge() - braceDodge);
     const hit = Math.random() < hitChance;
@@ -1108,6 +1160,12 @@ window.Combat = (function () {
         Sound.play(savage ? "crit" : "damage");
         spawnEnemyBlood();
         screenShake();
+        // Panic: a successful bite / shot can rattle your next attack.
+        // Runners especially — they get in your head.
+        if (e.panic && Math.random() < e.panic) {
+          state.playerPanicked = true;
+          log("You pull back, breath tight — your next shot is going to be shaky.", "info");
+        }
       }
     }
 
@@ -1120,9 +1178,9 @@ window.Combat = (function () {
       return;
     }
 
-    // Telegraph window closes after the hostile turn — whether they
-    // landed the big hit or got interrupted earlier.
+    // Close pending windows after the hostile turn.
     state.telegraphPending = false;
+    state.enemyAimed = false;
     refreshCombatStatus();
 
     companionTurn();
@@ -1296,8 +1354,20 @@ window.Combat = (function () {
     }, linger);
   }
 
+  // Player spent their turn using a stam item from inventory. No
+  // damage dealt, no aim line kept — hand to the enemy.
+  function consumeItemTurn(item) {
+    if (!state || state.enemy.hp <= 0) return;
+    state.aimReady = false;
+    state.counterReady = false;
+    const itemName = item && item.name ? item.name.replace(/^[^\w]+\s*/, "") : "a breath";
+    log(`You take a second for ${itemName}.`, "info");
+    refreshHud();
+    setTimeout(enemyTurn, 600);
+  }
+
   return {
-    start, act, throwGrenade,
+    start, act, throwGrenade, consumeItemTurn,
     // Is a combat instance currently active? Used by the inventory
     // modal's grenade-Use button to gate the throw.
     isActive: () => !!(state && state.enemy && state.enemy.hp > 0),

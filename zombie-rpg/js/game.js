@@ -70,11 +70,11 @@ window.Game = (function () {
     const idx = state.inventory.findIndex(i => i.id === id);
     if (idx < 0) return;
     const it = state.inventory[idx];
+    const inCombat = window.Combat && window.Combat.isActive && window.Combat.isActive();
+
     // Grenade — combat-only. Out of combat, refuse gracefully; in
-    // combat, delegate to Combat.throwGrenade which handles damage,
-    // the explosion log line, and the hostile follow-up turn.
+    // combat, delegate to Combat.throwGrenade.
     if (it.grenade) {
-      const inCombat = window.Combat && window.Combat.isActive && window.Combat.isActive();
       if (!inCombat) { toast("Save it for when it counts."); return; }
       it.qty = (it.qty || 1) - 1;
       if (it.qty <= 0) state.inventory.splice(idx, 1);
@@ -82,6 +82,28 @@ window.Game = (function () {
       Combat.throwGrenade();
       return;
     }
+
+    // In combat: no HP recovery — can't stitch yourself mid-fight.
+    // Stamina items (water, painkillers, adrenaline, energy bar) are
+    // allowed and spend your turn. The enemy still gets a swing.
+    if (inCombat) {
+      const hasStam = !!(it.stam || it.stamRefill);
+      const healOnly = !hasStam && !!it.heal;
+      if (healOnly) { toast("Can't patch yourself up mid-fight."); return; }
+      if (!hasStam) { toast("Nothing this'll do right now."); return; }
+      if (state.stam >= state.stamMax) { toast("Already steady."); return; }
+      if (it.stamRefill) state.stam = state.stamMax;
+      else               state.stam = Math.min(state.stamMax, state.stam + (it.stam || 0));
+      Sound.play("heal");
+      it.qty = (it.qty || 1) - 1;
+      if (it.qty <= 0) state.inventory.splice(idx, 1);
+      updateHud();
+      closeInventory();
+      // Hand the turn to the enemy — using an item is your action.
+      Combat.consumeItemTurn(it);
+      return;
+    }
+
     let applied = false;
     if (it.heal && state.hp < state.hpMax) {
       state.hp = Math.min(state.hpMax, state.hp + it.heal);
