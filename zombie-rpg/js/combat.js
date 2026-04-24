@@ -608,7 +608,13 @@ window.Combat = (function () {
     }
     if (state.range === "close") {
       const e = state.enemy;
-      return { kind: "telegraph", label: e.human ? "🤜 IN YOUR FACE" : "🤝 HOLDING YOU DOWN" };
+      // Only show the grapple chip when the ENEMY pulled you close.
+      // If the player chose to close (for melee advantage), they aren't
+      // being held down — show a neutral melee chip instead.
+      if (state.heldDown) {
+        return { kind: "telegraph", label: e.human ? "🤜 IN YOUR FACE" : "🤝 HOLDING YOU DOWN" };
+      }
+      return { kind: "fx", label: "🔪 IN MELEE" };
     }
     // Generic 'status' slot: future effects (stunned, bleeding, etc.)
     // can push labels onto state.enemy.statusEffects and they'll show
@@ -935,6 +941,7 @@ window.Combat = (function () {
       state.aimReady = false;
       state.counterReady = false;
       state.range = "close";
+      state.heldDown = false;
       log("You break for the gap — closing the distance.", "info");
       Sound.play("flee");
       refreshCombatStatus();
@@ -947,6 +954,7 @@ window.Combat = (function () {
       state.aimReady = false;
       state.counterReady = false;
       state.range = "far";
+      state.heldDown = false;
       log("You shove off, put distance back in.", "info");
       Sound.play("flee");
       // A small parting-shot bite is baked into the enemyTurn that
@@ -1264,6 +1272,7 @@ window.Combat = (function () {
     // if already close.
     if (state.range === "far" && e.aggressive && state.turn >= 2 && Math.random() < e.aggressive) {
       state.range = "close";
+      state.heldDown = true;
       if (e.human) {
         const clinchDmg = Math.max(1, rand(1, 2));
         s.hp -= clinchDmg;
@@ -1708,6 +1717,7 @@ window.Combat = (function () {
     state.noraWarn = false;       // Nora's warning was for the one that just fell
     state.turn = 0;
     state.range = "far"; // new wave — new fighter to close on
+    state.heldDown = false;
     // Breather: small restore between waves. Crucial — without it you
     // get whittled down over 10 enemies and there's no answer.
     const s = Game.state;
