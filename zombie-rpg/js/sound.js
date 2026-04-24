@@ -24,8 +24,25 @@ window.Sound = (function () {
 
   function ensure() {
     if (!ctx) init();
-    if (ctx && ctx.state === "suspended") ctx.resume();
+    if (ctx && ctx.state === "suspended") {
+      // Fire and don't await — the unlock listener and the resume on
+      // first user gesture do the heavy lifting. Sounds queued before
+      // resume completes are flushed by flushPending() once running.
+      try { ctx.resume(); } catch (e) {}
+    }
     return !!ctx;
+  }
+
+  // Sounds requested while the context is still resuming get queued
+  // here and flushed once it's actually running, so the very first
+  // 'select' / opening 'door' isn't dropped on cold-start.
+  const pending = [];
+  function flushPending() {
+    while (pending.length) {
+      const name = pending.shift();
+      const fn = FX[name];
+      if (fn) { try { fn(); } catch (e) { console.warn("sound", name, e); } }
+    }
   }
 
   // --- building blocks ---
@@ -202,7 +219,13 @@ window.Sound = (function () {
     if (!ensure() || muted) return;
     const fn = FX[name];
     if (!fn) return;
-    try { fn(); } catch (e) { /* swallow */ }
+    // Context may still be resuming after a tab-switch or first
+    // gesture — queue the sound and let flushPending() pick it up.
+    if (ctx.state !== "running") {
+      pending.push(name);
+      return;
+    }
+    try { fn(); } catch (e) { console.warn("sound", name, e); }
   }
 
   // --- Ambient drone ---
@@ -290,6 +313,33 @@ window.Sound = (function () {
   }
 
   function isMuted() { return muted; }
+
+  // Document-level audio unlock — every tap / click / keypress
+   // resumes the context if the browser suspended it. Modern Chrome
+   // and iOS Safari require a user gesture before audio plays; without
+   // this, sounds went hit-or-miss after tab-switches or scene
+   // transitions that weren't directly inside a click handler.
+  function unlock() {
+    if (!ctx) init();
+    if (ctx && ctx.state === "suspended") {
+      const p = ctx.resume();
+      if (p && typeof p.then === "function") p.then(flushPending, () => {});
+      else flushPending();
+    } else if (ctx && ctx.state === "running") {
+      flushPending();
+    }
+  }
+  if (typeof document !== "undefined") {
+    const opts = { passive: true };
+    document.addEventListener("pointerdown", unlock, opts);
+    document.addEventListener("touchstart",  unlock, opts);
+    document.addEventListener("keydown",     unlock, opts);
+    // Some browsers also re-suspend when the tab becomes hidden —
+    // resume on visibility return.
+    document.addEventListener("visibilitychange", () => {
+      if (document.visibilityState === "visible") unlock();
+    });
+  }
 
   return { init, play, setAmbience, stopAmbient, toggleMute, isMuted };
 })();
