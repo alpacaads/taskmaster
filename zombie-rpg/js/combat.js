@@ -351,14 +351,10 @@ window.Combat = (function () {
     const hp = config.hp !== undefined ? config.hp : baseHp;
     const atk = config.atk || baseAtk;
 
-    // Party-vs-party engagement. When a combat config declares
-    // engagedAllies (e.g. the two-bandit ambush where Maya is tied
-    // up fighting the second one), those allies can't assist from
-    // the sidelines until engagementFlipAt is reached. At that
-    // point the "second enemy" drops, the engagement lifts, and the
-    // ally rejoins the fight. Extra hostile damage is applied while
-    // the engagement is still live — the uncovered bandit takes
-    // his own shots at you.
+    // Party-vs-party engagement. Legacy field — config.engagedAllies
+    // is just a list of ally keys to mark as engaged. The proper
+    // model is config.allyEngagement below (real parallel fight with
+    // its own allyEnemy HP pool).
     const engagedAllies = Array.isArray(config.engagedAllies)
       ? config.engagedAllies.filter(a => typeof a === "string")
       : [];
@@ -408,8 +404,6 @@ window.Combat = (function () {
       noraWarn: false,
       engaged: engagedSet,
       engagedInitial: engagedAllies.slice(),
-      engagementFlipAt: engagementFlipAt,
-      engagementLifted: false,
       allyEnemy: allyEnemy,
       waveQueue: waveQueue,
       waveIndex: 1,
@@ -1111,7 +1105,7 @@ window.Combat = (function () {
     // turn, no attack either).
     if (e.telegraphEvery && !state.telegraphPending && !state.enemyAimed && !state.enemyBracing
         && state.turn > 0 && (state.turn % e.telegraphEvery === 0)
-        && (!state.engagementFlipAt || e.hp > state.engagementFlipAt)) {
+        && (e.hp > Math.ceil(e.maxHp / 2))) {
       const opts = ["telegraph"];
       if (e.enemyCanAim) opts.push("aim");
       if (e.enemyCanBrace) opts.push("brace");
@@ -1139,7 +1133,7 @@ window.Combat = (function () {
     // drags. Only fires when the enemy is still healthy enough to be
     // cautious (above the engagement flip threshold).
     if (e.repositionEvery && state.turn > 0 && (state.turn % e.repositionEvery === 0)
-        && (!state.engagementFlipAt || e.hp > state.engagementFlipAt)) {
+        && (e.hp > Math.ceil(e.maxHp / 2))) {
       log(`They pull back behind cover to reload. No shot from them this turn.`, "info");
       Sound.play("brace");
       companionTurn();
