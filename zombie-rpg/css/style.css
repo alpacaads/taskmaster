@@ -672,6 +672,45 @@ html, body {
   cursor: not-allowed;
 }
 
+/* Flee-journey countdown chip — appears above .choices on nodes that
+   declare timerSeconds + onTimeout. Unique to the Day-5 flee sequence. */
+.flee-timer {
+  margin: 0 14px;
+  padding: 6px 10px;
+  background: rgba(168, 32, 32, 0.16);
+  border: 1px solid rgba(208, 72, 72, 0.55);
+  border-radius: 6px;
+  color: #ffb1b1;
+  font-size: 12px;
+  letter-spacing: 2px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  animation: fleePulse 1s ease-in-out infinite;
+  text-transform: uppercase;
+}
+.flee-timer-label { opacity: 0.9; }
+.flee-timer-count {
+  font-size: 16px;
+  font-variant-numeric: tabular-nums;
+  color: #ffd6d6;
+}
+.flee-timer-critical {
+  background: rgba(208, 32, 32, 0.38);
+  border-color: #ff5a5a;
+  color: #ffe0e0;
+  animation: fleePulseCritical 0.45s ease-in-out infinite;
+}
+@keyframes fleePulse {
+  0%,100% { box-shadow: 0 0 0 0 rgba(208,72,72,0.35); }
+  50%     { box-shadow: 0 0 0 6px rgba(208,72,72,0.00); }
+}
+@keyframes fleePulseCritical {
+  0%,100% { box-shadow: 0 0 0 0 rgba(255,90,90,0.55); transform: translateY(0); }
+  50%     { box-shadow: 0 0 0 8px rgba(255,90,90,0.00); transform: translateY(-1px); }
+}
+
 /* Footer controls */
 .footer-controls {
   display: flex;

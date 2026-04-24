@@ -26,6 +26,25 @@ function equipVegaRifleOnce(s) {
   }
 }
 
+// ---- Day-5 flee-journey presence helpers ----
+// The rearguard choice plus in-flight deaths determine who is walking
+// beside you through the forest. These predicates are used by the 10
+// flee_journey_* nodes to branch narration between the named-character
+// variant (Maya, Ren, Vega, Nora) and the generic named-survivor beat.
+function mayaInColumn(s) {
+  return (s.flags && (s.flags.maya || s.companion === "Maya")) &&
+         !s.flags.mayaSacrificed && !s.flags.mayaFellInFlight;
+}
+function renInColumn(s) {
+  return !s.flags.renSacrificed && !s.flags.renFellInFlight;
+}
+function vegaInColumn(s) {
+  return !!s.flags.vegaSaved && !s.flags.vegaFellInFlight;
+}
+function noraInColumn(s) {
+  return s.companion2 === "Nora" && !s.flags.noraFellInFlight;
+}
+
 window.Story = {
 
   intro: {

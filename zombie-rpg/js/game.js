@@ -229,7 +229,17 @@ window.Game = (function () {
     const node = Story[nodeId];
     if (!node) { console.error("Missing node", nodeId); return; }
 
+    // Any prior flee-journey countdown dies here. New node may start a fresh
+    // one at the end of goto().
+    clearFleeTimer();
+
     state.node = nodeId;
+
+    // onEnter runs before text/choices so the node can stamp flags that
+    // its own text function reads (used by flee_journey_*_late nodes).
+    if (typeof node.onEnter === "function") {
+      try { node.onEnter(state); } catch (e) { console.error(e); }
+    }
 
     // Update scene
     const sceneEl = document.getElementById("scene");
@@ -325,11 +335,55 @@ window.Game = (function () {
 
     updateHud();
 
+    // Flee-journey countdown: a node opts in with `timerSeconds` + `onTimeout`.
+    // This is intentionally scoped — no other scene in the game uses this
+    // mechanic right now, so we gate it on the two fields being declared
+    // instead of rolling out a global timer system.
+    if (node.timerSeconds && node.onTimeout) {
+      startFleeTimer(node.timerSeconds, node.onTimeout);
+    }
+
     // Auto-save on new node
     try { localStorage.setItem(SAVE_KEY, JSON.stringify(state)); } catch (e) {}
   }
 
+  // ---- Flee-journey countdown (scoped: only flee_journey_* nodes use this) ----
+  let fleeTimerHandle = null;
+  function clearFleeTimer() {
+    if (fleeTimerHandle) { clearInterval(fleeTimerHandle); fleeTimerHandle = null; }
+    const el = document.getElementById("flee-timer");
+    if (el && el.parentNode) el.parentNode.removeChild(el);
+  }
+  function startFleeTimer(seconds, onTimeout) {
+    clearFleeTimer();
+    const choicesEl = document.getElementById("choices");
+    if (!choicesEl || !choicesEl.parentNode) return;
+    const chip = document.createElement("div");
+    chip.id = "flee-timer";
+    chip.className = "flee-timer";
+    chip.innerHTML =
+      `<span class="flee-timer-label">REACT</span>` +
+      `<span class="flee-timer-count">${seconds}</span>`;
+    choicesEl.parentNode.insertBefore(chip, choicesEl);
+    Sound.play("tense");
+    let remaining = seconds;
+    const countEl = chip.querySelector(".flee-timer-count");
+    fleeTimerHandle = setInterval(() => {
+      remaining -= 1;
+      if (countEl) countEl.textContent = String(Math.max(0, remaining));
+      if (remaining <= 2) chip.classList.add("flee-timer-critical");
+      if (remaining <= 0) {
+        clearFleeTimer();
+        goto(onTimeout);
+      }
+    }, 1000);
+  }
+
   function handleChoice(c) {
+    // Player made a call — kill any live flee-journey countdown.
+    // Belt-and-suspenders: goto() also clears it, but combat choices
+    // don't go through goto so we clear here first.
+    clearFleeTimer();
     const before = { hp: state.hp, food: state.food, ammo: state.ammo };
     if (c.effect) {
       try { c.effect(state); } catch (e) { console.error(e); }
