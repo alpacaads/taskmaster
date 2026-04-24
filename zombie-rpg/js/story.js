@@ -1022,26 +1022,27 @@ window.Story = {
           s.flags.hordeDefense = true;
         },
         combat: function (s) {
-          // Horde fight = 10 sequential enemies in a wave queue, mixed
-          // so breathers (walkers) come between harder beats (runners,
-          // pairs, a bloater). Small HP/stam restore between each
-          // wave keeps you going over the long stretch. The opening
-          // enemy is the first fighter; state.waves is everything
-          // after, in order.
+          // Horde fight = 10 sequential enemies, weighted heavily
+          // toward pairs / runners / bloaters so the player can't
+          // just one-shot single walkers all the way through with
+          // the party hosing the line. Breathers exist (single
+          // walkers) but they're the minority, not the spine.
           //
-          // Camp-ready composition (exposedTraitor) is slightly easier:
-          // more walker breathers, one runner, no bloater.
-          // Camp-not-ready is meaner: more runners, a bloater closer
-          // to the middle when you're still hurt.
+          // Camp-ready (exposedTraitor): better positioning, you
+          // see the threats coming. Mostly pairs + runners, one
+          // bloater, two single-walker breathers.
+          // Camp-not-ready: meaner everywhere — more runners
+          // (panic chains), two bloaters, one 'runner+pair'
+          // double-team mid-stretch.
           const ready = !!s.flags.exposedTraitor;
           const waves = ready
-            ? ["walker", "walker_pair", "walker", "runner",
-               "walker", "walker", "walker_pair", "walker", "walker"]
-            : ["walker", "runner", "walker_pair", "walker",
-               "runner", "walker", "bloater", "walker", "walker"];
+            ? ["walker_pair", "runner", "walker_pair", "walker",
+               "bloater", "walker_pair", "runner", "walker_pair", "walker"]
+            : ["runner", "walker_pair", "runner", "bloater",
+               "walker_pair", "runner", "walker_pair", "bloater", "walker_pair"];
           return {
-            enemy: "walker",           // first wave — an easy opener
-            waves: waves,              // nine more after
+            enemy: ready ? "walker_pair" : "walker_pair",  // both open with a pair, not a single walker
+            waves: waves,
             onWin: "post_horde_win",
             onLose: "post_horde_lose",
           };

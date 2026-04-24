@@ -1183,8 +1183,8 @@ One section per story node, in definition order. Function-branching fields (text
 
 1. **Hold the wall.** `COMBAT`
    - _effect:_ `s => { // Every saved ally is on the wall for this one. s.flags.hordeDefense = true; }`
-   - ⚔ combat _(default, with Maya companion, mission partner = maya, mission partner = ren, solo mission, saved Nora, bring Nora on mission, rested in car, told Vega, chore: medbay, chore: perimeter, chore: kitchen, killed traitor, romance Maya, romance Ren)_: enemy `walker` → win `post_horde_win` / lose `post_horde_lose`
-   - ⚔ combat _(exposed traitor)_: enemy `walker` → win `post_horde_win` / lose `post_horde_lose`
+   - ⚔ combat _(default, with Maya companion, mission partner = maya, mission partner = ren, solo mission, saved Nora, bring Nora on mission, rested in car, told Vega, chore: medbay, chore: perimeter, chore: kitchen, killed traitor, romance Maya, romance Ren)_: enemy `walker_pair` → win `post_horde_win` / lose `post_horde_lose`
+   - ⚔ combat _(exposed traitor)_: enemy `walker_pair` → win `post_horde_win` / lose `post_horde_lose`
 2. **Get the survivors out the back.**
    - → `flee_rearguard`
 
