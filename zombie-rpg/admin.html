@@ -947,12 +947,12 @@
   </footer>
 
   <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
-  <script src="js/overrides.js?v=198"></script>
-  <script src="js/scenes.js?v=198"></script>
+  <script src="js/overrides.js?v=199"></script>
+  <script src="js/scenes.js?v=199"></script>
   <!-- story.js is read-only here: we pull chapters / text / choices
        to annotate each scene card so the flow is legible without
        having to play through. -->
-  <script src="js/story.js?v=198"></script>
+  <script src="js/story.js?v=199"></script>
   <script>
     (async function () {
       const PROMPTS = (window.Scenes && window.Scenes.PROMPTS) || {};
@@ -1891,20 +1891,23 @@
           const img = scene.querySelector(".scene-art img");
           const badge = scene.querySelector(".reader-badge");
           const fileInput = scene.querySelector('input[type="file"]');
-          const refresh = () => {
+          const refresh = async () => {
             scene.classList.remove("img-missing");
-            const override = (window.__OVERRIDES || {})[imgSourceId];
+            // Read the blob fresh from IndexedDB for this scene's id.
+            // Avoids any chance of a stale shared objectURL pointing
+            // to a different scene's bitmap.
+            const blob = await Overrides.get(imgSourceId);
             const committed = isCommitted(imgSourceId);
-            // Clear first so the img reloads even when the URL text
-            // matches the last assignment (object URLs don't accept
-            // query params, so we can't bust via ?t= on blobs).
             img.src = "";
-            if (override) {
-              img.src = override;
+            if (blob) {
+              if (scene._objUrl) { try { URL.revokeObjectURL(scene._objUrl); } catch (e) {} }
+              scene._objUrl = URL.createObjectURL(blob);
+              img.src = scene._objUrl;
               scene.classList.add("replaced");
               scene.classList.toggle("committed", committed);
               badge.textContent = committed ? "COMMITTED" : "OVERRIDE";
             } else {
+              if (scene._objUrl) { try { URL.revokeObjectURL(scene._objUrl); } catch (e) {} scene._objUrl = null; }
               img.src = "images/" + imgSourceId + "." + extForId(imgSourceId) + "?t=" + Date.now();
               scene.classList.remove("replaced", "committed");
               badge.textContent = "live";
@@ -2036,13 +2039,16 @@
 
         async function refresh() {
           card.classList.remove("img-missing");
-          const url = overrideMap()[id];
-          if (url) {
-            // Clear first so setting to the same url still forces a
-            // reload of the <img> — guards against stale decoded
-            // bitmap when the blob behind the URL changed.
+          // Read the blob fresh from IndexedDB for THIS card's id.
+          // Creating our own objectURL per card avoids the 'shared
+          // __OVERRIDES URL map getting revoked under us' bug that
+          // caused uploads to render as a neighbour scene.
+          const blob = await Overrides.get(id);
+          if (blob) {
+            if (card._objUrl) { try { URL.revokeObjectURL(card._objUrl); } catch (e) {} }
+            card._objUrl = URL.createObjectURL(blob);
             img.src = "";
-            img.src = url;
+            img.src = card._objUrl;
             card.classList.add("replaced");
             const committed = isCommitted(id);
             card.classList.toggle("committed", committed);
@@ -2053,9 +2059,9 @@
             commitBtn.disabled = false;
             commitBtn.title = GH.token ? "Commit to repo" : "Add a GitHub token in Settings first";
             commitBtn.classList.toggle("needs-token", !GH.token);
-            const blob = await Overrides.get(id);
             sizeEl.textContent = blob ? "(" + fmtSize(blob.size) + ")" : "";
           } else {
+            if (card._objUrl) { try { URL.revokeObjectURL(card._objUrl); } catch (e) {} card._objUrl = null; }
             img.src = "images/" + id + "." + extForId(id) + "?t=" + Date.now();
             card.classList.remove("replaced", "committed");
             badge.textContent = "live";
