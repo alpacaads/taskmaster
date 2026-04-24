@@ -14,7 +14,7 @@ window.Combat = (function () {
     walker_pair:  { name: "Two Walkers", art: "🧟🧟",  hp: 8,  atk: [2, 4], speed: 1, desc: "They move together.", pack: true },
     runner:       { name: "Runner",      art: "🧟‍♂️", hp: 4,  atk: [3, 4], speed: 2, desc: "Fresh. Fast. Furious." },
     bloater:      { name: "Bloater",     art: "🧟💀",  hp: 9,  atk: [3, 5], speed: 1, desc: "A swollen, leaking thing." },
-    bandit:       { name: "Bandit",      art: "🧔🔫",  hp: 6,  atk: [3, 4], speed: 2, desc: "Smart. Armed. Desperate.", human: true, dodge: 0.22 },
+    bandit:       { name: "Bandit",      art: "🧔🔫",  hp: 6,  atk: [3, 4], speed: 2, desc: "Smart. Armed. Desperate.", human: true, dodge: 0.22, telegraphEvery: 3 },
     // Two bandits — one engaged with an ally (if present), one on you.
     // Modelled as a single HP pool so combat stays simple, but the
     // engagement lifts at engagementFlipAt (see start()) — when that
@@ -23,8 +23,10 @@ window.Combat = (function () {
     // dodge: human reflex — their smart repositioning makes your melee
     // whiff sometimes (ducking behind cover). repositionEvery: every
     // Nth hostile turn, one of them pulls back instead of attacking —
-    // no damage that turn, but no free hits either.
-    bandit_pair:  { name: "Two Bandits",  art: "🧔🔫🧔", hp: 16, atk: [3, 5], speed: 2, desc: "Smart. Armed. Coordinated.", human: true, pack: true, dodge: 0.25, repositionEvery: 4 },
+    // no damage that turn, but no free hits either. telegraphEvery:
+    // every Nth turn they wind up a big shot — the hero has a window
+    // to interrupt or brace.
+    bandit_pair:  { name: "Two Bandits",  art: "🧔🔫🧔", hp: 16, atk: [3, 5], speed: 2, desc: "Smart. Armed. Coordinated.", human: true, pack: true, dodge: 0.25, repositionEvery: 4, telegraphEvery: 3 },
     horde:        { name: "The Horde",   art: "🧟🧟🧟", hp: 16, atk: [3, 5], speed: 1, desc: "A tide of the dead." },
     // Mini-boss: the thing that was sealed inside the meat locker.
     // Mass of ruptured bodies fused together — slow, heavy, high HP.
@@ -474,6 +476,33 @@ window.Combat = (function () {
     setTimeout(enemyTurn, 600);
   }
 
+  // Status chip in the combat slug — 'AIMED' when next shot is primed,
+  // '⚠ TELEGRAPHED' when the enemy is winding up (player should read
+  // and decide). Also toggles the Aim button's availability.
+  function refreshCombatStatus() {
+    const chip = document.getElementById("combat-status");
+    if (chip) {
+      if (state && state.telegraphPending) {
+        chip.textContent = "⚠ TELEGRAPHED";
+        chip.className = "combat-status telegraphed";
+        chip.hidden = false;
+      } else if (state && state.aimReady) {
+        chip.textContent = "🎯 AIMED";
+        chip.className = "combat-status aimed";
+        chip.hidden = false;
+      } else {
+        chip.hidden = true;
+      }
+    }
+    const aimBtn = document.getElementById("combat-btn-aim");
+    if (aimBtn) {
+      const s = Game.state;
+      const canAim = !!(s && s.bestRanged && s.ammo > 0) && !(state && state.aimReady);
+      aimBtn.disabled = !canAim;
+      aimBtn.hidden = !(s && s.bestRanged);
+    }
+  }
+
   function refreshHud() {
     const s = Game.state;
     document.getElementById("c-hp").textContent = Math.max(0, s.hp);
@@ -486,6 +515,7 @@ window.Combat = (function () {
     const stamFill = document.getElementById("c-stam-fill");
     if (hpFill)   hpFill.style.width   = hpPct + "%";
     if (stamFill) stamFill.style.width = stamPct + "%";
+    refreshCombatStatus();
   }
 
   function updateEnemyHp() {
@@ -545,7 +575,35 @@ window.Combat = (function () {
     state.desperateBrace = false;
 
     if (action === "melee") {
+      // Aim is a ranged sight-line — any melee swing breaks it.
+      state.aimReady = false;
       if (!desperateMelee) s.stam -= 1;
+      // Interrupt check: if the enemy is mid-telegraph, your swing is
+      // a gamble. 60% catches him cold, bonus damage, his next turn
+      // is skipped. 40% you whiff into the wind-up and he lands it.
+      let interruptBonus = 0;
+      let interrupted = false;
+      if (state.telegraphPending) {
+        if (Math.random() < 0.6) {
+          interrupted = true;
+          interruptBonus = 2;
+          state.interruptedEnemy = true;
+          state.telegraphPending = false;
+        } else {
+          // Whiff — log a line, eat the incoming hit at the usual +2.
+          log(`You read him wrong — your swing goes wide.`, "info");
+          Sound.play("dodge");
+          spawnMark("miss");
+          Sound.play("melee");
+          refreshCombatStatus();
+          if (!desperateMelee) s.stam -= 0;
+          // Skip to enemy turn — damage resolution handled below.
+          refreshHud();
+          updateEnemyHp();
+          setTimeout(enemyTurn, 600);
+          return;
+        }
+      }
       // Desperate swing: low dice, crit impossible, no counter payoff.
       const base = desperateMelee ? rand(0, 2) : rand(1, 3);
       const weaponBonus = s.bestMelee ? s.bestMelee.bonus : 0;
@@ -556,12 +614,12 @@ window.Combat = (function () {
       const critChance = desperateMelee ? 0 : (counter ? 1 : (0.12 + noraCritBump()));
       const crit = Math.random() < critChance;
       const counterBonus = counter ? 3 : 0;
-      const dmg = base + weaponBonus + noraBonus() + counterBonus;
+      const dmg = base + weaponBonus + noraBonus() + counterBonus + interruptBonus;
       const total = crit ? dmg + 2 : dmg;
       const weaponPhr = weaponPhrase(s.bestMelee ? s.bestMelee.name : "Crowbar");
-      // Smart human enemies dodge your swing sometimes. Counter-crits
-      // (reading the lunge) always land — that's the whole payoff.
-      const enemyDodge = !crit && !counter ? (state.enemy.dodge || 0) : 0;
+      // Interrupts always land — you caught him setting up. Counter-
+      // crits too. Otherwise smart human enemies dodge sometimes.
+      const enemyDodge = (!crit && !counter && !interrupted) ? (state.enemy.dodge || 0) : 0;
       const dodged = Math.random() < enemyDodge;
       if (dodged) {
         log(`He twists away — ${weaponPhr} hits air.`, "info");
@@ -569,46 +627,95 @@ window.Combat = (function () {
         spawnMark("miss");
       } else {
         state.enemy.hp -= total;
-        const prefix = counter ? "Reading the lunge — " : "";
+        const prefix = interrupted ? "You read the wind-up — " : (counter ? "Reading the lunge — " : "");
         let line;
         if (desperateMelee && total <= 0) {
           line = `You can barely lift your arm. ${weaponPhr} clips its jaw. No give.`;
         } else if (desperateMelee) {
           line = `Muscle memory carries you. ${weaponPhr} lands — ${total} damage.`;
+        } else if (interrupted) {
+          line = `${prefix}${weaponPhr} catches him mid-draw. ${total} damage.`;
         } else if (crit) {
           line = `${prefix}You drive ${weaponPhr} through its skull. CRITICAL ${total}.`;
         } else {
           line = `You swing — ${total} damage.`;
         }
-        log(line, crit ? "crit" : "hero");
-        Sound.play(crit ? "crit" : "melee");
-        floatDamage(total, crit ? "crit" : null);
+        log(line, (crit || interrupted) ? "crit" : "hero");
+        Sound.play((crit || interrupted) ? "crit" : "melee");
+        floatDamage(total, (crit || interrupted) ? "crit" : null);
         hitFlash();
-        spawnMark(crit ? "slashCrit" : "slash");
+        spawnMark((crit || interrupted) ? "slashCrit" : "slash");
       }
+      refreshCombatStatus();
     }
     else if (action === "shoot") {
       state.counterReady = false;
       s.ammo -= 1;
       Sound.play("gunshot");
       gunFlash();
-      const hit = Math.random() < (state.enemy.speed === 2 ? 0.75 : 0.9);
+      // Aimed shot — guaranteed crit, +3 damage. Consumes aimReady.
+      const aimed = !!state.aimReady;
+      state.aimReady = false;
+      // Interrupt check against a telegraph — shots are faster than
+      // swings, so the odds are better (75%). Whiff eats the big hit.
+      let interrupted = false;
+      if (state.telegraphPending) {
+        if (Math.random() < 0.75) {
+          interrupted = true;
+          state.interruptedEnemy = true;
+          state.telegraphPending = false;
+        } else {
+          log("Your shot snaps wide — he was half-turned and you read it wrong.", "info");
+          spawnMark("miss");
+          refreshCombatStatus();
+          refreshHud();
+          updateEnemyHp();
+          setTimeout(enemyTurn, 600);
+          return;
+        }
+      }
+      // Aimed shots and interrupts always land. Otherwise the speed-2
+      // enemies (bandits, runners) still have their miss roll.
+      const baseHit = state.enemy.speed === 2 ? 0.75 : 0.9;
+      const hit = aimed || interrupted || Math.random() < baseHit;
       if (!hit) {
         log("The shot misses. The sound draws more attention.", "info");
         spawnMark("miss");
       } else {
-        const base = state.enemy.human ? rand(3, 5) : rand(2, 4);
+        const baseRoll = state.enemy.human ? rand(3, 5) : rand(2, 4);
         const weaponBonus = s.bestRanged ? s.bestRanged.bonus : 0;
-        const dmg = base + weaponBonus + noraBonus();
+        const aimBonus = aimed ? 3 : 0;
+        const interruptBonus = interrupted ? 2 : 0;
+        const dmg = baseRoll + weaponBonus + noraBonus() + aimBonus + interruptBonus;
         state.enemy.hp -= dmg;
         const weaponPhr = weaponPhrase(s.bestRanged ? s.bestRanged.name : "Handgun");
-        log(`You fire ${weaponPhr} — ${dmg} damage.`, "hero");
-        floatDamage(dmg);
+        let line;
+        if (aimed) line = `The sight settles. ${weaponPhr} speaks once. CRITICAL ${dmg}.`;
+        else if (interrupted) line = `You catch him mid-draw — ${weaponPhr} puts him on the ground. ${dmg} damage.`;
+        else line = `You fire ${weaponPhr} — ${dmg} damage.`;
+        log(line, (aimed || interrupted) ? "crit" : "hero");
+        floatDamage(dmg, (aimed || interrupted) ? "crit" : null);
         hitFlash();
-        spawnMark("hit");
+        spawnMark((aimed || interrupted) ? "slashCrit" : "hit");
       }
+      refreshCombatStatus();
+    }
+    else if (action === "aim") {
+      // No damage this turn. Skip your defense, line up the shot.
+      // Next fire is a guaranteed crit for +3 damage. Any non-fire
+      // action breaks the sight line.
+      if (!s.bestRanged) { Game.toast("No firearm"); Sound.play("drySnap"); return; }
+      if (s.ammo <= 0)   { Game.toast("No shot to aim"); Sound.play("drySnap"); return; }
+      state.counterReady = false;
+      state.aimReady = true;
+      // Aim shouldn't clear an active telegraph — you're sighting,
+      // not reacting. But the wind-up will still land as a big hit.
+      log("You drop to a knee and line up the shot. Steady.", "info");
+      Sound.play("brace");
+      refreshCombatStatus();
     }
     else if (action === "brace") {
+      state.aimReady = false;
       state.counterReady = false;
       if (!desperateBrace) s.stam -= 1;
       state.bracing = true;
@@ -623,6 +730,7 @@ window.Combat = (function () {
       Sound.play("brace");
     }
     else if (action === "flee") {
+      state.aimReady = false;
       Sound.play("flee");
       // Bosses and fast / pack enemies can't be escaped.
       if (state.enemy.speed >= 2 || state.enemy.pack || state.enemy.boss) {
@@ -841,6 +949,36 @@ window.Combat = (function () {
       return;
     }
 
+    // Interrupt payoff — player caught the enemy mid-wind-up last
+    // turn. He loses this turn entirely.
+    if (state.interruptedEnemy) {
+      state.interruptedEnemy = false;
+      state.telegraphPending = false;
+      log(`${e.name} reels from the blow — no shot from him this turn.`, "info");
+      Sound.play("brace");
+      refreshCombatStatus();
+      companionTurn();
+      state.turn += 1;
+      renderAllies();
+      return;
+    }
+
+    // Telegraph turn — smart humans wind up a big shot. No damage
+    // this turn; the player's next action is a reading call (strike /
+    // shoot to interrupt, brace to absorb, or ignore and eat it).
+    if (e.telegraphEvery && !state.telegraphPending && state.turn > 0
+        && (state.turn % e.telegraphEvery === 0)
+        && (!state.engagementFlipAt || e.hp > state.engagementFlipAt)) {
+      state.telegraphPending = true;
+      log(`${e.name} steadies — lining up the kill shot.`, "warn");
+      Sound.play("tense");
+      refreshCombatStatus();
+      companionTurn();
+      state.turn += 1;
+      renderAllies();
+      return;
+    }
+
     // Tactical reposition. Smart humans pull back to cover every few
     // turns — they don't attack and you don't get hit, but the fight
     // drags. Only fires when the enemy is still healthy enough to be
@@ -865,6 +1003,10 @@ window.Combat = (function () {
     // both of them are shooting. After the flip it's just one left.
     const isPair = state.enemy.pack === true && state.enemy.human === true;
     if (isPair && !state.engagementLifted) dmg += 1;
+    // Telegraphed shot lands this turn — the player didn't interrupt.
+    // +2 extra damage on top of everything else.
+    const telegraphLanding = state.telegraphPending;
+    if (telegraphLanding) dmg += 2;
 
     // Brace absorbs more now: -3 normal, -2 on savage. Desperate brace
     // (stam was 0) still absorbs something but only half as much.
@@ -942,6 +1084,11 @@ window.Combat = (function () {
       setTimeout(() => end("lose"), 900);
       return;
     }
+
+    // Telegraph window closes after the hostile turn — whether they
+    // landed the big hit or got interrupted earlier.
+    state.telegraphPending = false;
+    refreshCombatStatus();
 
     companionTurn();
 
