@@ -14,6 +14,12 @@ window.Game = (function () {
     flags: {},
     bonds: { maya: 0, ren: 0, vega: 0 },
     romance: null,
+    // Per-ally combat state: HP, HP max, ammo, ammo max. Seeded on
+    // demand the first time that ally is present in combat. If an
+    // ally hits 0 HP they can't assist until healed out of combat.
+    // Ammo is consumed when they fire; at 0 they switch to melee
+    // (lower damage) if they have a melee fallback.
+    allyState: {},
     // Equipped weapons — starter kit is a pocket knife only. Your first
     // firearm is looted from Mrs. Cho's apartment; every drop after
     // that is an upgrade. Bonuses stack into the per-swing / per-shot
@@ -104,10 +110,41 @@ window.Game = (function () {
       return;
     }
 
+    // Out of combat, heal items target the most-wounded party member
+    // first (lowest hp/hpMax ratio). Ellis still qualifies — if he's
+    // the one bleeding, the heal goes to him. Ties broken: Ellis wins.
     let applied = false;
-    if (it.heal && state.hp < state.hpMax) {
-      state.hp = Math.min(state.hpMax, state.hp + it.heal);
-      applied = true;
+    if (it.heal) {
+      const pool = [{ key: "ellis", hp: state.hp, hpMax: state.hpMax, name: state.name || "Ellis" }];
+      const st = state.allyState || {};
+      Object.keys(st).forEach(k => {
+        const a = st[k];
+        if (!a) return;
+        // Only include allies we know are around right now.
+        const inParty =
+          (k === "maya" && (state.companion === "Maya" || state.flags.missionPartner === "maya")) ||
+          (k === "ren"  && (state.flags.missionPartner === "ren" || state.flags.hordeDefense)) ||
+          (k === "vega" && (state.flags.hordeDefense || state.flags.companion2 === "Vega")) ||
+          (k === "nora" && state.companion2 === "Nora");
+        if (inParty && a.hpMax > 0) pool.push({ key: k, hp: a.hp, hpMax: a.hpMax,
+          name: k === "maya" ? "Maya" : k === "ren" ? "Ren" : k === "vega" ? "Vega" : "Nora" });
+      });
+      // Pick the one furthest from full. Ellis (first entry) wins ties.
+      let best = null;
+      pool.forEach(m => {
+        if (m.hp >= m.hpMax) return;
+        if (!best || (m.hp / m.hpMax) < (best.hp / best.hpMax)) best = m;
+      });
+      if (best) {
+        if (best.key === "ellis") {
+          state.hp = Math.min(state.hpMax, state.hp + it.heal);
+          toast(`Used: ${it.name} → you (+${it.heal} ❤️)`);
+        } else {
+          state.allyState[best.key].hp = Math.min(best.hpMax, best.hp + it.heal);
+          toast(`Used: ${it.name} → ${best.name} (+${it.heal} ❤️)`);
+        }
+        applied = true;
+      }
     }
     if (it.stamRefill && state.stam < state.stamMax) {
       state.stam = state.stamMax;
@@ -122,7 +159,6 @@ window.Game = (function () {
     if (it.qty <= 0) state.inventory.splice(idx, 1);
     updateHud();
     openInventory();   // re-render with the new state
-    toast("Used: " + it.name);
   }
 
   let state = DEFAULT_STATE();
@@ -435,6 +471,33 @@ window.Game = (function () {
       { readonly: true, name: "⚡ Stamina",    qty: `${state.stam}/${state.stamMax}` },
       { readonly: true, name: "🔫 Ammunition", qty: state.ammo },
     ];
+    // Show each present ally's HP + ammo so the player can spot who's
+    // wounded and plan. Down allies (hp 0) are called out. Out of
+    // combat the player can click Heal to target a specific ally.
+    const allyList = [];
+    const inCombat = !!(window.Combat && window.Combat.isActive && window.Combat.isActive());
+    const as = state.allyState || {};
+    const maybeAlly = (key, emoji, label, present) => {
+      if (!present) return;
+      const a = as[key];
+      if (!a) return;
+      allyList.push({ key, emoji, label, hp: a.hp, hpMax: a.hpMax, ammo: a.ammo, ammoMax: a.ammoMax });
+    };
+    const onMission = state.flags && "missionPartner" in state.flags;
+    const mayaHere = onMission ? state.flags.missionPartner === "maya" : state.companion === "Maya";
+    const renHere  = onMission ? state.flags.missionPartner === "ren"  : !!state.flags.maya === false && state.companion !== "Maya" ? false : false; // Ren is camp-only, not in party chip by default
+    maybeAlly("maya", "👩‍🦰", "Maya", mayaHere);
+    // Ren / Vega only show in the inventory if they're with you right now
+    // (mission / camp defense). We don't model them persistently in every
+    // scene; this is intentional minimalism.
+    allyList.forEach(a => {
+      const downTag = a.hp <= 0 ? " · DOWN" : "";
+      const ammoTxt = a.ammoMax > 0 ? ` · 🔫${a.ammo}/${a.ammoMax}` : "";
+      rows.push({ readonly: true,
+        name: `${a.emoji} ${a.label}`,
+        qty:  `${a.hp}/${a.hpMax}${ammoTxt}${downTag}`,
+      });
+    });
     if (state.bestMelee) {
       const b = state.bestMelee.bonus;
       rows.push({ readonly: true,

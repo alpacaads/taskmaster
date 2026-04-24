@@ -34,7 +34,7 @@ window.Combat = (function () {
     bandit:       { name: "Bandit",      art: "🧔🔫",  hp: 10, atk: [3, 4], speed: 2, desc: "Smart. Armed. Desperate.", human: true, dodge: 0.22, telegraphEvery: 3 },
     // Older / Younger bandit — named variants for the ambush so the
     // two-person fight reads like two people, not one HP pool.
-    bandit_older:   { name: "Older Bandit",   art: "🧔🔫",  hp: 10, atk: [3, 5], speed: 2, desc: "Hand-tattoos. Steady aim. He's done this before.", human: true, dodge: 0.25, telegraphEvery: 3 },
+    bandit_older:   { name: "Older Bandit",   art: "🧔🔫",  hp: 20, atk: [3, 5], speed: 2, desc: "Hand-tattoos. Steady aim. He's done this before.", human: true, dodge: 0.25, telegraphEvery: 3, enemyCanBrace: true },
     bandit_younger: { name: "Younger Bandit", art: "🧑🔫",  hp: 9,  atk: [3, 4], speed: 2, desc: "Skinny. Shaking. More dangerous for it.", human: true, dodge: 0.2, telegraphEvery: 3, panic: 0.15 },
     // Kept for legacy / save-compat. No story node references it now.
     bandit_pair:  { name: "Two Bandits",  art: "🧔🔫🧔", hp: 24, atk: [3, 5], speed: 2, desc: "Smart. Armed. Coordinated.", human: true, pack: true, dodge: 0.25, repositionEvery: 4, telegraphEvery: 3, enemyCanAim: true, enemyCanBrace: true, panic: 0.15 },
@@ -244,6 +244,50 @@ window.Combat = (function () {
   //
   // hordeDefense overrides both: the camp is on the wall, so every
   // surviving ally is in this fight regardless of mission bookkeeping.
+  // ---- Ally combat state: HP + ammo, seeded per-ally on demand.
+  // Each ally now has their own HP and ammo pool, so healing
+  // between fights matters and wasting their ammo has a cost.
+  // ---------------------------------------------------------------
+  const ALLY_PROFILES = {
+    maya: { hp: 8,  hpMax: 8,  ammo: 12, ammoMax: 12, meleeDmg: [3, 4], rangedDmg: [3, 4] },
+    ren:  { hp: 6,  hpMax: 6,  ammo: 4,  ammoMax: 4,  meleeDmg: [1, 2], rangedDmg: [1, 2] },
+    vega: { hp: 10, hpMax: 10, ammo: 8,  ammoMax: 8,  meleeDmg: [3, 4], rangedDmg: [4, 6] },
+    nora: { hp: 4,  hpMax: 4,  ammo: 0,  ammoMax: 0,  meleeDmg: [0, 0], rangedDmg: [0, 0] },
+  };
+  function ensureAllyState() {
+    const s = Game.state;
+    s.allyState = s.allyState || {};
+    const seed = (key) => {
+      if (s.allyState[key]) return;
+      const p = ALLY_PROFILES[key];
+      if (!p) return;
+      s.allyState[key] = { hp: p.hp, hpMax: p.hpMax, ammo: p.ammo, ammoMax: p.ammoMax };
+    };
+    if (mayaPresent()) seed("maya");
+    if (renPresent())  seed("ren");
+    if (vegaPresent()) seed("vega");
+    if (noraPresent()) seed("nora");
+  }
+  function allyAlive(key) {
+    const a = Game.state && Game.state.allyState && Game.state.allyState[key];
+    return !!(a && a.hp > 0);
+  }
+  function allyHasAmmo(key) {
+    const a = Game.state && Game.state.allyState && Game.state.allyState[key];
+    return !!(a && a.ammo > 0);
+  }
+  function allyConsumeAmmo(key) {
+    const a = Game.state && Game.state.allyState && Game.state.allyState[key];
+    if (a && a.ammo > 0) a.ammo -= 1;
+  }
+  function allyTakeDamage(key, amount) {
+    const a = Game.state && Game.state.allyState && Game.state.allyState[key];
+    if (!a) return false;
+    a.hp = Math.max(0, a.hp - amount);
+    return a.hp <= 0;
+  }
+  window.AllyState = { ensureAllyState, allyAlive, ALLY_PROFILES };
+
   function mayaPresent() {
     const s = Game.state;
     if (s.flags && s.flags.hordeDefense) return !!s.flags.maya;
@@ -302,37 +346,32 @@ window.Combat = (function () {
       ae && ae.allyKey === key && ae.hp > 0
         ? `FIGHTING ${ae.hp}/${ae.maxHp}`
         : "ENGAGED";
+    const st = Game.state && Game.state.allyState || {};
+    // Status line priority: ENGAGED > DOWN > OUT OF AMMO > CD/ready.
+    // All chips also append HP 'x/y · 🔫n' so the player can read
+    // ally combat status at a glance.
+    const allyLabel = (key, cd, readyTxt) => {
+      if (eng[key]) return engagedLabel(key);
+      const a = st[key];
+      if (a && a.hp <= 0) return "DOWN";
+      const ready = (cd || 0) <= 0;
+      const core = ready ? readyTxt : `CD ${cd}`;
+      const hpTxt = a ? ` · ❤${a.hp}/${a.hpMax}` : "";
+      const ammoTxt = (a && a.ammoMax > 0) ? ` · 🔫${a.ammo}` : "";
+      return core + hpTxt + ammoTxt;
+    };
+    const isAlive = (key) => !(st[key] && st[key].hp <= 0);
     if (mayaPresent()) {
-      if (eng.maya) {
-        chips.push(build("maya", "👩‍🦰", "MAYA", false, engagedLabel("maya")));
-      } else {
-        const ready = state.mayaCd <= 0;
-        chips.push(build("maya", "👩‍🦰", "MAYA", ready, ready ? "NEXT SHOT" : `CD ${state.mayaCd}`));
-      }
+      chips.push(build("maya", "👩‍🦰", "MAYA", !eng.maya && isAlive("maya") && state.mayaCd <= 0, allyLabel("maya", state.mayaCd, "NEXT SHOT")));
     }
     if (renPresent()) {
-      if (eng.ren) {
-        chips.push(build("ren", "🧑‍⚕️", "REN", false, engagedLabel("ren")));
-      } else {
-        const ready = state.renCd <= 0;
-        chips.push(build("ren", "🧑‍⚕️", "REN", ready, ready ? "TRIAGE" : `CD ${state.renCd}`));
-      }
+      chips.push(build("ren", "🧑‍⚕️", "REN", !eng.ren && isAlive("ren") && state.renCd <= 0, allyLabel("ren", state.renCd, "TRIAGE")));
     }
     if (vegaPresent()) {
-      if (eng.vega) {
-        chips.push(build("vega", "🫡", "VEGA", false, engagedLabel("vega")));
-      } else {
-        const ready = state.vegaCd <= 0;
-        chips.push(build("vega", "🫡", "VEGA", ready, ready ? "RIFLE READY" : `CD ${state.vegaCd}`));
-      }
+      chips.push(build("vega", "🫡", "VEGA", !eng.vega && isAlive("vega") && state.vegaCd <= 0, allyLabel("vega", state.vegaCd, "RIFLE READY")));
     }
     if (noraPresent()) {
-      if (eng.nora) {
-        chips.push(build("nora", "👧", "NORA", false, engagedLabel("nora")));
-      } else {
-        const ready = (state.noraCd || 0) <= 0;
-        chips.push(build("nora", "👧", "NORA", ready, ready ? "SPOTTER" : `CD ${state.noraCd}`));
-      }
+      chips.push(build("nora", "👧", "NORA", !eng.nora && isAlive("nora") && (state.noraCd || 0) <= 0, allyLabel("nora", state.noraCd, "SPOTTER")));
     }
     wrap.innerHTML = chips.join("");
   }
@@ -381,6 +420,10 @@ window.Combat = (function () {
   function start(config) {
     const def = ENEMIES[config.enemy];
     if (!def) { console.error("Unknown enemy", config.enemy); return; }
+    // Seed per-ally HP/ammo pools so they have something to lose
+    // this fight. Each ally carries their state between fights, so
+    // a wounded Ren stays wounded until healed out of combat.
+    ensureAllyState();
 
     // Risky encounters (story choices tagged RISKY or explicit risk:true)
     // scale the enemy up — +1 to both HP and each damage bound. Story
@@ -1350,6 +1393,28 @@ window.Combat = (function () {
           state.playerPanicked = true;
           log("You pull back, breath tight — your next shot is going to be shaky.", "info");
         }
+        // Spread damage: 22% chance the enemy's pressure also clips a
+        // random present ally for 1-2 HP. Accumulates across a fight —
+        // allies can go down and will stop assisting until healed.
+        if (Math.random() < 0.22) {
+          const candidates = [];
+          if (mayaPresent() && allyAlive("maya") && !(state.engaged && state.engaged.maya)) candidates.push("maya");
+          if (renPresent()  && allyAlive("ren")  && !(state.engaged && state.engaged.ren))  candidates.push("ren");
+          if (vegaPresent() && allyAlive("vega") && !(state.engaged && state.engaged.vega)) candidates.push("vega");
+          // Nora stays in the sandbags — she's a kid. Not a target.
+          if (candidates.length) {
+            const pick = candidates[Math.floor(Math.random() * candidates.length)];
+            const bite = rand(1, 2);
+            const downed = allyTakeDamage(pick, bite);
+            const name = pick === "maya" ? "Maya" : pick === "ren" ? "Ren" : "Vega";
+            log(downed
+              ? `${name} takes one catching for you — she's down. Can't fight. (${bite})`
+              : `${name} takes one catching for you — ${bite}.`,
+              downed ? "crit" : "ally");
+            if (downed) flashAlly(pick);
+            renderAllies();
+          }
+        }
       }
     }
 
@@ -1432,16 +1497,28 @@ window.Combat = (function () {
     const s = Game.state;
     if (!state || state.enemy.hp <= 0) return;
 
-    if (mayaPresent() && !(state.engaged && state.engaged.maya)) {
+    if (mayaPresent() && !(state.engaged && state.engaged.maya) && allyAlive("maya")) {
       state.mayaCd = (state.mayaCd || 0) - 1;
       if (state.mayaCd <= 0) {
-        // Lovers fight harder. +1 damage and a tighter cooldown.
         const bump = lovedMaya() ? 1 : 0;
-        const dmg = (state.enemy.human ? rand(3, 4) : rand(2, 3)) + bump;
-        state.enemy.hp -= dmg;
-        log(`Maya fires from cover — ${dmg} damage.`, "ally");
-        Sound.play("gunshot");
-        gunFlash();
+        // If she's out of rifle rounds she closes and swings her
+        // hunting knife — Maya's melee is strong, just slower.
+        const outOfAmmo = !allyHasAmmo("maya");
+        let dmg;
+        let line;
+        if (outOfAmmo) {
+          dmg = rand(2, 3) + bump;
+          state.enemy.hp -= dmg;
+          line = `Maya's out of rounds — she closes and drives her knife in. ${dmg} damage.`;
+        } else {
+          dmg = (state.enemy.human ? rand(3, 4) : rand(2, 3)) + bump;
+          state.enemy.hp -= dmg;
+          allyConsumeAmmo("maya");
+          line = `Maya fires from cover — ${dmg} damage.`;
+        }
+        log(line, "ally");
+        Sound.play(outOfAmmo ? "melee" : "gunshot");
+        if (!outOfAmmo) gunFlash();
         spawnMark("hit");
         floatDamage(dmg);
         hitFlash();
@@ -1456,7 +1533,7 @@ window.Combat = (function () {
       }
     }
 
-    if (renPresent() && !(state.engaged && state.engaged.ren)) {
+    if (renPresent() && !(state.engaged && state.engaged.ren) && allyAlive("ren")) {
       // Ren's one-shot stamina save — once per combat, if the hero
       // has burned through everything, she tosses a water bottle
       // over and buys them a breath.
@@ -1489,11 +1566,22 @@ window.Combat = (function () {
         flashAlly("ren");
       } else if (state.renCd <= 0 && !lowHp && !fullBenefit) {
         // Not needed for healing — she uses the window to cover you
-        // with her sidearm. Small damage, not the main event.
-        const dmg = Math.max(1, rand(1, 2) - (state.enemy.smallArmsResist || 0));
-        state.enemy.hp -= dmg;
-        log(`Ren lays down covering fire — ${dmg} damage.`, "ally");
-        Sound.play("gunshot");
+        // with her sidearm. Small damage. Out of rounds → scalpel.
+        const outOfAmmo = !allyHasAmmo("ren");
+        let dmg;
+        let line;
+        if (outOfAmmo) {
+          dmg = Math.max(1, rand(1, 2) - Math.floor((state.enemy.smallArmsResist || 0) / 2));
+          state.enemy.hp -= dmg;
+          line = `Ren darts in with her scalpel — ${dmg} damage.`;
+        } else {
+          dmg = Math.max(1, rand(1, 2) - (state.enemy.smallArmsResist || 0));
+          state.enemy.hp -= dmg;
+          allyConsumeAmmo("ren");
+          line = `Ren lays down covering fire — ${dmg} damage.`;
+        }
+        log(line, "ally");
+        Sound.play(outOfAmmo ? "melee" : "gunshot");
         spawnMark("hit");
         floatDamage(dmg);
         updateEnemyHp();
@@ -1510,19 +1598,29 @@ window.Combat = (function () {
       }
     }
 
-    if (vegaPresent() && !(state.engaged && state.engaged.vega)) {
+    if (vegaPresent() && !(state.engaged && state.engaged.vega) && allyAlive("vega")) {
       state.vegaCd = (state.vegaCd || 0) - 1;
       if (state.vegaCd <= 0) {
         // Sniper: slow cadence, hard-hitting, always accurate.
         // Armoured enemies soak it a bit but the headshot bonus
-        // lands clean.
-        let dmg = rand(4, 6);
-        dmg += (state.enemy.headshotBonus || 0);         // clean shot, aim for the head
-        dmg = Math.max(1, dmg - (state.enemy.smallArmsResist || 0));
-        state.enemy.hp -= dmg;
-        log(`Vega's rifle cracks — ${dmg} damage.`, "ally");
-        Sound.play("gunshot");
-        gunFlash();
+        // lands clean. Out of rounds → combat knife — still deadly.
+        const outOfAmmo = !allyHasAmmo("vega");
+        let dmg;
+        let line;
+        if (outOfAmmo) {
+          dmg = rand(3, 5);
+          state.enemy.hp -= dmg;
+          line = `Vega's dry — she closes and puts her combat knife through the neck. ${dmg} damage.`;
+        } else {
+          dmg = rand(4, 6) + (state.enemy.headshotBonus || 0);
+          dmg = Math.max(1, dmg - (state.enemy.smallArmsResist || 0));
+          state.enemy.hp -= dmg;
+          allyConsumeAmmo("vega");
+          line = `Vega's rifle cracks — ${dmg} damage.`;
+        }
+        log(line, "ally");
+        Sound.play(outOfAmmo ? "melee" : "gunshot");
+        if (!outOfAmmo) gunFlash();
         spawnMark("hit");
         floatDamage(dmg);
         hitFlash();
@@ -1537,7 +1635,7 @@ window.Combat = (function () {
       }
     }
 
-    if (noraPresent() && !(state.engaged && state.engaged.nora)) {
+    if (noraPresent() && !(state.engaged && state.engaged.nora) && allyAlive("nora")) {
       state.noraCd = (state.noraCd || 0) - 1;
       // Hold the warning until you actually need it: she pipes up once
       // the fight turns (hero below ~60%) OR the enemy is still healthy
