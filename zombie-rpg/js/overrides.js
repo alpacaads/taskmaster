@@ -37,6 +37,19 @@ window.Overrides = (function () {
     return tx("readwrite", store => { store.put(blob, id); });
   }
 
+  // Targeted refresh — updates the object URL for a single id without
+  // revoking every other URL on the page. Use this after save() so
+  // unrelated <img> elements don't end up pointing at a just-revoked
+  // blob (which browsers sometimes render as a stale neighbour image).
+  function refreshOne(id, blob) {
+    if (current[id]) {
+      try { URL.revokeObjectURL(current[id]); } catch (e) {}
+    }
+    current[id] = URL.createObjectURL(blob);
+    window.__OVERRIDES = current;
+    return current[id];
+  }
+
   function remove(id) {
     return tx("readwrite", store => { store.delete(id); });
   }
@@ -89,5 +102,5 @@ window.Overrides = (function () {
   // Ensure a map exists even before loadAll resolves.
   window.__OVERRIDES = current;
 
-  return { save, remove, clear, list, get, loadAll };
+  return { save, remove, clear, list, get, loadAll, refreshOne };
 })();

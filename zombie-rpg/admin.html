@@ -947,12 +947,12 @@
   </footer>
 
   <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
-  <script src="js/overrides.js?v=197"></script>
-  <script src="js/scenes.js?v=197"></script>
+  <script src="js/overrides.js?v=198"></script>
+  <script src="js/scenes.js?v=198"></script>
   <!-- story.js is read-only here: we pull chapters / text / choices
        to annotate each scene card so the flow is legible without
        having to play through. -->
-  <script src="js/story.js?v=197"></script>
+  <script src="js/story.js?v=198"></script>
   <script>
     (async function () {
       const PROMPTS = (window.Scenes && window.Scenes.PROMPTS) || {};
@@ -1895,6 +1895,10 @@
             scene.classList.remove("img-missing");
             const override = (window.__OVERRIDES || {})[imgSourceId];
             const committed = isCommitted(imgSourceId);
+            // Clear first so the img reloads even when the URL text
+            // matches the last assignment (object URLs don't accept
+            // query params, so we can't bust via ?t= on blobs).
+            img.src = "";
             if (override) {
               img.src = override;
               scene.classList.add("replaced");
@@ -1922,7 +1926,11 @@
             try {
               const compressed = await compressImage(file, imgSourceId);
               await Overrides.save(imgSourceId, compressed);
-              await Overrides.loadAll();
+              // Targeted URL refresh for JUST this id — avoids the
+              // 'revoke every objectURL then rebuild' churn that
+              // sometimes showed a neighbour scene's image in place
+              // of the one we just uploaded.
+              Overrides.refreshOne(imgSourceId, compressed);
               renderFlow();
             } catch (err) {
               alert("Could not save: " + (err && err.message ? err.message : err));
@@ -2030,6 +2038,10 @@
           card.classList.remove("img-missing");
           const url = overrideMap()[id];
           if (url) {
+            // Clear first so setting to the same url still forces a
+            // reload of the <img> — guards against stale decoded
+            // bitmap when the blob behind the URL changed.
+            img.src = "";
             img.src = url;
             card.classList.add("replaced");
             const committed = isCommitted(id);
@@ -2085,7 +2097,7 @@
           try {
             const compressed = await compressImage(file, id);
             await Overrides.save(id, compressed);
-            await Overrides.loadAll(); // refresh objectURL map
+            Overrides.refreshOne(id, compressed); // targeted, no global churn
             await refresh();
           } catch (err) {
             alert("Could not save: " + (err && err.message ? err.message : err));
