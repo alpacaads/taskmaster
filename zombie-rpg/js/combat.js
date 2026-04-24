@@ -271,9 +271,14 @@ window.Combat = (function () {
       `</span>`;
     };
     const eng = (state && state.engaged) || {};
+    const ae = state && state.allyEnemy;
+    const engagedLabel = (key) =>
+      ae && ae.allyKey === key && ae.hp > 0
+        ? `FIGHTING ${ae.hp}/${ae.maxHp}`
+        : "ENGAGED";
     if (mayaPresent()) {
       if (eng.maya) {
-        chips.push(build("maya", "👩‍🦰", "MAYA", false, "ENGAGED"));
+        chips.push(build("maya", "👩‍🦰", "MAYA", false, engagedLabel("maya")));
       } else {
         const ready = state.mayaCd <= 0;
         chips.push(build("maya", "👩‍🦰", "MAYA", ready, ready ? "NEXT SHOT" : `CD ${state.mayaCd}`));
@@ -281,7 +286,7 @@ window.Combat = (function () {
     }
     if (renPresent()) {
       if (eng.ren) {
-        chips.push(build("ren", "🧑‍⚕️", "REN", false, "ENGAGED"));
+        chips.push(build("ren", "🧑‍⚕️", "REN", false, engagedLabel("ren")));
       } else {
         const ready = state.renCd <= 0;
         chips.push(build("ren", "🧑‍⚕️", "REN", ready, ready ? "TRIAGE" : `CD ${state.renCd}`));
@@ -289,7 +294,7 @@ window.Combat = (function () {
     }
     if (vegaPresent()) {
       if (eng.vega) {
-        chips.push(build("vega", "🫡", "VEGA", false, "ENGAGED"));
+        chips.push(build("vega", "🫡", "VEGA", false, engagedLabel("vega")));
       } else {
         const ready = state.vegaCd <= 0;
         chips.push(build("vega", "🫡", "VEGA", ready, ready ? "RIFLE READY" : `CD ${state.vegaCd}`));
@@ -297,7 +302,7 @@ window.Combat = (function () {
     }
     if (noraPresent()) {
       if (eng.nora) {
-        chips.push(build("nora", "👧", "NORA", false, "ENGAGED"));
+        chips.push(build("nora", "👧", "NORA", false, engagedLabel("nora")));
       } else {
         const ready = (state.noraCd || 0) <= 0;
         chips.push(build("nora", "👧", "NORA", ready, ready ? "SPOTTER" : `CD ${state.noraCd}`));
@@ -347,12 +352,23 @@ window.Combat = (function () {
       : [];
     const engagedSet = {};
     engagedAllies.forEach(a => { engagedSet[a] = true; });
-    // Flip only fires when an ally was engaged — the narrative beat
-    // is 'ally finishes her bandit and rejoins.' Solo players face
-    // the pair's full pressure the whole fight; no artificial midpoint.
-    const engagementFlipAt = typeof config.engagementFlipAt === "number"
-      ? config.engagementFlipAt
-      : (engagedAllies.length ? Math.ceil(hp / 2) : 0);
+
+    // Ally engagement: ally is fighting their OWN enemy with its OWN
+    // HP, running in parallel to yours. They're locked out of assist
+    // until they kill it. See tickAllyFight.
+    //   config.allyEngagement = { ally: "maya", enemy: "bandit" }
+    let allyEnemy = null;
+    if (config.allyEngagement && config.allyEngagement.ally && ENEMIES[config.allyEngagement.enemy]) {
+      const aDef = ENEMIES[config.allyEngagement.enemy];
+      allyEnemy = {
+        id: config.allyEngagement.enemy,
+        name: aDef.name,
+        hp: aDef.hp,
+        maxHp: aDef.hp,
+        allyKey: config.allyEngagement.ally,
+      };
+      engagedSet[config.allyEngagement.ally] = true;
+    }
 
     // Wave fights: config.waves is an array of enemy ids that come
     // after the opening one. The horde defense uses this to spawn a
@@ -382,6 +398,7 @@ window.Combat = (function () {
       engagedInitial: engagedAllies.slice(),
       engagementFlipAt: engagementFlipAt,
       engagementLifted: false,
+      allyEnemy: allyEnemy,
       waveQueue: waveQueue,
       waveIndex: 1,
       totalWaves: totalWaves,
@@ -1091,12 +1108,10 @@ window.Combat = (function () {
     if (savage) dmg += 2;
     // Enemy lined up the shot last turn — auto-savage, +3 damage.
     if (state.enemyAimed) { dmg += 3; savage = true; }
-    // Party-vs-party pressure. For pair enemies (two bandits) before
-    // the engagement flip, add +1: either the ally is tied up and the
-    // second bandit is stealing shots at you, or you're solo and
-    // both of them are shooting. After the flip it's just one left.
-    const isPair = state.enemy.pack === true && state.enemy.human === true;
-    if (isPair && !state.engagementLifted) dmg += 1;
+    // Cross-fire: while an ally is still tied up with their own
+    // enemy, that enemy is also taking shots at the player through
+    // the gaps. +1 damage per hostile turn until the ally wins.
+    if (state.allyEnemy && state.allyEnemy.hp > 0) dmg += 1;
     // Telegraphed shot lands this turn — the player didn't interrupt.
     // +2 extra damage on top of everything else.
     const telegraphLanding = state.telegraphPending;
@@ -1207,34 +1222,49 @@ window.Combat = (function () {
     el.classList.add("hit-red");
   }
 
-  // Check if the "second enemy" has been whittled down enough to
-  // lift the engagement — e.g. Maya finishes her bandit and swings
-  // back to the main fight. Fires at most once per combat.
-  function checkEngagementFlip() {
-    if (!state || state.engagementLifted) return;
-    if (!state.engagementFlipAt) return;
-    if (!state.engagedInitial || !state.engagedInitial.length) return;
-    if (state.enemy.hp > state.engagementFlipAt) return;
-    state.engagementLifted = true;
-    const freed = state.engagedInitial.slice();
-    // Clear the engagement so companionTurn starts picking them back up.
-    state.engaged = {};
-    // Grace cooldown so they don't fire on the same tick the flip happens.
-    freed.forEach(a => {
-      if (a === "maya") state.mayaCd = Math.max(state.mayaCd || 0, 1);
-      if (a === "ren")  state.renCd  = Math.max(state.renCd  || 0, 1);
-      if (a === "vega") state.vegaCd = Math.max(state.vegaCd || 0, 1);
-      if (a === "nora") state.noraCd = Math.max(state.noraCd || 0, 1);
-    });
-    const who = freed.map(a =>
-      a === "maya" ? "Maya" :
-      a === "ren"  ? "Ren"  :
-      a === "vega" ? "Vega" :
-      a === "nora" ? "Nora" : a
-    ).join(" and ");
-    log(`${who} drops her bandit — swings back to yours.`, "crit");
+  // Ally's parallel fight — she chips her own enemy's HP down each
+  // player action. When it hits zero, she's actually killed her
+  // fighter and rejoins the assist rotation. Called from act() after
+  // the player's action resolves.
+  function tickAllyFight() {
+    if (!state || !state.allyEnemy || state.allyEnemy.hp <= 0) return;
+    const ae = state.allyEnemy;
+    const key = ae.allyKey;
+    // Ally damage per tick scales with romance / bonds. Maya is ex-
+    // military so she deals clean damage; Ren is a medic and was
+    // never in the game as an engagement-partner, but if she's ever
+    // wired, she'd tick less (2-3).
+    const s = Game.state;
+    let tick;
+    if (key === "maya") {
+      const bump = (s.flags && s.flags.lovedMaya) ? 1 : 0;
+      tick = rand(2, 4) + bump;
+    } else if (key === "ren") {
+      tick = rand(1, 3);
+    } else if (key === "vega") {
+      tick = rand(3, 4);
+    } else {
+      tick = rand(2, 3);
+    }
+    ae.hp = Math.max(0, ae.hp - tick);
+    const niceName = key === "maya" ? "Maya" : key === "ren" ? "Ren" : key === "vega" ? "Vega" : key;
+    log(`${niceName} trades shots with hers — ${tick} damage. (${ae.name}: ${ae.hp}/${ae.maxHp})`, "ally");
     renderAllies();
+    if (ae.hp <= 0) {
+      state.allyEnemy = null;
+      if (state.engaged) state.engaged[key] = false;
+      // Grace cooldown — don't fire on the same tick she closes out.
+      if (key === "maya") state.mayaCd = Math.max(state.mayaCd || 0, 1);
+      if (key === "ren")  state.renCd  = Math.max(state.renCd  || 0, 1);
+      if (key === "vega") state.vegaCd = Math.max(state.vegaCd || 0, 1);
+      log(`${niceName} drops hers — swings back to yours.`, "crit");
+      renderAllies();
+    }
   }
+
+  // Legacy shim — old code paths call checkEngagementFlip. Route to
+  // the new ally-fight tick.
+  function checkEngagementFlip() { tickAllyFight(); }
 
   // ---------- companion turn ----------
   function companionTurn() {

@@ -413,15 +413,21 @@ window.Story = {
         next: "after_ambush_mercy" },
       { label: "Fight — you need these supplies", tag: "COMBAT", tagClass: "danger",
         combat: function (s) {
+          // Two bandits. If Maya's with you it's a parallel fight —
+          // you take one, she takes the other, she can't help until
+          // she finishes hers. Solo you fight them one at a time.
+          if (s.companion === "Maya") {
+            return {
+              enemy: "bandit",
+              allyEngagement: { ally: "maya", enemy: "bandit" },
+              risky: !s.flags.restedInCar,
+              onWin: "after_ambush_fight",
+              onLose: "death",
+            };
+          }
           return {
-            // Always two bandits per the narrative. If Maya's with
-            // you, she pins down one until the half-HP flip. If you're
-            // solo, both are on you — the base pair stats + hostile
-            // damage bump handle it.
-            enemy: "bandit_pair",
-            engagedAllies: s.companion === "Maya" ? ["maya"] : [],
-            // Rested + spotted = you get the jump on them: non-risky
-            // combat (no +25% HP / +1 damage bump on the bandits).
+            enemy: "bandit",
+            waves: ["bandit"],
             risky: !s.flags.restedInCar,
             onWin: "after_ambush_fight",
             onLose: "death",
@@ -452,12 +458,19 @@ window.Story = {
     choices: [
       { label: "Fight for your life", tag: "COMBAT", tagClass: "danger",
         effect: s => { s.flags.carriedNora = true; },
-        // Two bandits either way. Maya pins one if she's here; solo
-        // means both come at you.
+        // Two bandits. Parallel with Maya; sequential if solo.
         combat: function (s) {
+          if (s.companion === "Maya") {
+            return {
+              enemy: "bandit",
+              allyEngagement: { ally: "maya", enemy: "bandit" },
+              onWin: "sacrifice_loot",
+              onLose: "death",
+            };
+          }
           return {
-            enemy: "bandit_pair",
-            engagedAllies: s.companion === "Maya" ? ["maya"] : [],
+            enemy: "bandit",
+            waves: ["bandit"],
             onWin: "sacrifice_loot",
             onLose: "death",
           };

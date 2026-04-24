@@ -1,6 +1,6 @@
 # Dead Light — Story Flow
 
-Auto-generated from `zombie-rpg/js/story.js`. 2026-04-23
+Auto-generated from `zombie-rpg/js/story.js`. 2026-04-24
 
 One section per story node, in definition order. Function-branching fields (text, scene, speaker, next, combat) are enumerated across a set of common state permutations so every reachable variant is legible.
 
@@ -502,9 +502,9 @@ One section per story node, in definition order. Function-branching fields (text
    - _effect:_ `s => { // Bandits take the bag AND the bigger weapon. You're reduced // to the pocket knife you started Day 1 with. Armor stays — // it's on your body, not in the bag. const lost = []; if (s.bestRanged) { lost.push(s.bestRanged.name); s.bestRanged = null; } if (s.ammo > 0) { lost.push(`${s.ammo} rounds`); s.ammo = 0; } if (s.bestMelee && s.bestMelee.name !== "Pocket Knife") { lost.push(s.bestMelee.name); s.bestMelee = { name: "Pocket Knife", bonus: 0, slot: "melee" }; } const keep = (s.inventory || []).filter(it => it && it.armor); const dropped = (s.inventory || []).filter(it => it && !it.armor); if (dropped.length) lost.push(`${dropped.length} supplies`); s.inventory = keep; Game.toast(lost.length ? `They take: ${lost.join(" · ")}` : "They wave you through"); }`
    - → `after_ambush_mercy`
 2. **Fight — you need these supplies** `COMBAT`
-   - ⚔ combat _(default, mission partner = maya, mission partner = ren, solo mission, saved Nora, bring Nora on mission, told Vega, chore: medbay, chore: perimeter, chore: kitchen, exposed traitor, killed traitor, romance Ren)_: enemy `bandit_pair` · risky → win `after_ambush_fight` / lose `death`
-   - ⚔ combat _(with Maya companion, romance Maya)_: enemy `bandit_pair` · risky → win `after_ambush_fight` / lose `death`
-   - ⚔ combat _(rested in car)_: enemy `bandit_pair` → win `after_ambush_fight` / lose `death`
+   - ⚔ combat _(default, mission partner = maya, mission partner = ren, solo mission, saved Nora, bring Nora on mission, told Vega, chore: medbay, chore: perimeter, chore: kitchen, exposed traitor, killed traitor, romance Ren)_: enemy `bandit` · risky → win `after_ambush_fight` / lose `death`
+   - ⚔ combat _(with Maya companion, romance Maya)_: enemy `bandit` · risky → win `after_ambush_fight` / lose `death`
+   - ⚔ combat _(rested in car)_: enemy `bandit` → win `after_ambush_fight` / lose `death`
 3. **"Take me. Let the kid go."** `SACRIFICE` _require:_ `s => s.companion2 === "Nora"`
    - → `sacrifice_intro`
 
@@ -542,8 +542,8 @@ One section per story node, in definition order. Function-branching fields (text
 
 1. **Fight for your life** `COMBAT`
    - _effect:_ `s => { s.flags.carriedNora = true; }`
-   - ⚔ combat _(default, mission partner = maya, mission partner = ren, solo mission, saved Nora, bring Nora on mission, rested in car, told Vega, chore: medbay, chore: perimeter, chore: kitchen, exposed traitor, killed traitor, romance Ren)_: enemy `bandit_pair` → win `sacrifice_loot` / lose `death`
-   - ⚔ combat _(with Maya companion, romance Maya)_: enemy `bandit_pair` → win `sacrifice_loot` / lose `death`
+   - ⚔ combat _(default, mission partner = maya, mission partner = ren, solo mission, saved Nora, bring Nora on mission, rested in car, told Vega, chore: medbay, chore: perimeter, chore: kitchen, exposed traitor, killed traitor, romance Ren)_: enemy `bandit` → win `sacrifice_loot` / lose `death`
+   - ⚔ combat _(with Maya companion, romance Maya)_: enemy `bandit` → win `sacrifice_loot` / lose `death`
 
 ---
 
@@ -1183,8 +1183,8 @@ One section per story node, in definition order. Function-branching fields (text
 
 1. **Hold the wall.** `COMBAT`
    - _effect:_ `s => { // Every saved ally is on the wall for this one. s.flags.hordeDefense = true; }`
-   - ⚔ combat _(default, with Maya companion, mission partner = maya, mission partner = ren, solo mission, saved Nora, bring Nora on mission, rested in car, told Vega, chore: medbay, chore: perimeter, chore: kitchen, killed traitor, romance Maya, romance Ren)_: enemy `horde` · risky · hp=46 · atk=[5,8] → win `post_horde_win` / lose `post_horde_lose`
-   - ⚔ combat _(exposed traitor)_: enemy `horde` · hp=38 · atk=[4,7] → win `post_horde_win` / lose `post_horde_lose`
+   - ⚔ combat _(default, with Maya companion, mission partner = maya, mission partner = ren, solo mission, saved Nora, bring Nora on mission, rested in car, told Vega, chore: medbay, chore: perimeter, chore: kitchen, killed traitor, romance Maya, romance Ren)_: enemy `walker` → win `post_horde_win` / lose `post_horde_lose`
+   - ⚔ combat _(exposed traitor)_: enemy `walker` → win `post_horde_win` / lose `post_horde_lose`
 2. **Get the survivors out the back.**
    - → `flee_rearguard`
 
