@@ -117,6 +117,18 @@ window.Combat = (function () {
       }
       // NOTE: no kind === 'weapon' — weapons come from story beats only.
     });
+    // Ren's superior-find bonus: about 1 kill in 3 she spots something
+    // the player missed. Pool is the better end of the supplies —
+    // antiseptic / adrenaline / painkillers / extra bandages. Stacks
+    // through a wave queue, so long fights reward her presence.
+    if (renPresent() && !(state.engaged && state.engaged.ren) && Math.random() < 0.33) {
+      const pool = ["antiseptic", "adrenaline", "painkillers", "bandages"];
+      const pick = pool[Math.floor(Math.random() * pool.length)];
+      if (Game.giveItem) {
+        Game.giveItem(pick);
+        Game.toast("Ren spots something — " + pick + " stashed.");
+      }
+    }
   }
 
   // Always auto-equip a looted weapon. Every loot entry is designed to
@@ -402,6 +414,13 @@ window.Combat = (function () {
       waveQueue: waveQueue,
       waveIndex: 1,
       totalWaves: totalWaves,
+      // Range system — combat starts at 'far'. Fire and Aim work;
+      // melee needs you to Close first. Some enemies stay at range
+      // (runner) but the default is: close once, you stay close.
+      range: "far",
+      // One-shot ally interventions per combat.
+      mayaSaveUsed: false,
+      renStamSaveUsed: false,
       startMs: Date.now(),
     };
 
@@ -574,6 +593,15 @@ window.Combat = (function () {
       aimBtn.disabled = !canAim;
       aimBtn.hidden = !(s && s.bestRanged);
     }
+    // Close / Strike toggle: at 'far' the player sees Close; once
+    // they've closed, Strike replaces it.
+    const closeBtn = document.getElementById("combat-btn-close");
+    const meleeBtn = document.getElementById("combat-btn-melee");
+    if (closeBtn && meleeBtn) {
+      const isFar = state && state.range === "far";
+      closeBtn.hidden = !isFar;
+      meleeBtn.hidden = !!isFar;
+    }
     renderEnemyStatus();
   }
 
@@ -649,6 +677,12 @@ window.Combat = (function () {
     state.desperateBrace = false;
 
     if (action === "melee") {
+      // Melee requires close range. Fire / Aim can reach anywhere;
+      // crowbar requires being nose-to-nose.
+      if (state.range === "far") {
+        Game.toast("Too far. Close the distance first.");
+        return;
+      }
       // Aim is a ranged sight-line — any melee swing breaks it.
       state.aimReady = false;
       if (!desperateMelee) s.stam -= 1;
@@ -801,6 +835,18 @@ window.Combat = (function () {
       // not reacting. But the wind-up will still land as a big hit.
       log("You drop to a knee and line up the shot. Steady.", "info");
       Sound.play("brace");
+      refreshCombatStatus();
+    }
+    else if (action === "close") {
+      // Spend the turn closing the distance. Enemy still gets their
+      // swing — running at them is a risk. After this you're at
+      // melee range and Strike unlocks.
+      if (state.range === "close") { Game.toast("Already close."); return; }
+      state.aimReady = false;
+      state.counterReady = false;
+      state.range = "close";
+      log("You break for the gap — closing the distance.", "info");
+      Sound.play("flee");
       refreshCombatStatus();
     }
     else if (action === "brace") {
@@ -1163,6 +1209,21 @@ window.Combat = (function () {
       Sound.play("brace");
       spawnMark("block");
     } else {
+      // Maya save — once per combat, if this hit would drop you to
+      // 0 or below, Maya shoulders you clear. Damage voided.
+      const wouldDie = (s.hp - dmg) <= 0;
+      if (wouldDie && mayaPresent() && !state.mayaSaveUsed && !(state.engaged && state.engaged.maya)) {
+        state.mayaSaveUsed = true;
+        log(`Maya shoulders into you — the shot hits air where you were. "Move, Ellis."`, "ally");
+        Sound.play("dodge");
+        spawnMark("block");
+        screenShake();
+        refreshHud();
+        companionTurn();
+        state.turn += 1;
+        renderAllies();
+        return;
+      }
       // Armored vest (or any armor:true inventory item) eats one hit
       // and is destroyed. Big value, but gone after.
       const inv = s.inventory || [];
@@ -1296,6 +1357,18 @@ window.Combat = (function () {
     }
 
     if (renPresent() && !(state.engaged && state.engaged.ren)) {
+      // Ren's one-shot stamina save — once per combat, if the hero
+      // has burned through everything, she tosses a water bottle
+      // over and buys them a breath.
+      if (s.stam <= 0 && !state.renStamSaveUsed) {
+        state.renStamSaveUsed = true;
+        const give = Math.max(2, Math.ceil(s.stamMax / 2));
+        s.stam = Math.min(s.stamMax, s.stam + give);
+        log(`Ren tosses you a water bottle. "Drink. You're not done." +${give} stamina.`, "ally");
+        Sound.play("heal");
+        refreshHud();
+        flashAlly("ren");
+      }
       state.renCd = (state.renCd || 0) - 1;
       // Heal amount + cooldown both scale with bond / love.
       const heal = renHealAmount();
@@ -1314,6 +1387,23 @@ window.Combat = (function () {
         refreshHud();
         state.renCd = cd;
         flashAlly("ren");
+      } else if (state.renCd <= 0 && !lowHp && !fullBenefit) {
+        // Not needed for healing — she uses the window to cover you
+        // with her sidearm. Small damage, not the main event.
+        const dmg = Math.max(1, rand(1, 2) - (state.enemy.smallArmsResist || 0));
+        state.enemy.hp -= dmg;
+        log(`Ren lays down covering fire — ${dmg} damage.`, "ally");
+        Sound.play("gunshot");
+        spawnMark("hit");
+        floatDamage(dmg);
+        updateEnemyHp();
+        state.renCd = cd;
+        flashAlly("ren");
+        if (state.enemy.hp <= 0) {
+          log(`${state.enemy.name} falls.`, "crit");
+          finishOrAdvance();
+          return;
+        }
       } else if (state.renCd < 0) {
         // Ready but not needed — hold, don't drift into deep negatives.
         state.renCd = 0;
@@ -1323,8 +1413,12 @@ window.Combat = (function () {
     if (vegaPresent() && !(state.engaged && state.engaged.vega)) {
       state.vegaCd = (state.vegaCd || 0) - 1;
       if (state.vegaCd <= 0) {
-        // Captain's rifle hits hard but the angle is tight — 3-4 dmg.
-        const dmg = rand(3, 4);
+        // Sniper: slow cadence, hard-hitting, always accurate.
+        // Armoured enemies soak it a bit but the headshot bonus
+        // lands clean.
+        let dmg = rand(4, 6);
+        dmg += (state.enemy.headshotBonus || 0);         // clean shot, aim for the head
+        dmg = Math.max(1, dmg - (state.enemy.smallArmsResist || 0));
         state.enemy.hp -= dmg;
         log(`Vega's rifle cracks — ${dmg} damage.`, "ally");
         Sound.play("gunshot");
@@ -1333,7 +1427,7 @@ window.Combat = (function () {
         floatDamage(dmg);
         hitFlash();
         updateEnemyHp();
-        state.vegaCd = 2;
+        state.vegaCd = 3; // sniper cadence — slower than Maya
         flashAlly("vega");
         if (state.enemy.hp <= 0) {
           log(`${state.enemy.name} falls.`, "crit");
@@ -1409,6 +1503,7 @@ window.Combat = (function () {
     state.bracing = false;
     state.counterReady = false;
     state.turn = 0;
+    state.range = "far"; // new wave — new fighter to close on
     // Breather: small restore between waves. Crucial — without it you
     // get whittled down over 10 enemies and there's no answer.
     const s = Game.state;
