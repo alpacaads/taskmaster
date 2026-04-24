@@ -366,7 +366,12 @@ window.Combat = (function () {
       if (eng[key]) return engagedLabel(key);
       const a = st[key];
       if (a && a.hp <= 0) return "DOWN";
-      const ready = (cd || 0) <= 0;
+      // RIFLE READY means "she fires on your next action." Because
+      // companionTurn decrements cd before firing (cd=1 → 0 → fires,
+      // reset to 3), a chip that only lit up at cd<=0 would be stale
+      // by render time — the post-fire render already shows cd=3.
+      // Surface the ready state one step early so it matches intent.
+      const ready = (cd || 0) <= 1;
       const core = ready ? readyTxt : `CD ${cd}`;
       const hpTxt = a ? ` · ❤${a.hp}/${a.hpMax}` : "";
       const ammoTxt = (a && a.ammoMax > 0) ? ` · 🔫${a.ammo}` : "";
@@ -374,13 +379,13 @@ window.Combat = (function () {
     };
     const isAlive = (key) => !(st[key] && st[key].hp <= 0);
     if (mayaPresent()) {
-      chips.push(build("maya", "👩‍🦰", "MAYA", !eng.maya && isAlive("maya") && state.mayaCd <= 0, allyLabel("maya", state.mayaCd, "NEXT SHOT")));
+      chips.push(build("maya", "👩‍🦰", "MAYA", !eng.maya && isAlive("maya") && (state.mayaCd || 0) <= 1, allyLabel("maya", state.mayaCd, "NEXT SHOT")));
     }
     if (renPresent()) {
-      chips.push(build("ren", "🧑‍⚕️", "REN", !eng.ren && isAlive("ren") && state.renCd <= 0, allyLabel("ren", state.renCd, "TRIAGE")));
+      chips.push(build("ren", "🧑‍⚕️", "REN", !eng.ren && isAlive("ren") && (state.renCd || 0) <= 1, allyLabel("ren", state.renCd, "TRIAGE")));
     }
     if (vegaPresent()) {
-      chips.push(build("vega", "🫡", "VEGA", !eng.vega && isAlive("vega") && state.vegaCd <= 0, allyLabel("vega", state.vegaCd, "RIFLE READY")));
+      chips.push(build("vega", "🫡", "VEGA", !eng.vega && isAlive("vega") && (state.vegaCd || 0) <= 1, allyLabel("vega", state.vegaCd, "RIFLE READY")));
     }
     if (noraPresent()) {
       chips.push(build("nora", "👧", "NORA", !eng.nora && isAlive("nora") && (state.noraCd || 0) <= 0, allyLabel("nora", state.noraCd, "SPOTTER")));
@@ -1540,6 +1545,7 @@ window.Combat = (function () {
           line = `Maya fires from cover — ${dmg} damage.`;
         }
         log(line, "ally");
+        Game.toast(outOfAmmo ? `👩‍🦰 Maya · knife · ${dmg}` : `👩‍🦰 Maya fires · ${dmg}`);
         Sound.play(outOfAmmo ? "melee" : "gunshot");
         if (!outOfAmmo) gunFlash();
         spawnMark("hit");
@@ -1582,6 +1588,7 @@ window.Combat = (function () {
       if (shouldHeal) {
         s.hp = Math.min(s.hpMax, s.hp + heal);
         log(`Ren patches you — +${heal} HP.`, "ally");
+        Game.toast(`🧑‍⚕️ Ren heals · +${heal} ❤️`);
         Sound.play("heal");
         floatDamage(heal, "heal");
         refreshHud();
@@ -1604,6 +1611,7 @@ window.Combat = (function () {
           line = `Ren lays down covering fire — ${dmg} damage.`;
         }
         log(line, "ally");
+        Game.toast(outOfAmmo ? `🧑‍⚕️ Ren · scalpel · ${dmg}` : `🧑‍⚕️ Ren fires · ${dmg}`);
         Sound.play(outOfAmmo ? "melee" : "gunshot");
         spawnMark("hit");
         floatDamage(dmg);
@@ -1642,6 +1650,7 @@ window.Combat = (function () {
           line = `Vega's rifle cracks — ${dmg} damage.`;
         }
         log(line, "ally");
+        Game.toast(outOfAmmo ? `🫡 Vega · knife · ${dmg}` : `🫡 Vega fires · ${dmg}`);
         Sound.play(outOfAmmo ? "melee" : "gunshot");
         if (!outOfAmmo) gunFlash();
         spawnMark("hit");
