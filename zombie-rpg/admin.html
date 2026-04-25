@@ -1033,12 +1033,12 @@
   </footer>
 
   <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
-  <script src="js/overrides.js?v=246"></script>
-  <script src="js/scenes.js?v=246"></script>
+  <script src="js/overrides.js?v=247"></script>
+  <script src="js/scenes.js?v=247"></script>
   <!-- story.js is read-only here: we pull chapters / text / choices
        to annotate each scene card so the flow is legible without
        having to play through. -->
-  <script src="js/story.js?v=246"></script>
+  <script src="js/story.js?v=247"></script>
   <script>
     (async function () {
       const PROMPTS = (window.Scenes && window.Scenes.PROMPTS) || {};
@@ -2227,9 +2227,31 @@
       async function onAudioPicked(slotId, files) {
         if (!files || files.length === 0) return;
         const file = files[0];
-        if (!/^audio\//.test(file.type) && !/\.(mp3|wav|m4a|ogg)$/i.test(file.name)) {
-          toast("Pick an audio file (mp3 / wav / m4a / ogg).", "err");
-          return;
+        // Must be an actual audio MIME type. Filename-only fallback
+        // would let a JPEG renamed to *.mp3 through, and the file
+        // would commit to the repo as a broken audio slot.
+        const isAudioMime = /^audio\//.test(file.type || "");
+        const isAudioName = /\.(mp3|wav|m4a|ogg|webm|aac|flac)$/i.test(file.name);
+        if (!isAudioMime) {
+          if (file.type && /^image\//.test(file.type)) {
+            toast("That's an image. Audio files only — mp3 / wav / m4a / ogg.", "err");
+          } else if (!isAudioName) {
+            toast("Pick an audio file (mp3 / wav / m4a / ogg).", "err");
+          } else {
+            // Filename suggests audio but MIME says otherwise. Probe
+            // the first bytes — JPEG starts with FFD8FF, PNG with
+            // 89504E47, MP3 with FFFB or ID3.
+            const head = await file.slice(0, 4).arrayBuffer();
+            const b = new Uint8Array(head);
+            const isJpeg = b[0] === 0xFF && b[1] === 0xD8 && b[2] === 0xFF;
+            const isPng  = b[0] === 0x89 && b[1] === 0x50 && b[2] === 0x4E && b[3] === 0x47;
+            if (isJpeg || isPng) {
+              toast("That's an image masquerading as audio. Pick a real audio file.", "err");
+              return;
+            }
+            // Otherwise allow — could be a tagless MP3 / OGG.
+          }
+          if (!isAudioName) return;
         }
         try {
           await window.AudioOverrides.save(slotId, file);
