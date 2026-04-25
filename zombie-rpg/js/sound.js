@@ -427,6 +427,30 @@ window.Sound = (function () {
     if (audioServerUrl[slot] === undefined) probeServerAudio(slot);
     return null;
   }
+  // Music ducking — drop the master gain (which feeds procedural
+  // music + SFX) AND any active music-override audio element while
+  // a voice line is playing. Web Audio runs through master; HTML
+  // Audio overrides have their own .volume so we touch both.
+  let activeVoiceCount = 0;
+  function duckMusic() {
+    activeVoiceCount++;
+    if (master) master.gain.value = muted ? 0 : 0.12;
+    Object.keys(audioPlayers).forEach(s => {
+      if (s.startsWith("music_")) {
+        try { audioPlayers[s].volume = 0.12; } catch (e) {}
+      }
+    });
+  }
+  function unduckMusic() {
+    activeVoiceCount = Math.max(0, activeVoiceCount - 1);
+    if (activeVoiceCount > 0) return;
+    if (master) master.gain.value = muted ? 0 : 0.55;
+    Object.keys(audioPlayers).forEach(s => {
+      if (s.startsWith("music_")) {
+        try { audioPlayers[s].volume = 0.55; } catch (e) {}
+      }
+    });
+  }
   function playOverride(slot, opts) {
     const o = opts || {};
     const loop = !!o.loop;
@@ -444,7 +468,33 @@ window.Sound = (function () {
     a.loop = loop;
     a.volume = volume;
     if (!loop) a.currentTime = 0;
-    try { a.play().catch(() => {}); } catch (e) {}
+    // For non-looping voice / SFX overrides, duck the music while
+    // they play so the line is audible. Restore on 'ended' or
+    // 'error'. Music slots aren't ducked (otherwise we'd duck
+    // ourselves to silence).
+    if (!loop && !slot.startsWith("music_")) {
+      duckMusic();
+      let restored = false;
+      const restore = () => {
+        if (restored) return;
+        restored = true;
+        a.removeEventListener("ended", restore);
+        a.removeEventListener("error", restore);
+        unduckMusic();
+      };
+      a.addEventListener("ended", restore);
+      a.addEventListener("error", restore);
+      // Safety net — if the audio never fires either event (rare),
+      // unduck after 12s anyway so music doesn't stay quiet.
+      setTimeout(restore, 12000);
+      try {
+        a.play().catch(() => restore());
+      } catch (e) {
+        restore();
+      }
+    } else {
+      try { a.play().catch(() => {}); } catch (e) {}
+    }
     return true;
   }
   function stopOverride(slot) {
