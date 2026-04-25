@@ -689,7 +689,14 @@ window.Sound = (function () {
     ambientScene = scene;
     // Stop the legacy drone if any was running.
     stopAmbient();
-    if (musicTrack === "combat" && scene !== "combat") return; // hold during combat
+    // Hold combat music ONLY while combat is actively running. The
+    // moment Combat.end() clears its state, isActive() returns false
+    // and the next scene's setAmbience is allowed to swap tracks.
+    // Without this gate the combat track bleeds into the post-fight
+    // narrative scene and any later transitions for the rest of the
+    // session.
+    const inCombat = !!(window.Combat && window.Combat.isActive && window.Combat.isActive());
+    if (musicTrack === "combat" && scene !== "combat" && inCombat) return;
     let track = null;
     if (!scene) track = null;
     else if (scene === "combat" || scene === "romance" || scene === "tense"
