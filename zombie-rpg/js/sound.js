@@ -145,6 +145,107 @@ window.Sound = (function () {
       noise({ dur: 0.4, cutoff: 1600, q: 2, vol: 0.15 });
     },
 
+    // Bloater — wet, low-frequency gurgle with a bubbling tail.
+    // Sounds bloated and infected, like something speaking through fluid.
+    bloaterGurgle: () => {
+      if (!ensure() || muted) return;
+      const t0 = now();
+      const o = ctx.createOscillator();
+      const g = ctx.createGain();
+      const f = ctx.createBiquadFilter();
+      o.type = "sawtooth";
+      o.frequency.setValueAtTime(70, t0);
+      o.frequency.linearRampToValueAtTime(54, t0 + 0.55);
+      o.frequency.linearRampToValueAtTime(62, t0 + 0.95);
+      f.type = "lowpass"; f.frequency.value = 320; f.Q.value = 5;
+      g.gain.setValueAtTime(0, t0);
+      g.gain.linearRampToValueAtTime(0.30, t0 + 0.10);
+      g.gain.exponentialRampToValueAtTime(0.0008, t0 + 1.10);
+      o.connect(f); f.connect(g); g.connect(master);
+      o.start(t0); o.stop(t0 + 1.15);
+      // Bubbling tail — narrow lowpass noise that sounds like fluid
+      // gurgling in the throat.
+      noise({ dur: 0.5, cutoff: 220, q: 6, vol: 0.18, delay: 0.32 });
+      noise({ dur: 0.25, cutoff: 180, q: 8, vol: 0.12, delay: 0.7 });
+    },
+
+    // Hunter — sharper, faster, predatory snarl. Mid-range, rises and
+    // bites quickly. Reads as the smart-zombie that remembers how to hunt.
+    hunterSnarl: () => {
+      if (!ensure() || muted) return;
+      const t0 = now();
+      const o = ctx.createOscillator();
+      const g = ctx.createGain();
+      const f = ctx.createBiquadFilter();
+      o.type = "sawtooth";
+      o.frequency.setValueAtTime(135, t0);
+      o.frequency.exponentialRampToValueAtTime(225, t0 + 0.18);
+      o.frequency.exponentialRampToValueAtTime(105, t0 + 0.50);
+      f.type = "bandpass"; f.frequency.value = 850; f.Q.value = 3;
+      g.gain.setValueAtTime(0, t0);
+      g.gain.linearRampToValueAtTime(0.28, t0 + 0.06);
+      g.gain.exponentialRampToValueAtTime(0.0008, t0 + 0.6);
+      o.connect(f); f.connect(g); g.connect(master);
+      o.start(t0); o.stop(t0 + 0.65);
+      // Breath/rasp tail — high noise burst.
+      noise({ dur: 0.32, cutoff: 1900, q: 2, vol: 0.16, delay: 0.05 });
+    },
+
+    // Abomination — deep, monstrous, multi-layered roar. Two oscillators
+    // detuned + a wet noise bottom for body. Long sustain so the freezer
+    // mini-boss feels physically larger than everything else.
+    abominationRoar: () => {
+      if (!ensure() || muted) return;
+      const t0 = now();
+      // Sub layer.
+      const o1 = ctx.createOscillator();
+      const g1 = ctx.createGain();
+      o1.type = "sawtooth";
+      o1.frequency.setValueAtTime(46, t0);
+      o1.frequency.linearRampToValueAtTime(38, t0 + 1.2);
+      o1.frequency.linearRampToValueAtTime(52, t0 + 1.65);
+      g1.gain.setValueAtTime(0, t0);
+      g1.gain.linearRampToValueAtTime(0.42, t0 + 0.22);
+      g1.gain.exponentialRampToValueAtTime(0.0008, t0 + 1.85);
+      o1.connect(g1); g1.connect(master);
+      o1.start(t0); o1.stop(t0 + 1.9);
+      // Mid harmonic.
+      const o2 = ctx.createOscillator();
+      const g2 = ctx.createGain();
+      o2.type = "square";
+      o2.frequency.setValueAtTime(96, t0);
+      o2.frequency.linearRampToValueAtTime(78, t0 + 1.3);
+      g2.gain.setValueAtTime(0, t0);
+      g2.gain.linearRampToValueAtTime(0.16, t0 + 0.30);
+      g2.gain.exponentialRampToValueAtTime(0.0008, t0 + 1.6);
+      o2.connect(g2); g2.connect(master);
+      o2.start(t0); o2.stop(t0 + 1.65);
+      // Wet body.
+      noise({ dur: 1.20, cutoff: 200, q: 1.2, vol: 0.22, delay: 0.10 });
+    },
+
+    // Calder (traitor) — half-human gasp followed by a zombie groan
+    // tail. The bite has already won, but his voice is still in there.
+    calderGasp: () => {
+      if (!ensure() || muted) return;
+      const t0 = now();
+      const o = ctx.createOscillator();
+      const g = ctx.createGain();
+      const f = ctx.createBiquadFilter();
+      o.type = "triangle";
+      o.frequency.setValueAtTime(225, t0);
+      o.frequency.exponentialRampToValueAtTime(290, t0 + 0.16);
+      o.frequency.exponentialRampToValueAtTime(170, t0 + 0.65);
+      f.type = "bandpass"; f.frequency.value = 620; f.Q.value = 4;
+      g.gain.setValueAtTime(0, t0);
+      g.gain.linearRampToValueAtTime(0.22, t0 + 0.08);
+      g.gain.exponentialRampToValueAtTime(0.0008, t0 + 0.75);
+      o.connect(f); f.connect(g); g.connect(master);
+      o.start(t0); o.stop(t0 + 0.80);
+      // Zombie groan tail underneath, layered late.
+      setTimeout(() => FX.groan && FX.groan(), 380);
+    },
+
     hordeRoar: () => {
       noise({ dur: 1.6, cutoff: 380, q: 0.7, vol: 0.35 });
       for (let i = 0; i < 4; i++) setTimeout(() => FX.groan(), i * 320 + Math.random() * 200);

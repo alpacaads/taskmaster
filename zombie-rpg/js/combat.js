@@ -595,10 +595,14 @@ window.Combat = (function () {
     const logEl = document.getElementById("combat-log");
     logEl.innerHTML = "";
 
+    // Combat opener — use the per-enemy voice when there is one, fall
+    // back to the generic horde roar / dry-snap / groan for the rest.
     if (config.enemy === "horde") Sound.play("hordeRoar");
-    else if (config.enemy === "runner") Sound.play("runnerScream");
     else if (config.enemy === "bandit" || config.enemy === "bandit_pair") Sound.play("drySnap");
-    else Sound.play("groan");
+    else {
+      const v = voiceFor(config.enemy);
+      Sound.play(v || "groan");
+    }
 
     // Opening log line when an ally gets pinned down — gives the player
     // the 'one on you, one on yours' read before the first turn.
@@ -1386,6 +1390,22 @@ window.Combat = (function () {
     setTimeout(() => el.classList.remove("muzzle-flash"), 260);
   }
 
+  // ---- Per-enemy zombie voice ----
+  // Each turned-type gets its own procedural growl. Plays once on
+  // combat start (signature) and again over each successful attack
+  // hit so the player can hear what just bit them. Bandits return
+  // null — they're human, no zombie voice.
+  function voiceFor(enemyId) {
+    if (!enemyId) return null;
+    if (enemyId === "freezer_abom") return "abominationRoar";
+    if (enemyId === "traitor")      return "calderGasp";
+    if (enemyId.startsWith("bloater")) return "bloaterGurgle";
+    if (enemyId.startsWith("hunter"))  return "hunterSnarl";
+    if (enemyId.startsWith("runner"))  return "runnerScream";
+    if (enemyId.startsWith("walker"))  return "groan";
+    return null;
+  }
+
   // ---- QTE outcome flashes ----
   // Big center-screen text pop so the player always sees the result of
   // a reactive dodge / break window even if they were focused on the
@@ -1577,6 +1597,8 @@ window.Combat = (function () {
           s.hp -= bite;
           log(`${e.name} drives down — ${bite} damage. Still pinned.`, "enemy");
           Sound.play("damage");
+          const biteVoice = voiceFor(state.enemyId);
+          if (biteVoice) Sound.play(biteVoice);
           spawnEnemyBlood();
           floatDamage(bite);
           screenShake();
@@ -1671,6 +1693,8 @@ window.Combat = (function () {
       // window — beat the timer and the lurch fails entirely; let it
       // expire and they land the grab + clinch.
       log(`${e.name} coils to lunge — DODGE!`, "warn");
+      const lurchVoice = voiceFor(state.enemyId);
+      if (lurchVoice) Sound.play(lurchVoice);
       promptReaction({
         kind: "dodge_lurch",
         seconds: 3,
@@ -1881,6 +1905,11 @@ window.Combat = (function () {
         }
         log(line, savage ? "crit" : "enemy");
         Sound.play(savage ? "crit" : "damage");
+        // Per-enemy growl layered over the impact so the player hears
+        // who just bit them. Roughly half the time on normal hits, every
+        // time on savage / boss bites for emphasis.
+        const v = voiceFor(state.enemyId);
+        if (v && (savage || Math.random() < 0.55)) Sound.play(v);
         spawnEnemyBlood();
         screenShake();
         // Panic: a successful bite / shot can rattle your next attack.
@@ -2240,6 +2269,9 @@ window.Combat = (function () {
     const descEl = document.getElementById("enemy-desc");
     if (descEl) descEl.textContent = state.enemy.desc || "";
     setCombatBackdrop(nextType);
+    // Per-wave signature voice — each new fighter announces itself.
+    const wv = voiceFor(nextType);
+    if (wv) Sound.play(wv);
     const chEl = document.getElementById("combat-chapter");
     if (chEl) {
       // Only useful when there's actually a wave count to show.
