@@ -1540,6 +1540,101 @@ html, body {
   transition: stroke-dashoffset 380ms cubic-bezier(.2,.7,.3,1);
 }
 
+/* ---- Nora rescue mini-game ----
+   Five sequential click targets pop at random screen positions.
+   Each pulses red and drains. Hits flash green; misses fade red. */
+.nora-rescue {
+  position: absolute; inset: 0;
+  z-index: 12;
+  pointer-events: none;
+}
+.nora-rescue-bg {
+  position: absolute; inset: 0;
+  background: radial-gradient(ellipse at center, rgba(40,8,8,0.35) 0%, rgba(8,2,2,0.78) 100%);
+  pointer-events: none;
+  animation: noraBgFade 240ms ease-out forwards;
+}
+@keyframes noraBgFade {
+  0%   { opacity: 0; }
+  100% { opacity: 1; }
+}
+.nora-rescue-banner {
+  position: absolute;
+  top: 18%; left: 50%;
+  transform: translate(-50%, 0);
+  text-align: center;
+  font-family: ui-monospace, "SF Mono", Menlo, monospace;
+  text-transform: uppercase;
+  pointer-events: none;
+  text-shadow:
+    0 4px 12px rgba(0,0,0,0.95),
+    0 0 18px rgba(0,0,0,0.85);
+  animation: flashPop 700ms cubic-bezier(.2,.7,.3,1);
+}
+.nora-banner-title {
+  font-size: 26px;
+  font-weight: 800;
+  letter-spacing: 5px;
+  color: #ff7a7a;
+}
+.nora-banner-progress {
+  margin-top: 6px;
+  font-size: 14px;
+  letter-spacing: 3px;
+  color: #f0bb4b;
+}
+.nora-rescue-buttons {
+  position: absolute; inset: 0;
+  pointer-events: none;
+}
+.nora-rescue-btn {
+  position: absolute;
+  width: 64px; height: 64px;
+  border-radius: 50%;
+  pointer-events: auto;
+  cursor: pointer;
+  background:
+    radial-gradient(circle at 35% 30%, rgba(255,255,255,0.18) 0%, rgba(255,255,255,0) 45%),
+    radial-gradient(circle at 50% 100%, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0) 60%),
+    linear-gradient(180deg, #4a1010 0%, #200505 100%);
+  border: 2px solid #ff5a5a;
+  color: #fff;
+  display: flex; align-items: center; justify-content: center;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.18),
+    inset 0 -2px 4px rgba(0,0,0,0.55),
+    0 0 18px rgba(255,90,90,0.7),
+    0 4px 10px rgba(0,0,0,0.6);
+  animation: noraBtnPop 260ms cubic-bezier(.2,.7,.3,1) forwards,
+             reactPulse 0.55s ease-in-out 260ms infinite;
+  transform: scale(0.4);
+  opacity: 0;
+}
+.nora-rescue-btn svg { width: 28px; height: 28px; }
+@keyframes noraBtnPop {
+  0%   { transform: scale(0.4); opacity: 0; }
+  100% { transform: scale(1.0); opacity: 1; }
+}
+.nora-rescue-btn.hit {
+  border-color: #b6e87a;
+  background: linear-gradient(180deg, #1a3010 0%, #0a1a04 100%);
+  color: #c8f08a;
+  animation: noraBtnHit 220ms ease-out forwards;
+  pointer-events: none;
+}
+@keyframes noraBtnHit {
+  0%   { transform: scale(1.0); opacity: 1; box-shadow: 0 0 24px rgba(180,232,122,0.85); }
+  100% { transform: scale(1.4); opacity: 0;  box-shadow: 0 0 0 rgba(180,232,122,0); }
+}
+.nora-rescue-btn.missed {
+  animation: noraBtnMiss 220ms ease-out forwards;
+  pointer-events: none;
+}
+@keyframes noraBtnMiss {
+  0%   { transform: scale(1.0); opacity: 0.85; }
+  100% { transform: scale(0.6); opacity: 0; }
+}
+
 /* Reactive QTE — Brace slot transforms during a dodge/break window.
    Big pulsing red disc with the countdown front-and-center. */
 .combat-btn.combat-btn-react {

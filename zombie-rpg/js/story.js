@@ -1906,15 +1906,17 @@ window.Story = {
     sceneClass: "blood",
     chapter: "Day 4 — Pharmacy",
     text: function(s) {
-      let base = "Something heavy shifts at the back of the aisle — wrong-shaped, bloated, its skin split open in seeping black fissures. A bloater. The air around it shimmers; your eyes sting before it even turns.\n\nDon't close. Don't let it grab you.";
+      let base = "Something heavy shifts at the back of the aisle — wrong-shaped, bloated, its skin split open in seeping black fissures. A bloater, fat with bile. The air around it shimmers; your eyes sting before it even turns.\n\nDon't close. Don't let it grab you. And it's going to spit — watch the swell of its throat. That's the wind-up.";
       if (s.flags.bringNora) {
-        base += "\n\nYou shove Nora down behind the checkout counter and wave her farther back. The gas drifts low.";
+        base += "\n\nYou shove Nora down behind the checkout counter and wave her farther back. \"Stay small. Stay quiet.\" The gas drifts low. You shouldn't have brought her.";
       }
       return base;
     },
     choices: [
       { label: "Fight", tag: "COMBAT", tagClass: "danger",
-        combat: { enemy: "bloater", onWin: "hospital_lobby", onLose: "death" } },
+        // Hospital bloater is overgrown — double the standard HP and
+        // the salvo + Nora-rescue mechanics get full play time.
+        combat: { enemy: "bloater", hp: 24, onWin: "hospital_lobby", onLose: "death" } },
     ]
   },
 
@@ -1933,6 +1935,40 @@ window.Story = {
            : "";
     },
     text: function(s) {
+      // Nora outcomes from the bloater rescue mini-game take
+      // narrative priority — the room is whatever the bile left.
+      if (s.flags.noraDied) {
+        if (s.flags.missionPartner === "maya") {
+          return "Maya stands at the lobby door with one hand on the frame. She doesn't turn around when you come out.\n\n\"You brought her, Ellis.\"\n\n\"I know.\"\n\n\"Don't say my name like that.\"\n\nThe vending machine flickers. She walks out into the parking lot ahead of you and doesn't slow down.";
+        }
+        if (s.flags.missionPartner === "ren") {
+          return "Ren is in the hallway with her hands open at her sides like she's still going to do something useful with them. She isn't.\n\n\"How old was she.\"\n\n\"Ten.\"\n\nRen sits down right there on the linoleum, her back to a vending machine, and doesn't speak again for the time it takes you to gather what you came for.";
+        }
+        return "You sit alone in a row of cracked plastic chairs. Stuff a backpack with what you came for. Don't look at the doorway you came out of. Don't think about the small shape on the floor on the other side.\n\nThe vending machine flickers. The hospital exhales around you — old breath. No life. None at all.";
+      }
+      if (s.flags.noraInjured) {
+        let base;
+        if (s.flags.missionPartner === "maya") {
+          base = "Maya is wrapping Nora's arm with a strip of her own undershirt. Her hands are steady. Her eyes are not.\n\n\"It's clean. She's lucky.\" A pause. \"You're not.\"\n\n\"I know.\"\n\n\"You knew before we left, Ellis.\"";
+        } else if (s.flags.missionPartner === "ren") {
+          base = "Ren is on the floor with Nora in her lap, irrigating the burn with a saline bottle. She's humming, low — the song. Her hands are professional. Everything else about her is not.\n\nWhen she finally looks at you it's the same look she gave Calder.\n\n\"I'm angry with you. I want you to know that.\"";
+        } else {
+          base = "You wrap Nora's arm in the lobby. She lets you. She doesn't ask questions. She holds her breath when the gauze pulls.\n\nWhen you tell her she's brave, she shakes her head once. Tight. Like she doesn't want to hear it from you right now.";
+        }
+        return base + "\n\nYou could sit another minute. Or you could go.";
+      }
+      if (s.flags.noraSavedClean) {
+        let base;
+        if (s.flags.missionPartner === "maya") {
+          base = "Maya is checking your back where the bile soaked through. Her jaw is tight; her hands aren't shaking.\n\n\"You took it. All of it.\" Pause. \"For her.\"\n\n\"For all of us.\"\n\nShe presses a clean cloth against the worst of it and doesn't say anything for a while.";
+        } else if (s.flags.missionPartner === "ren") {
+          base = "Ren is cleaning the bile off your jacket with everything she has — saline, gauze, half her water bottle. Nora is sitting on the chair beside you, arms around her own knees, watching.\n\n\"You shouldn't have done that,\" Ren says quietly.\n\n\"Yes I should.\"\n\nShe doesn't argue.";
+        } else {
+          base = "Your back stings where the bile soaked through. Nora is on the chair beside you with her arms around her knees, watching you like she's trying to memorize something.\n\nYou tell her she's safe. She nods once. Doesn't speak. Doesn't move closer.";
+        }
+        return base + "\n\nYou could sit another minute. Or you could go.";
+      }
+      // Default — no Nora rescue happened (Nora wasn't along).
       let base;
       if (s.flags.missionPartner === "maya") {
         base = "You drop into a row of waiting chairs. Maya sits beside you — not touching, but close.\n\n\"You handle yourself. I noticed.\"\n\nA streetlight, somehow still alive, hums outside. She hasn't looked away from you.";
@@ -1948,7 +1984,7 @@ window.Story = {
     },
     choices: [
       { label: "Lean closer. Let Maya see you see her.",
-        require: s => s.flags.missionPartner === "maya",
+        require: s => s.flags.missionPartner === "maya" && !s.flags.noraDied,
         effect: s => {
           s.bonds.maya += 2;
           // Explicit 'I'm into you' — locks Ren's bonfire option out.
@@ -1957,10 +1993,13 @@ window.Story = {
         },
         next: "mission_return" },
       { label: "Keep it professional. Stand up.",
-        require: s => s.flags.missionPartner === "maya",
+        require: s => s.flags.missionPartner === "maya" && !s.flags.noraDied,
+        next: "mission_return" },
+      { label: "Walk out after Maya. Eat the silence.",
+        require: s => s.flags.missionPartner === "maya" && s.flags.noraDied,
         next: "mission_return" },
       { label: "Take Ren's hand. Say nothing.",
-        require: s => s.flags.missionPartner === "ren",
+        require: s => s.flags.missionPartner === "ren" && !s.flags.noraDied,
         effect: s => {
           s.bonds.ren += 2;
           s.flags.committedRen = true;
@@ -1968,7 +2007,10 @@ window.Story = {
         },
         next: "mission_return" },
       { label: "Give Ren space. Pack the bag.",
-        require: s => s.flags.missionPartner === "ren",
+        require: s => s.flags.missionPartner === "ren" && !s.flags.noraDied,
+        next: "mission_return" },
+      { label: "Sit on the linoleum next to her. Don't speak.",
+        require: s => s.flags.missionPartner === "ren" && s.flags.noraDied,
         next: "mission_return" },
       { label: "Sit the extra minute. You've earned it.",
         require: s => s.flags.solo_mission,

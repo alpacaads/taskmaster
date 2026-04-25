@@ -30,7 +30,7 @@ window.Combat = (function () {
     // own hit chance for a turn, but their bite isn't what kills you.
     runner:       { name: "Runner",      art: "🧟‍♂️", hp: 4,  atk: [3, 4], speed: 2, desc: "Fresh. Fast. Furious.", panic: 0.3, aggressive: 0.65 },
     // Bloater: slow clumsy giant — easy to dodge, hard to hurt, big hit.
-    bloater:      { name: "Bloater",     art: "🧟💀",  hp: 12, atk: [3, 5], speed: 1, desc: "A swollen, leaking thing. The air around it burns.", smallArmsResist: 2, heavySwing: true, aggressive: 0.25, toxic: 2, rangedFlavor: "gas", telegraphEvery: 4 },
+    bloater:      { name: "Bloater",     art: "🧟💀",  hp: 12, atk: [3, 5], speed: 1, desc: "A swollen, leaking thing. The air around it burns.", smallArmsResist: 2, heavySwing: true, aggressive: 0.25, toxic: 2, rangedFlavor: "gas", telegraphEvery: 4, salvoSize: 3 },
     bandit:       { name: "Bandit",      art: "🧔🔫",  hp: 10, atk: [3, 4], speed: 2, desc: "Smart. Armed. Desperate.", human: true, dodge: 0.22, telegraphEvery: 3 },
     // Older / Younger bandit — named variants for the ambush so the
     // two-person fight reads like two people, not one HP pool.
@@ -53,7 +53,7 @@ window.Combat = (function () {
     // so the combat backdrop art can be unique per wave. ----
     walker_horde:  { name: "Walker",   art: "🧟",    hp: 4,  atk: [2, 3], speed: 1, desc: "Slow. Hungry. Relentless.", smallArmsResist: 1, headshotBonus: 2, aggressive: 0.45 },
     runner_horde:  { name: "Runner",   art: "🧟‍♂️", hp: 4,  atk: [3, 4], speed: 2, desc: "Fresh. Fast. Furious.", panic: 0.3, aggressive: 0.65 },
-    bloater_horde: { name: "Bloater",  art: "🧟💀",  hp: 12, atk: [3, 5], speed: 1, desc: "A swollen, leaking thing. The air around it burns.", smallArmsResist: 2, heavySwing: true, aggressive: 0.25, toxic: 2, rangedFlavor: "gas", telegraphEvery: 4 },
+    bloater_horde: { name: "Bloater",  art: "🧟💀",  hp: 12, atk: [3, 5], speed: 1, desc: "A swollen, leaking thing. The air around it burns.", smallArmsResist: 2, heavySwing: true, aggressive: 0.25, toxic: 2, rangedFlavor: "gas", telegraphEvery: 4, salvoSize: 3 },
     hunter_horde:  { name: "Hunter",   art: "🧟‍♂️", hp: 12, atk: [3, 5], speed: 2, desc: "Turned, but it remembers how to hunt.", smallArmsResist: 2, meleeVulnerable: 2, telegraphEvery: 4, aggressive: 0.6 },
     // Flesh-walls — the abomination type that crashes the horde for
     // climax waves. Same stats as freezer_abom so admin art is shared.
@@ -1243,6 +1243,13 @@ window.Combat = (function () {
     refreshHud();
     updateEnemyHp();
 
+    // Bloater pivots toward the kid as it gets desperate. If the
+    // player's last damage drops it under the threshold, the rescue
+    // QTE fires now — even if it was the killing blow. The rescue
+    // function will route to finishOrAdvance after the sequence if
+    // the bloater is at 0.
+    if (checkNoraRescue()) return;
+
     // Check the player's kill BEFORE ticking the ally's parallel fight.
     // If we tick first, Maya's shot can kill the older bandit on the
     // same turn the player drops the younger — and finishOrAdvance
@@ -1551,6 +1558,245 @@ window.Combat = (function () {
     }
   }
 
+  // ---- Nora rescue: 5-button random-position QTE ----
+  // Triggered once per fight against the hospital bloater (or any
+  // bloater type) when its HP drops to ≤ 30% AND Nora is along.
+  // Returns true if a rescue is now in progress (caller should NOT
+  // continue normal turn flow). Resolution paths feed back into
+  // finishOrAdvance / enemyTurn after the sequence completes.
+  function checkNoraRescue() {
+    if (!state || !state.enemy) return false;
+    if (state._noraRescueTriggered) return false;
+    if (state.enemyId !== "bloater" && state.enemyId !== "bloater_horde") return false;
+    const s = Game.state;
+    if (!s || s.companion2 !== "Nora") return false;
+    if (s.flags && s.flags.noraDied) return false;
+    if (state.enemy.hp > Math.ceil(state.enemy.maxHp * 0.30)) return false;
+    state._noraRescueTriggered = true;
+    triggerNoraRescue();
+    return true;
+  }
+  function triggerNoraRescue() {
+    if (!state) return;
+    // Lock combat input via the reaction state; act() guards on this.
+    state.reaction = { kind: "nora_rescue", abort: () => {} };
+
+    const screen = document.getElementById("combat-screen");
+    if (!screen) return;
+    const overlay = document.createElement("div");
+    overlay.className = "nora-rescue";
+    overlay.innerHTML =
+      `<div class="nora-rescue-bg"></div>` +
+      `<div class="nora-rescue-banner">` +
+        `<div class="nora-banner-title">SAVE NORA</div>` +
+        `<div class="nora-banner-progress" id="nora-progress">0 / 5</div>` +
+      `</div>` +
+      `<div class="nora-rescue-buttons" id="nora-rescue-buttons"></div>`;
+    screen.appendChild(overlay);
+
+    Sound.play("tense");
+    Game.toast("🛑 SAVE NORA");
+    log(`The bloater pivots — it's going for Nora!`, "warn");
+
+    const TOTAL = 5;
+    const rect = screen.getBoundingClientRect();
+    const positions = generateRescuePositions(rect, TOTAL);
+
+    let hits = 0;
+    let attempts = 0;
+
+    const fireNext = () => {
+      if (attempts >= TOTAL) { finishNoraRescue(hits, TOTAL); return; }
+      const pos = positions[attempts];
+      attempts++;
+      const btn = document.createElement("button");
+      btn.className = "nora-rescue-btn";
+      btn.style.left = pos.x + "px";
+      btn.style.top  = pos.y + "px";
+      btn.innerHTML = ICONS.dodge;
+      const host = document.getElementById("nora-rescue-buttons");
+      if (host) host.appendChild(btn);
+      // Tighten the window slightly per attempt so it stays tense.
+      const ms = Math.max(750, 1100 - (attempts - 1) * 60);
+      let resolved = false;
+      const t = setTimeout(() => {
+        if (resolved) return;
+        resolved = true;
+        btn.classList.add("missed");
+        Sound.play("drySnap");
+        setTimeout(() => btn.remove(), 220);
+        fireNext();
+      }, ms);
+      btn.addEventListener("click", () => {
+        if (resolved) return;
+        resolved = true;
+        hits++;
+        btn.classList.add("hit");
+        Sound.play("dodge");
+        const prog = document.getElementById("nora-progress");
+        if (prog) prog.textContent = `${hits} / ${TOTAL}`;
+        clearTimeout(t);
+        setTimeout(() => btn.remove(), 220);
+        fireNext();
+      });
+    };
+    fireNext();
+  }
+  function generateRescuePositions(rect, count) {
+    const positions = [];
+    const margin = 56;
+    const usableW = Math.max(120, rect.width  - margin * 2);
+    const usableH = Math.max(120, rect.height * 0.62 - margin * 2); // upper 62%
+    const minDist = 90;
+    for (let i = 0; i < count; i++) {
+      let placed = false;
+      for (let tries = 0; tries < 60 && !placed; tries++) {
+        const x = margin + Math.random() * usableW;
+        const y = margin + 60 + Math.random() * usableH; // skip slug bar
+        if (positions.every(p => Math.hypot(p.x - x, p.y - y) >= minDist)) {
+          positions.push({ x, y });
+          placed = true;
+        }
+      }
+      if (!placed) {
+        positions.push({
+          x: margin + Math.random() * usableW,
+          y: margin + 60 + Math.random() * usableH,
+        });
+      }
+    }
+    return positions;
+  }
+  function finishNoraRescue(hits, total) {
+    const overlay = document.querySelector(".nora-rescue");
+    if (overlay) setTimeout(() => overlay.remove(), 600);
+    if (state) state.reaction = null;
+    const s = Game.state;
+    s.flags = s.flags || {};
+    s.bonds = s.bonds || {};
+
+    if (hits >= total) {
+      // 5/5 — Nora unhurt, you wore the spray
+      s.flags.noraSavedClean = true;
+      const dmg = rand(3, 5);
+      s.hp = Math.max(0, s.hp - dmg);
+      log(`You shoulder Nora behind the counter — bile soaks your back. ${dmg} damage.`, "ally");
+      flashCenterText("SAVED HER", "edge");
+      Sound.play("brace");
+      floatDamage(dmg);
+      refreshHud();
+      if (s.hp <= 0) {
+        log("You collapse — but Nora's still breathing.", "crit");
+        Sound.play("death");
+        setTimeout(() => end("lose"), 900);
+        return;
+      }
+    } else if (hits >= 4) {
+      // 4/5 — Nora hurt, bonds drop
+      s.flags.noraInjured = true;
+      s.bonds.maya = Math.max(0, (s.bonds.maya || 0) - 1);
+      s.bonds.ren  = Math.max(0, (s.bonds.ren  || 0) - 1);
+      s.bonds.vega = Math.max(0, (s.bonds.vega || 0) - 1);
+      log(`Bile catches Nora's arm. She doesn't cry. That's worse.`, "crit");
+      flashCenterText("SHE'S HURT", "threat");
+      Game.toast("Trust −1 · Maya / Ren / Vega");
+      Sound.play("damage");
+      spawnEnemyBlood();
+    } else {
+      // <4 — Nora dies, bonds wiped, romance ended
+      s.flags.noraDied = true;
+      s.companion2 = null;
+      s.bonds.maya = 0;
+      s.bonds.ren  = 0;
+      s.bonds.vega = 0;
+      s.flags.committedMaya = false;
+      s.flags.committedRen  = false;
+      s.flags.lovedMaya     = false;
+      s.flags.lovedRen      = false;
+      s.romance = null;
+      log(`Nora is on the floor. She isn't getting up. You brought her here.`, "crit");
+      flashCenterText("NORA FELL", "threat");
+      Game.toast("All trust lost. You brought a child.");
+      Sound.play("death");
+      spawnEnemyBlood();
+      screenShake();
+    }
+    refreshHud();
+
+    // After the sequence — finish the fight if the bloater was already
+    // at 0 HP (player's last shot killed it during the trigger turn),
+    // otherwise resume the regular turn flow.
+    setTimeout(() => {
+      if (!state) return;
+      if (state.enemy.hp <= 0) {
+        log(`${state.enemy.name} falls.`, "crit");
+        finishOrAdvance();
+        return;
+      }
+      companionTurn();
+      state.turn += 1;
+      renderAllies();
+      refreshCombatStatus();
+      setTimeout(enemyTurn, 600);
+    }, 1300);
+  }
+
+  // Bloater salvo — fires `total` consecutive ranged-dodge prompts.
+  // Each shot uses a tighter window than the last (1.4s → 1.0s) so
+  // the rhythm tightens as the bile keeps coming. Damage is per-shot
+  // small so dodging some of them isn't all-or-nothing.
+  function fireSalvo(remaining, e, total) {
+    if (!state) return;
+    if (total === undefined) total = remaining;
+    if (remaining <= 0) {
+      // Salvo over — clear telegraph windows, hand off the turn.
+      state.telegraphPending = false;
+      state.enemyAimed = false;
+      refreshCombatStatus();
+      // Nora-rescue gate may have armed during the salvo (player took
+      // damage but bloater wasn't hit) — skip enemyTurn handoff if it
+      // fires; otherwise advance the turn normally.
+      if (checkNoraRescue()) return;
+      companionTurn();
+      state.turn += 1;
+      renderAllies();
+      return;
+    }
+    const idx = total - remaining + 1;
+    log(`Bile spit ${idx}/${total} incoming — DODGE!`, "warn");
+    promptReaction({
+      kind: "dodge_salvo",
+      seconds: Math.max(0.9, 1.4 - (idx - 1) * 0.12),
+      icon: ICONS.dodge, label: "DODGE",
+      onSuccess: () => {
+        log(`Spit ${idx}/${total} — clean.`, "info");
+        Sound.play("dodge");
+        flashEvade();
+        flashCenterText(`${idx}/${total} DODGED`, "edge");
+        fireSalvo(remaining - 1, e, total);
+      },
+      onFail: () => {
+        const dmg = rand(2, 3);
+        const s = Game.state;
+        s.hp -= dmg;
+        log(`Bile lands on you — ${dmg} damage.`, "enemy");
+        Sound.play("damage");
+        flashCenterText("HIT!", "threat");
+        spawnEnemyBlood();
+        screenShake();
+        floatDamage(dmg);
+        refreshHud();
+        if (s.hp <= 0) {
+          log("You collapse, choking on bile.", "crit");
+          Sound.play("death");
+          setTimeout(() => end("lose"), 900);
+          return;
+        }
+        fireSalvo(remaining - 1, e, total);
+      },
+    });
+  }
+
   // ---------- enemy turn ----------
   function enemyTurn() {
     if (!state) return;
@@ -1795,6 +2041,19 @@ window.Combat = (function () {
           renderAllies();
         },
       });
+      return;
+    }
+
+    // Bloater salvo — multi-shot bile barrage. Each shot is its own
+    // tight dodge window; tighten the timer with each successive shot
+    // (player gets read on the rhythm). Damage per shot is small so
+    // they can stack into a real bite if you eat any of them.
+    if (state.range === "far" && (state.enemyAimed || state.telegraphPending)
+        && e.salvoSize && e.salvoSize > 1) {
+      log(`${e.name} swells — bile salvo incoming!`, "warn");
+      const v = voiceFor(state.enemyId);
+      if (v) Sound.play(v);
+      fireSalvo(e.salvoSize, e);
       return;
     }
 
