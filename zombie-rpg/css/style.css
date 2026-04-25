@@ -432,45 +432,40 @@ html, body {
 }
 
 /* Per-grapheme animation layer */
-/* Mrs. Cho's lampshade flicker — warm radial glow over the right
-   side of the image (where the nightstand lamp sits per the prompt)
-   with an irregular keyframe pattern that mimics a failing bulb:
-   long steady stretches punctuated by quick stutters and the
-   occasional deep dim. steps(1, end) keeps the transitions snappy
-   instead of smooth-fading. */
+/* Mrs. Cho's lampshade flicker — the lamp is the ONLY light in the
+   room, so when the bulb stutters the whole scene drops to near-
+   darkness. Black overlay covering the full image; opacity flips
+   between 0 (lamp on, image visible) and ~0.8 (lamp dies, room goes
+   black). steps(1, end) snaps the cuts so it reads as electrical
+   fault, not a smooth fade. */
 .scene-art[data-scene="neighbour_apt"]::after,
 .scene-art[data-scene="cho_loot"]::after {
   content: "";
   position: absolute;
   inset: 0;
-  background: radial-gradient(
-    ellipse 70% 55% at 72% 42%,
-    rgba(255, 200, 130, 0.45) 0%,
-    rgba(255, 170, 80, 0.22)  30%,
-    rgba(255, 140, 60, 0.08)  55%,
-    transparent               70%);
-  mix-blend-mode: screen;
+  background: #000;
   pointer-events: none;
   z-index: 2;
+  opacity: 0;
   animation: choLampFlicker 4.2s steps(1, end) infinite;
 }
 @keyframes choLampFlicker {
-  0%,  18%    { opacity: 1.00; }   /* steady warm glow */
-  19%, 19.6%  { opacity: 0.40; }   /* sharp dim */
-  20%         { opacity: 0.95; }
-  21%, 21.4%  { opacity: 0.30; }   /* second stutter */
-  22%         { opacity: 1.00; }
-  43%, 47%    { opacity: 0.80; }   /* small steady dim */
-  47.5%       { opacity: 1.00; }
-  68%         { opacity: 1.00; }
-  69%, 69.3%  { opacity: 0.18; }   /* big drop */
-  70%         { opacity: 0.85; }
-  71%, 71.5%  { opacity: 0.32; }   /* recovery stutter */
-  72%         { opacity: 1.00; }
-  88%         { opacity: 0.70; }
-  92%, 92.4%  { opacity: 0.45; }
-  93%         { opacity: 1.00; }
-  100%        { opacity: 1.00; }
+  0%,  18%    { opacity: 0;    } /* lamp on — full warm room visible */
+  19%, 19.6%  { opacity: 0.78; } /* sharp dim — room drops to near-dark */
+  20%         { opacity: 0.05; }
+  21%, 21.4%  { opacity: 0.82; } /* second stutter */
+  22%         { opacity: 0;    }
+  43%, 47%    { opacity: 0.30; } /* small dim — half-shadow */
+  47.5%       { opacity: 0;    }
+  68%         { opacity: 0;    }
+  69%, 69.3%  { opacity: 0.92; } /* big drop — almost pitch black */
+  70%         { opacity: 0.10; }
+  71%, 71.5%  { opacity: 0.70; } /* recovery stutter */
+  72%         { opacity: 0;    }
+  88%         { opacity: 0.40; }
+  92%, 92.4%  { opacity: 0.60; }
+  93%         { opacity: 0;    }
+  100%        { opacity: 0;    }
 }
 
 .scene-art .g {
