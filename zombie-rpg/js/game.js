@@ -290,6 +290,10 @@ window.Game = (function () {
             `</ul>`
           : "");
       sceneEl2.appendChild(overlay);
+      // Play the meet-card voice line if uploaded for this slot.
+      // Silently no-ops if no audio override exists (no procedural
+      // FX is registered for meet_*_card slots).
+      if (window.Sound && Sound.play) Sound.play(nodeId);
     }
     document.getElementById("scene-chapter").textContent = node.chapter || "";
 
