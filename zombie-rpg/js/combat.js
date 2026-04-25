@@ -837,10 +837,10 @@ window.Combat = (function () {
     // The dedicated Strike slot is gone — close-range melee now lives in
     // the Close/Strike toggle above.
     if (meleeBtn) meleeBtn.hidden = true;
-    // Fire stays enabled at close range — point blank shots are now
-    // valid (auto-hit, headshot if aim was set). Disabled only by the
-    // ammo / weapon checks the act() handler runs anyway.
-    if (fireBtn) fireBtn.disabled = false;
+    // Fire stays enabled at close range when YOU closed the gap (point
+    // blank with the gun in their face). When the enemy has you held
+    // down, the gun is pinned — disable until you Break.
+    if (fireBtn) fireBtn.disabled = !!(state && state.heldDown);
     if (aimBtnEl) {
       const s = Game.state;
       if (isClose) {
@@ -1027,12 +1027,14 @@ window.Combat = (function () {
       refreshCombatStatus();
     }
     else if (action === "shoot") {
-      // Point-blank fire is allowed. The gun-in-the-face penalty used
-      // to be a hard 'too close' lockout — now closing simply trades
-      // ranged accuracy for melee bonuses. Firing at close auto-hits
-      // (no miss roll) and an aimed shot at close becomes a guaranteed
-      // headshot with full stacking — that's the payoff for keeping
-      // aim alive through a grab.
+      // Point-blank fire is allowed when YOU closed the gap — you can
+      // still bring the gun up. But if the enemy has you in a grab
+      // (heldDown), the gun is pinned. You have to BREAK first.
+      if (state.heldDown) {
+        Game.toast("Pinned — break the grip first.");
+        Sound.play("drySnap");
+        return;
+      }
       state.counterReady = false;
       s.ammo -= 1;
       Sound.play("gunshot");
