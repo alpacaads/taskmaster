@@ -637,16 +637,10 @@ window.Combat = (function () {
     if (state.enemyBracing) {
       return { kind: "reload", label: "🛡 BRACED" };
     }
-    if (state.range === "close") {
-      const e = state.enemy;
-      // Only show a chip when the ENEMY pulled you close — that
-      // changes the rules (gun useless, toxic-aura ticking). If the
-      // player chose to close to swing, no chip at all.
-      if (state.heldDown) {
-        return { kind: "telegraph", label: e.human ? "🤜 IN YOUR FACE" : "🤝 HOLDING YOU DOWN" };
-      }
-      return null;
-    }
+    // Close-range states (heldDown / IN MELEE) used to surface here as
+    // a big text chip; the GRIP / PINNED badges + dark vignette FX
+    // already cover them, so we leave the headline chip empty.
+    if (state.range === "close") return null;
     // Generic 'status' slot: future effects (stunned, bleeding, etc.)
     // can push labels onto state.enemy.statusEffects and they'll show
     // here without more plumbing.
