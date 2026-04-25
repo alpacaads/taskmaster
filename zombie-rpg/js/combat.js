@@ -834,7 +834,10 @@ window.Combat = (function () {
     // The dedicated Strike slot is gone — close-range melee now lives in
     // the Close/Strike toggle above.
     if (meleeBtn) meleeBtn.hidden = true;
-    if (fireBtn) fireBtn.disabled = !!isClose;
+    // Fire stays enabled at close range — point blank shots are now
+    // valid (auto-hit, headshot if aim was set). Disabled only by the
+    // ammo / weapon checks the act() handler runs anyway.
+    if (fireBtn) fireBtn.disabled = false;
     if (aimBtnEl) {
       const s = Game.state;
       if (isClose) {
@@ -1021,16 +1024,17 @@ window.Combat = (function () {
       refreshCombatStatus();
     }
     else if (action === "shoot") {
-      // At close range the gun won't come up — they're too in your
-      // face. You have to break the distance or swing.
-      if (state.range === "close") {
-        Game.toast("Too close — swap to melee.");
-        return;
-      }
+      // Point-blank fire is allowed. The gun-in-the-face penalty used
+      // to be a hard 'too close' lockout — now closing simply trades
+      // ranged accuracy for melee bonuses. Firing at close auto-hits
+      // (no miss roll) and an aimed shot at close becomes a guaranteed
+      // headshot with full stacking — that's the payoff for keeping
+      // aim alive through a grab.
       state.counterReady = false;
       s.ammo -= 1;
       Sound.play("gunshot");
       gunFlash();
+      const pointBlank = state.range === "close";
       // Aimed shot — guaranteed crit, +3 damage. Consumes aimReady.
       const aimed = !!state.aimReady;
       state.aimReady = false;
@@ -1052,17 +1056,17 @@ window.Combat = (function () {
           return;
         }
       }
-      // Aimed shots and interrupts always land. Otherwise the speed-2
-      // enemies (bandits, runners) still have their miss roll, and
-      // 'shaky' / 'panicked' states drop your accuracy further.
+      // Aimed shots, interrupts, and point-blank shots always land.
+      // Otherwise the speed-2 enemies (bandits, runners) still have
+      // their miss roll, and 'shaky' / 'panicked' states drop accuracy.
       let baseHit = state.enemy.speed === 2 ? 0.75 : 0.9;
       baseHit -= (state.enemy.shaky || 0);          // hard to shoot someone you knew
       // Smart human enemies (bandits) duck and weave at range too —
       // their dodge stat used to only matter for melee. Aimed shots and
       // telegraph-interrupts still bypass — those are guaranteed crits.
-      if (!aimed && !interrupted) baseHit -= (state.enemy.dodge || 0);
+      if (!aimed && !interrupted && !pointBlank) baseHit -= (state.enemy.dodge || 0);
       if (state.playerPanicked) baseHit -= 0.25;    // runner bit scared you
-      const hit = aimed || interrupted || Math.random() < Math.max(0.2, baseHit);
+      const hit = aimed || interrupted || pointBlank || Math.random() < Math.max(0.2, baseHit);
       state.playerPanicked = false; // consumed either way
       if (!hit) {
         log("The shot misses. The sound draws more attention.", "info");
@@ -1072,24 +1076,30 @@ window.Combat = (function () {
         const weaponBonus = s.bestRanged ? s.bestRanged.bonus : 0;
         const aimBonus = aimed ? 3 : 0;
         const interruptBonus = interrupted ? 2 : 0;
-        // Aimed shots + interrupts = headshots. Big bonus on armoured
-        // enemies (abomination, traitor). Otherwise small-arms resist
-        // shaves some damage off the bullet.
-        const headshot = (aimed || interrupted) ? (state.enemy.headshotBonus || 0) : 0;
+        // Point-blank doubles down: aimed-at-close = guaranteed headshot
+        // with the headshot bonus on top + a +2 muzzle-contact bump.
+        // Unaimed point-blank still gets the headshot bonus (the gun is
+        // pressed against them) but no +2 — it's a panic shot, not the
+        // sniper-grade execution.
+        const isHeadshot = aimed || interrupted || pointBlank;
+        const headshot = isHeadshot ? (state.enemy.headshotBonus || 0) : 0;
+        const muzzleContact = (pointBlank && aimed) ? 2 : 0;
         const armour = state.enemy.smallArmsResist || 0;
-        let dmg = baseRoll + weaponBonus + noraBonus() + aimBonus + interruptBonus + headshot;
+        let dmg = baseRoll + weaponBonus + noraBonus() + aimBonus + interruptBonus + headshot + muzzleContact;
         dmg = Math.max(1, dmg - armour);
         if (state.enemyBracing) { dmg = Math.max(1, Math.floor(dmg / 2)); state.enemyBracing = false; }
         state.enemy.hp -= dmg;
         const weaponPhr = weaponPhrase(s.bestRanged ? s.bestRanged.name : "Handgun");
         let line;
-        if (aimed) line = `The sight settles. ${weaponPhr} speaks once. CRITICAL ${dmg}.`;
-        else if (interrupted) line = `You catch him mid-draw — ${weaponPhr} puts him on the ground. ${dmg} damage.`;
-        else line = `You fire ${weaponPhr} — ${dmg} damage.`;
-        log(line, (aimed || interrupted) ? "crit" : "hero");
-        floatDamage(dmg, (aimed || interrupted) ? "crit" : null);
+        if (aimed && pointBlank) line = `Muzzle to the temple. ${weaponPhr} fires — HEADSHOT ${dmg}.`;
+        else if (aimed)          line = `The sight settles. ${weaponPhr} speaks once. CRITICAL ${dmg}.`;
+        else if (pointBlank)     line = `Point blank. ${weaponPhr} barks against its skull — ${dmg} damage.`;
+        else if (interrupted)    line = `You catch him mid-draw — ${weaponPhr} puts him on the ground. ${dmg} damage.`;
+        else                     line = `You fire ${weaponPhr} — ${dmg} damage.`;
+        log(line, (aimed || interrupted || pointBlank) ? "crit" : "hero");
+        floatDamage(dmg, (aimed || interrupted || pointBlank) ? "crit" : null);
         hitFlash();
-        spawnMark((aimed || interrupted) ? "slashCrit" : "hit");
+        spawnMark((aimed || interrupted || pointBlank) ? "slashCrit" : "hit");
       }
       refreshCombatStatus();
     }
