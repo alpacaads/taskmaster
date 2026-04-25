@@ -541,9 +541,17 @@ window.Combat = (function () {
     const descEl = document.getElementById("enemy-desc");
     if (descEl) descEl.textContent = state.enemy.desc || "";
     const chEl = document.getElementById("combat-chapter");
-    if (chEl) chEl.textContent = state.totalWaves > 1
-      ? `WAVE ${state.waveIndex} / ${state.totalWaves}`
-      : "CONTACT";
+    if (chEl) {
+      // Only useful when there's actually a wave count to show.
+      // Otherwise hide it so the slug bar isn't cluttered.
+      if (state.totalWaves > 1) {
+        chEl.textContent = `WAVE ${state.waveIndex} / ${state.totalWaves}`;
+        chEl.hidden = false;
+      } else {
+        chEl.textContent = "";
+        chEl.hidden = true;
+      }
+    }
 
     const logEl = document.getElementById("combat-log");
     logEl.innerHTML = "";
@@ -629,13 +637,13 @@ window.Combat = (function () {
     }
     if (state.range === "close") {
       const e = state.enemy;
-      // Only show the grapple chip when the ENEMY pulled you close.
-      // If the player chose to close (for melee advantage), they aren't
-      // being held down — show a neutral melee chip instead.
+      // Only show a chip when the ENEMY pulled you close — that
+      // changes the rules (gun useless, toxic-aura ticking). If the
+      // player chose to close to swing, no chip at all.
       if (state.heldDown) {
         return { kind: "telegraph", label: e.human ? "🤜 IN YOUR FACE" : "🤝 HOLDING YOU DOWN" };
       }
-      return { kind: "fx", label: "🔪 IN MELEE" };
+      return null;
     }
     // Generic 'status' slot: future effects (stunned, bleeding, etc.)
     // can push labels onto state.enemy.statusEffects and they'll show
@@ -1876,9 +1884,17 @@ window.Combat = (function () {
     if (descEl) descEl.textContent = state.enemy.desc || "";
     setCombatBackdrop(nextType);
     const chEl = document.getElementById("combat-chapter");
-    if (chEl) chEl.textContent = state.totalWaves > 1
-      ? `WAVE ${state.waveIndex} / ${state.totalWaves}`
-      : "CONTACT";
+    if (chEl) {
+      // Only useful when there's actually a wave count to show.
+      // Otherwise hide it so the slug bar isn't cluttered.
+      if (state.totalWaves > 1) {
+        chEl.textContent = `WAVE ${state.waveIndex} / ${state.totalWaves}`;
+        chEl.hidden = false;
+      } else {
+        chEl.textContent = "";
+        chEl.hidden = true;
+      }
+    }
     refreshHud();
     updateEnemyHp();
     refreshCombatStatus();
