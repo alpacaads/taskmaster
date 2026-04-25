@@ -405,7 +405,19 @@ window.Sound = (function () {
     audioServerProbed[slot] = true;
     const url = "audio/" + slot + ".mp3";
     fetch(url, { method: "HEAD", cache: "no-store" })
-      .then(r => { audioServerUrl[slot] = r.ok ? url : false; })
+      .then(r => {
+        audioServerUrl[slot] = r.ok ? url : false;
+        // Race fix — if this slot is for the music track currently
+        // playing procedurally (because the probe wasn't resolved
+        // when playMusic() ran), swap to the now-confirmed override.
+        if (r.ok && musicTrack && slot === "music_" + musicTrack) {
+          // Kill procedural timers without touching musicTrack so
+          // playOverride can pick up where the procedural left off.
+          musicTimers.forEach(t => clearInterval(t));
+          musicTimers = [];
+          playOverride(slot, { loop: true, volume: 0.55 });
+        }
+      })
       .catch(() => { audioServerUrl[slot] = false; });
   }
   function resolveOverrideUrl(slot) {
@@ -762,6 +774,20 @@ window.Sound = (function () {
     document.addEventListener("visibilitychange", () => {
       if (document.visibilityState === "visible") unlock();
     });
+    // Probe server audio URLs at DOMContentLoaded — HEAD requests
+    // don't need a user gesture, so by the time the player taps the
+    // title screen every override URL is already resolved. Without
+    // this, the very first playMusic("title") fires before its probe
+    // returns and falls through to the procedural pad.
+    const earlyProbe = () => {
+      preProbeFired = true;
+      PRE_PROBE_SLOTS.forEach(probeServerAudio);
+    };
+    if (document.readyState === "loading") {
+      document.addEventListener("DOMContentLoaded", earlyProbe, { once: true });
+    } else {
+      earlyProbe();
+    }
   }
 
   // Pick the right firearm sound for the equipped weapon. Falls back
