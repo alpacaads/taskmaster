@@ -437,10 +437,6 @@ window.Combat = (function () {
   function start(config) {
     const def = ENEMIES[config.enemy];
     if (!def) { console.error("Unknown enemy", config.enemy); return; }
-    // Seed per-ally HP/ammo pools so they have something to lose
-    // this fight. Each ally carries their state between fights, so
-    // a wounded Ren stays wounded until healed out of combat.
-    ensureAllyState();
 
     // Risky encounters (story choices tagged RISKY or explicit risk:true)
     // scale the enemy up — +1 to both HP and each damage bound. Story
@@ -519,6 +515,13 @@ window.Combat = (function () {
       renStamSaveUsed: false,
       startMs: Date.now(),
     };
+
+    // Seed per-ally HP/ammo pools NOW — vegaPresent() and other
+    // presence checks read state.enemyId, which only just got set.
+    // Seeding before this assignment used last fight's enemy id and
+    // silently failed for state-dependent allies (Vega in the Calder
+    // fight), leaving them un-seeded → allyAlive() false → never fired.
+    ensureAllyState();
 
     const combatScreen = document.getElementById("combat-screen");
     document.getElementById("game-screen").classList.add("hidden");
