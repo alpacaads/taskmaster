@@ -1037,7 +1037,9 @@ window.Combat = (function () {
       }
       state.counterReady = false;
       s.ammo -= 1;
-      Sound.play("gunshot");
+      // Per-firearm shot sound — Sound.fire() picks the variant based
+      // on the equipped weapon name (revolver / rifle / pistol).
+      Sound.fire(s.bestRanged ? s.bestRanged.name : "");
       gunFlash();
       const pointBlank = state.range === "close";
       // Aimed shot — guaranteed crit, +3 damage. Consumes aimReady.
@@ -2384,7 +2386,8 @@ window.Combat = (function () {
         }
         log(line, "ally");
         Game.toast(outOfAmmo ? `👩‍🦰 Maya · knife · ${dmg}` : `👩‍🦰 Maya fires · ${dmg}`);
-        Sound.play(outOfAmmo ? "melee" : "gunshot");
+        // Maya carries a sidearm — pistol-class crack.
+        if (outOfAmmo) Sound.play("melee"); else Sound.fire("pistol");
         if (!outOfAmmo) gunFlash();
         spawnMark("hit");
         floatDamage(dmg);
@@ -2452,7 +2455,8 @@ window.Combat = (function () {
         }
         log(line, "ally");
         Game.toast(outOfAmmo ? `🧑‍⚕️ Ren · scalpel · ${dmg}` : `🧑‍⚕️ Ren fires · ${dmg}`);
-        Sound.play(outOfAmmo ? "melee" : "gunshot");
+        // Ren — medic's sidearm, pistol-class crack.
+        if (outOfAmmo) Sound.play("melee"); else Sound.fire("pistol");
         spawnMark("hit");
         floatDamage(dmg);
         updateEnemyHp();
@@ -2492,7 +2496,8 @@ window.Combat = (function () {
         }
         log(line, "ally");
         Game.toast(outOfAmmo ? `🫡 Vega · knife · ${dmg}` : `🫡 Vega fires · ${dmg}`);
-        Sound.play(outOfAmmo ? "melee" : "gunshot");
+        // Vega — bolt-action ranger rifle, deep boom + bolt-cycle clack.
+        if (outOfAmmo) Sound.play("melee"); else Sound.fire("rifle");
         if (!outOfAmmo) gunFlash();
         spawnMark("hit");
         floatDamage(dmg);

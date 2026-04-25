@@ -261,6 +261,63 @@ window.Sound = (function () {
       tone({ freq: 75, type: "sine", dur: 0.20, vol: 0.45, slideTo: 35, slideCurve: "exp" });
       noise({ dur: 0.30, cutoff: 500, q: 0.4, vol: 0.10, delay: 0.06, decay: 0.30 });
     },
+
+    // ---- Per-firearm shots ----
+    // Real-world layered construction: HF crack (supersonic gas snap)
+    // → mid snap → low body boom → tail. Autoloaders also play a
+    // mechanical slide/bolt cycle a beat after the shot. Pick via
+    // Sound.fire(weaponName) so the trigger wires to the equipped gun.
+
+    // Cho's .38 Special — short-barrel revolver. Sharp crack, healthy
+    // low thump, no slide cycle. Slightly longer reverb tail than a
+    // pistol because the cylinder gap leaks.
+    shotRevolver: () => {
+      if (!ensure() || muted) return;
+      noise({ dur: 0.012, cutoff: 3400, q: 0.6, vol: 0.55, type: "highpass", decay: 0.05 });
+      tone({ freq: 280, type: "sine", dur: 0.07,  vol: 0.42, slideTo: 90, slideCurve: "exp", attack: 0.001 });
+      tone({ freq: 70,  type: "sine", dur: 0.22,  vol: 0.50, slideTo: 28, slideCurve: "exp", attack: 0.001 });
+      noise({ dur: 0.34, cutoff: 460, q: 0.4, vol: 0.13, decay: 0.34, delay: 0.04 });
+    },
+
+    // Vega's Ranger Rifle — bolt-action .308-class. Heavier crack,
+    // deeper boom, long reverberant tail, distinct bolt-cycle clack
+    // ~700ms after the shot.
+    shotRifle: () => {
+      if (!ensure() || muted) return;
+      noise({ dur: 0.022, cutoff: 2700, q: 0.5, vol: 0.65, type: "highpass", decay: 0.06 });
+      tone({ freq: 200, type: "sine", dur: 0.10, vol: 0.50, slideTo: 60, slideCurve: "exp", attack: 0.001 });
+      tone({ freq: 50,  type: "sine", dur: 0.36, vol: 0.55, slideTo: 22, slideCurve: "exp", attack: 0.001 });
+      noise({ dur: 0.58, cutoff: 340, q: 0.3, vol: 0.16, decay: 0.58, delay: 0.06 });
+      // Bolt lift + pull (clack)
+      setTimeout(() => {
+        if (!ensure() || muted) return;
+        noise({ dur: 0.024, cutoff: 4000, q: 0.8, vol: 0.18, type: "highpass" });
+        tone({ freq: 820, type: "triangle", dur: 0.04, vol: 0.10 });
+      }, 700);
+      // Bolt forward + lock (chack)
+      setTimeout(() => {
+        if (!ensure() || muted) return;
+        noise({ dur: 0.030, cutoff: 3500, q: 0.7, vol: 0.16, type: "highpass" });
+        tone({ freq: 620, type: "triangle", dur: 0.05, vol: 0.09 });
+      }, 880);
+    },
+
+    // Generic semi-auto pistol — sharper than the revolver due to
+    // higher chamber pressure, slightly less low body, quick slide
+    // cycle ~60ms after the shot.
+    shotPistol: () => {
+      if (!ensure() || muted) return;
+      noise({ dur: 0.010, cutoff: 4100, q: 0.7, vol: 0.50, type: "highpass", decay: 0.04 });
+      tone({ freq: 240, type: "sine", dur: 0.06, vol: 0.40, slideTo: 90, slideCurve: "exp", attack: 0.001 });
+      tone({ freq: 80,  type: "sine", dur: 0.16, vol: 0.42, slideTo: 32, slideCurve: "exp", attack: 0.001 });
+      noise({ dur: 0.20, cutoff: 700, q: 0.4, vol: 0.10, decay: 0.20, delay: 0.03 });
+      setTimeout(() => {
+        if (!ensure() || muted) return;
+        noise({ dur: 0.015, cutoff: 5000, q: 1.0, vol: 0.10, type: "highpass" });
+        tone({ freq: 1200, type: "triangle", dur: 0.025, vol: 0.06 });
+      }, 60);
+    },
+
     drySnap: () => { // failed shot / dud — soft tick, no square buzz
       noise({ dur: 0.03, cutoff: 1800, q: 0.6, vol: 0.16 });
       tone({ freq: 200, type: "triangle", dur: 0.04, vol: 0.05 });
@@ -523,5 +580,14 @@ window.Sound = (function () {
     });
   }
 
-  return { init, play, setAmbience, stopAmbient, toggleMute, isMuted };
+  // Pick the right firearm sound for the equipped weapon. Falls back
+  // to the generic semi-auto pistol crack for anything unrecognized.
+  function fire(weaponName) {
+    const n = String(weaponName || "").toLowerCase();
+    if (n.includes("rifle")    || n.includes("ranger"))   return play("shotRifle");
+    if (n.includes(".38")      || n.includes("revolver")) return play("shotRevolver");
+    return play("shotPistol");
+  }
+
+  return { init, play, fire, setAmbience, stopAmbient, toggleMute, isMuted };
 })();
