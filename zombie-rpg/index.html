@@ -10,7 +10,7 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <title>Dead Light — A Zombie RPG</title>
-  <link rel="stylesheet" href="css/style.css?v=217" />
+  <link rel="stylesheet" href="css/style.css?v=218" />
 </head>
 <body>
 
@@ -20,7 +20,7 @@
     <div id="title-screen" class="screen">
       <div class="title-bg">
         <img class="title-image" id="title-image" alt=""
-             src="images/title.jpg?v=217"
+             src="images/title.jpg?v=218"
              onerror="this.closest('.title-bg').classList.add('no-image')" />
         <div class="title-vignette"></div>
       </div>
@@ -102,7 +102,13 @@
 
       <div class="combat-allies" id="combat-allies"></div>
 
+      <!-- Enemy status icons (left side, mirrors ally cards on right) -->
+      <div id="enemy-status-badges" class="status-strip enemy-strip" hidden></div>
+
       <div class="combat-log" id="combat-log"></div>
+
+      <!-- Player buffs / debuffs — narrow strip above the hero bars -->
+      <div id="player-status-badges" class="status-strip player-strip" hidden></div>
 
       <div class="combat-hero">
         <div class="hero-stat">
@@ -205,11 +211,11 @@
 
   </div>
 
-  <script src="js/sound.js?v=217"></script>
-  <script src="js/overrides.js?v=217"></script>
-  <script src="js/scenes.js?v=217"></script>
-  <script src="js/story.js?v=217"></script>
-  <script src="js/combat.js?v=217"></script>
-  <script src="js/game.js?v=217"></script>
+  <script src="js/sound.js?v=218"></script>
+  <script src="js/overrides.js?v=218"></script>
+  <script src="js/scenes.js?v=218"></script>
+  <script src="js/story.js?v=218"></script>
+  <script src="js/combat.js?v=218"></script>
+  <script src="js/game.js?v=218"></script>
 </body>
 </html>

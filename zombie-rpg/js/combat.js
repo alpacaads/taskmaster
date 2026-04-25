@@ -667,6 +667,55 @@ window.Combat = (function () {
     host.hidden = false;
   }
 
+  // ---- Status badges (left = enemy, bottom-strip = player) ----
+  // Multiple active flags surface as small pills so the player can read
+  // the full picture at a glance: enemy might be AIMED + GRIPPING you
+  // + spewing TOXIC fumes, all at once. Tone: 'threat' is bad for the
+  // player (red), 'edge' is good for the player (green).
+  function computeEnemyBadges() {
+    if (!state || !state.enemy || state.enemy.hp <= 0) return [];
+    const out = [];
+    if (state.interruptedEnemy)       out.push({ tone: "edge",   icon: "💢", label: "REELING" });
+    if (state.enemyStunnedFromBreak)  out.push({ tone: "edge",   icon: "😵", label: "STAGGERED" });
+    if (state.telegraphPending)       out.push({ tone: "threat", icon: "⚠",  label: "WIND-UP" });
+    if (state.enemyAimed)             out.push({ tone: "threat", icon: "🎯", label: "AIMED" });
+    if (state.enemyBracing)           out.push({ tone: "threat", icon: "🛡", label: "BRACED" });
+    if (state.heldDown)               out.push({ tone: "threat", icon: "🤝", label: "GRIP" });
+    if (state.range === "close" && state.enemy.toxic)
+                                      out.push({ tone: "threat", icon: "☣",  label: "TOXIC AURA" });
+    return out;
+  }
+  function computePlayerBadges() {
+    const s = Game.state;
+    if (!s || !state) return [];
+    const out = [];
+    if (state.aimReady)               out.push({ tone: "edge",   icon: "🎯", label: "AIMED" });
+    if (state.counterReady)           out.push({ tone: "edge",   icon: "🛡", label: "COUNTER" });
+    if (state.bracing)                out.push({ tone: "edge",   icon: "💪", label: "BRACED" });
+    if (state.heldDown)               out.push({ tone: "threat", icon: "🤝", label: "PINNED" });
+    if (state.playerPanicked)         out.push({ tone: "threat", icon: "😰", label: "PANIC" });
+    if (state.range === "close" && state.enemy && state.enemy.toxic)
+                                      out.push({ tone: "threat", icon: "☣",  label: "IN GAS" });
+    return out;
+  }
+  function renderStatusBadges() {
+    const escapeAttr = (s) => String(s).replace(/"/g, "&quot;");
+    const paint = (hostId, list) => {
+      const host = document.getElementById(hostId);
+      if (!host) return;
+      if (!list.length) { host.hidden = true; host.innerHTML = ""; return; }
+      host.innerHTML = list.map(b =>
+        `<span class="status-badge tone-${b.tone}" title="${escapeAttr(b.label)}">` +
+        `<span class="badge-icon">${b.icon}</span>` +
+        `<span class="badge-label">${b.label}</span>` +
+        `</span>`
+      ).join("");
+      host.hidden = false;
+    };
+    paint("enemy-status-badges",  computeEnemyBadges());
+    paint("player-status-badges", computePlayerBadges());
+  }
+
   // Status chip in the combat slug — 'AIMED' when next shot is primed,
   // '⚠ TELEGRAPHED' when the enemy is winding up (player should read
   // and decide). Also toggles the Aim button's availability.
@@ -747,6 +796,7 @@ window.Combat = (function () {
       }
     }
     renderEnemyStatus();
+    renderStatusBadges();
   }
 
   function refreshHud() {
