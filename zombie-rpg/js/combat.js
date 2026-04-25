@@ -42,7 +42,7 @@ window.Combat = (function () {
     // Mini-boss: the thing that was sealed inside the meat locker.
     // Mass of ruptured bodies fused together — slow, heavy, armoured,
     // but headshots (aimed) punch through.
-    freezer_abom: { name: "Meatlocker Abomination", art: "🧟💀", hp: 60, atk: [3, 5], speed: 1, desc: "Grown together in the cold. It shouldn't still be moving.", savageRate: 0.2, boss: true, smallArmsResist: 3, headshotBonus: 4, heavySwing: true, aggressive: 0.4, accuracy: 0.45 },
+    freezer_abom: { name: "Meatlocker Abomination", art: "🧟💀", hp: 60, atk: [3, 5], speed: 1, desc: "Grown together in the cold. It shouldn't still be moving.", savageRate: 0.2, boss: true, smallArmsResist: 3, headshotBonus: 4, heavySwing: true, aggressive: 0.4, accuracy: 0.45, breakStuns: true },
     // Calder turned — fast, sturdy, 9mm bounces off, but he's not quite
     // armoured against a crowbar to the skull.
     traitor:      { name: "Calder (Turned)", art: "🧟‍♂️", hp: 20, atk: [4, 6], speed: 2, desc: "Not Calder any more. Something wearing his face.", savageRate: 0.28, boss: true, smallArmsResist: 2, meleeVulnerable: 2, telegraphEvery: 4, aggressive: 0.4 },
@@ -996,9 +996,18 @@ window.Combat = (function () {
       if (state.range === "far") { Game.toast("Already at distance."); return; }
       state.aimReady = false;
       state.counterReady = false;
+      const wasHeld = state.heldDown;
       state.range = "far";
       state.heldDown = false;
-      log("You shove off, put distance back in.", "info");
+      // Lumbering bosses (the abomination) lose their grip and a beat
+      // when you tear free — gives the player a real out from the grab,
+      // otherwise the chip-damage aura makes the fight pure RNG.
+      if (wasHeld && state.enemy && state.enemy.breakStuns) {
+        state.enemyStunnedFromBreak = true;
+        log(`You wrench free of ${state.enemy.name}'s grip — it stumbles, off-balance.`, "info");
+      } else {
+        log("You shove off, put distance back in.", "info");
+      }
       Sound.play("flee");
       // A small parting-shot bite is baked into the enemyTurn that
       // follows (they swing as you retreat). No special damage here.
@@ -1255,6 +1264,22 @@ window.Combat = (function () {
       state.interruptedEnemy = false;
       state.telegraphPending = false;
       log(`${e.name} reels from the blow — no shot from him this turn.`, "info");
+      Sound.play("brace");
+      refreshCombatStatus();
+      companionTurn();
+      state.turn += 1;
+      renderAllies();
+      return;
+    }
+
+    // Break-stun payoff — heavy bosses lose their next turn after the
+    // player tears out of their grip. Toxic aura still doesn't tick
+    // here because we already shifted to far range in the break action.
+    if (state.enemyStunnedFromBreak) {
+      state.enemyStunnedFromBreak = false;
+      state.telegraphPending = false;
+      state.enemyAimed = false;
+      log(`${e.name} staggers, trying to find you in the dark — no swing this turn.`, "info");
       Sound.play("brace");
       refreshCombatStatus();
       companionTurn();
@@ -1806,6 +1831,7 @@ window.Combat = (function () {
     state.turn = 0;
     state.range = "far"; // new wave — new fighter to close on
     state.heldDown = false;
+    state.enemyStunnedFromBreak = false;
     // Breather: small restore between waves. Crucial — without it you
     // get whittled down over 10 enemies and there's no answer.
     const s = Game.state;
