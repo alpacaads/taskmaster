@@ -882,6 +882,10 @@ window.Combat = (function () {
   // ---------- player turn ----------
   function act(action) {
     if (!state) return;
+    // Reactive QTE in progress — only the reaction button accepts
+    // input. Drop everything else so a fast finger can't shoot through
+    // a dodge/break window.
+    if (state.reaction) return;
     const s = Game.state;
 
     if (action === "shoot" && !s.bestRanged) { Game.toast("No firearm"); Sound.play("drySnap"); return; }
@@ -1346,6 +1350,75 @@ window.Combat = (function () {
     setTimeout(() => el.classList.remove("muzzle-flash"), 260);
   }
 
+  // ---------- Reactive QTE (Brace slot transforms into a timed dodge
+  // or break button). Triggered when the enemy initiates a dangerous
+  // move (lurch / pin). Player has `seconds` to click; otherwise the
+  // enemy's move resolves at full effect. Other action buttons are
+  // locked while a reaction is pending so the player can't shoot
+  // through it. ----
+  function promptReaction(opts) {
+    const { kind, seconds, label, icon, onSuccess, onFail } = opts;
+    if (!state) { onFail && onFail(); return; }
+    if (state.reaction) { onFail && onFail(); return; } // one at a time
+    const braceBtn = document.querySelector(".combat-btn[onclick*=\"'brace'\"]");
+    if (!braceBtn) { onFail && onFail(); return; }
+    const allBtns = Array.from(document.querySelectorAll(".combat-btn"));
+    const cachedDisabled = allBtns.map(b => b.disabled);
+    const cachedHTML = braceBtn.innerHTML;
+    const cachedOnClick = braceBtn.getAttribute("onclick");
+
+    // Lock every other action button while the timer runs.
+    allBtns.forEach(b => { if (b !== braceBtn) b.disabled = true; });
+
+    let remaining = seconds;
+    const drawButton = () => {
+      braceBtn.innerHTML =
+        `<span class="reaction-icon">${icon}</span>` +
+        `<span class="reaction-count">${remaining}</span>` +
+        `<span class="label">${label}</span>`;
+    };
+    drawButton();
+    braceBtn.classList.add("combat-btn-react");
+    braceBtn.setAttribute("onclick", "Combat.reactNow()");
+
+    let handle = null;
+    const cleanup = (succeeded, skipCallbacks) => {
+      if (handle) { clearInterval(handle); handle = null; }
+      braceBtn.classList.remove("combat-btn-react");
+      braceBtn.innerHTML = cachedHTML;
+      braceBtn.setAttribute("onclick", cachedOnClick);
+      allBtns.forEach((b, i) => { b.disabled = cachedDisabled[i]; });
+      if (state) state.reaction = null;
+      refreshCombatStatus();
+      if (skipCallbacks) return;
+      if (succeeded) onSuccess && onSuccess();
+      else onFail && onFail();
+    };
+
+    state.reaction = {
+      kind,
+      resolve: (ok) => cleanup(ok, false),
+      abort:   ()   => cleanup(false, true),
+    };
+    Sound.play("tense");
+
+    handle = setInterval(() => {
+      remaining -= 1;
+      if (remaining <= 0) {
+        cleanup(false);
+        return;
+      }
+      drawButton();
+    }, 1000);
+  }
+
+  // Public hook: clicked the reaction button in time.
+  function reactNow() {
+    if (state && state.reaction && state.reaction.resolve) {
+      state.reaction.resolve(true);
+    }
+  }
+
   // ---------- enemy turn ----------
   function enemyTurn() {
     if (!state) return;
@@ -1392,6 +1465,65 @@ window.Combat = (function () {
       companionTurn();
       state.turn += 1;
       renderAllies();
+      return;
+    }
+
+    // Pin reaction — if the enemy still has you in their grip at the
+    // start of their turn, give the player a 3s window to tear free.
+    // Beat the timer: clean break to far range, no damage. Miss it:
+    // they get a free close-range bite on top of any toxic tick.
+    if (state.heldDown && state.range === "close") {
+      log(`${e.name} bears down — BREAK FREE!`, "warn");
+      promptReaction({
+        kind: "break_pin",
+        seconds: 3,
+        icon: "🤜", label: "BREAK",
+        onSuccess: () => {
+          log(`You wrench out of ${e.name}'s grip — back to range.`, "info");
+          Sound.play("flee");
+          state.range = "far";
+          state.heldDown = false;
+          refreshCombatStatus();
+          companionTurn();
+          state.turn += 1;
+          renderAllies();
+        },
+        onFail: () => {
+          // Toxic tick first (you're still in the cloud), then the bite.
+          if (e.toxic && s.hp > 0) {
+            const tick = e.toxic;
+            s.hp -= tick;
+            log(`The cloud sears your lungs — ${tick} damage.`, "enemy");
+            Sound.play("damage");
+            floatDamage(tick);
+            refreshHud();
+            if (s.hp <= 0) {
+              log("You collapse, choking.", "crit");
+              Sound.play("death");
+              setTimeout(() => end("lose"), 900);
+              return;
+            }
+          }
+          const bite = rand(2, 4);
+          s.hp -= bite;
+          log(`${e.name} drives down — ${bite} damage. Still pinned.`, "enemy");
+          Sound.play("damage");
+          spawnEnemyBlood();
+          floatDamage(bite);
+          screenShake();
+          refreshHud();
+          if (s.hp <= 0) {
+            log("You collapse, pinned.", "crit");
+            Sound.play("death");
+            setTimeout(() => end("lose"), 900);
+            return;
+          }
+          refreshCombatStatus();
+          companionTurn();
+          state.turn += 1;
+          renderAllies();
+        },
+      });
       return;
     }
 
@@ -1466,34 +1598,56 @@ window.Combat = (function () {
     // to breathe before they commit to closing — and doesn't fire
     // if already close.
     if (state.range === "far" && e.aggressive && state.turn >= 2 && Math.random() < e.aggressive) {
-      state.range = "close";
-      state.heldDown = true;
-      if (e.human) {
-        const clinchDmg = Math.max(1, rand(1, 2));
-        s.hp -= clinchDmg;
-        log(`${e.name} drives in close and swings — ${clinchDmg} damage. Gun's useless at this range.`, "enemy");
-        Sound.play("damage");
-        spawnEnemyBlood();
-        floatDamage(clinchDmg);
-        screenShake();
-        refreshHud();
-        if (s.hp <= 0) {
-          log("You collapse.", "crit");
-          Sound.play("death");
-          setTimeout(() => end("lose"), 900);
-          return;
-        }
-      } else {
-        log(`${e.name} lurches in, grabs at you. You can't bring the gun up.`, "enemy");
-        Sound.play("groan");
-      }
-      // Close-related windows close — telegraph / aim can't carry.
-      state.telegraphPending = false;
-      state.enemyAimed = false;
-      refreshCombatStatus();
-      companionTurn();
-      state.turn += 1;
-      renderAllies();
+      // Enemy is committing to close the gap. Player gets a 3s dodge
+      // window — beat the timer and the lurch fails entirely; let it
+      // expire and they land the grab + clinch.
+      log(`${e.name} coils to lunge — DODGE!`, "warn");
+      promptReaction({
+        kind: "dodge_lurch",
+        seconds: 3,
+        icon: "🤸", label: "DODGE",
+        onSuccess: () => {
+          log(`You roll wide — ${e.name} closes on empty air.`, "info");
+          Sound.play("dodge");
+          spawnMark("miss");
+          // Lurch failed. Telegraph / aim windows close; turn ends clean.
+          state.telegraphPending = false;
+          state.enemyAimed = false;
+          refreshCombatStatus();
+          companionTurn();
+          state.turn += 1;
+          renderAllies();
+        },
+        onFail: () => {
+          state.range = "close";
+          state.heldDown = true;
+          if (e.human) {
+            const clinchDmg = Math.max(1, rand(1, 2));
+            s.hp -= clinchDmg;
+            log(`${e.name} drives in close and swings — ${clinchDmg} damage. Gun's useless at this range.`, "enemy");
+            Sound.play("damage");
+            spawnEnemyBlood();
+            floatDamage(clinchDmg);
+            screenShake();
+            refreshHud();
+            if (s.hp <= 0) {
+              log("You collapse.", "crit");
+              Sound.play("death");
+              setTimeout(() => end("lose"), 900);
+              return;
+            }
+          } else {
+            log(`${e.name} lurches in, grabs at you. You can't bring the gun up.`, "enemy");
+            Sound.play("groan");
+          }
+          state.telegraphPending = false;
+          state.enemyAimed = false;
+          refreshCombatStatus();
+          companionTurn();
+          state.turn += 1;
+          renderAllies();
+        },
+      });
       return;
     }
 
@@ -1905,6 +2059,12 @@ window.Combat = (function () {
   // ---------- end ----------
   function end(result) {
     const cfg = state;
+    // Kill any in-flight reactive QTE so its 1s tick doesn't fire
+    // after the combat screen has been wiped. abort() restores DOM
+    // without invoking onSuccess/onFail (they'd touch a null state).
+    if (cfg && cfg.reaction && cfg.reaction.abort) {
+      try { cfg.reaction.abort(); } catch (_) {}
+    }
     state = null; // lock out further player input immediately
     // Hold on the combat screen for a beat so the final log line and
     // any loot/buff/trust toasts are actually readable before we wipe
@@ -2047,7 +2207,7 @@ window.Combat = (function () {
   }
 
   return {
-    start, act, throwGrenade, consumeItemTurn,
+    start, act, throwGrenade, consumeItemTurn, reactNow,
     // Is a combat instance currently active? Used by the inventory
     // modal's grenade-Use button to gate the throw.
     isActive: () => !!(state && state.enemy && state.enemy.hp > 0),
