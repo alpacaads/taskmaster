@@ -2684,7 +2684,6 @@ window.Combat = (function () {
       setTimeout(() => advanceToNextWave(), 950);
       return;
     }
-    Sound.play("victory");
     setTimeout(() => end("win"), 950);
   }
 
