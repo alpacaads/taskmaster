@@ -5,63 +5,62 @@
 // (index.html) and the admin (admin.html) call loadAll() to populate an
 // in-memory { sceneId: objectURL } map. scenes.js reads that map
 // synchronously at render time.
-window.Overrides = (function () {
-  const DB_NAME = "dead-light-overrides";
-  const STORE = "images";
-  const VERSION = 1;
+//
+// Bumped to DB version 2 to add a second 'audio' store (same shape) for
+// the audio admin tab. window.AudioOverrides exposes the parallel API.
+const __DL_DB_NAME = "dead-light-overrides";
+const __DL_DB_VERSION = 2;
+const __DL_IMG_STORE = "images";
+const __DL_AUDIO_STORE = "audio";
 
-  function openDB() {
-    return new Promise((resolve, reject) => {
-      const req = indexedDB.open(DB_NAME, VERSION);
-      req.onupgradeneeded = () => {
-        const db = req.result;
-        if (!db.objectStoreNames.contains(STORE)) db.createObjectStore(STORE);
-      };
-      req.onsuccess = () => resolve(req.result);
-      req.onerror = () => reject(req.error);
-    });
-  }
+function __dlOpenDB() {
+  return new Promise((resolve, reject) => {
+    const req = indexedDB.open(__DL_DB_NAME, __DL_DB_VERSION);
+    req.onupgradeneeded = () => {
+      const db = req.result;
+      if (!db.objectStoreNames.contains(__DL_IMG_STORE))   db.createObjectStore(__DL_IMG_STORE);
+      if (!db.objectStoreNames.contains(__DL_AUDIO_STORE)) db.createObjectStore(__DL_AUDIO_STORE);
+    };
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = () => reject(req.error);
+  });
+}
 
+// Factory — same Promise-based API for both stores. globalKey is the
+// window.* property the loaded {id: objectURL} map is mirrored to so
+// game-side code can read it synchronously.
+function __dlMakeOverrideStore(storeName, globalKey) {
   function tx(mode, fn) {
-    return openDB().then(db => new Promise((resolve, reject) => {
-      const t = db.transaction(STORE, mode);
-      const store = t.objectStore(STORE);
+    return __dlOpenDB().then(db => new Promise((resolve, reject) => {
+      const t = db.transaction(storeName, mode);
+      const store = t.objectStore(storeName);
       const result = fn(store);
       t.oncomplete = () => resolve(result && result.__value);
       t.onerror = () => reject(t.error);
       t.onabort = () => reject(t.error);
     }));
   }
-
   function save(id, blob) {
     return tx("readwrite", store => { store.put(blob, id); });
   }
-
-  // Targeted refresh — updates the object URL for a single id without
-  // revoking every other URL on the page. Use this after save() so
-  // unrelated <img> elements don't end up pointing at a just-revoked
-  // blob (which browsers sometimes render as a stale neighbour image).
   function refreshOne(id, blob) {
     if (current[id]) {
       try { URL.revokeObjectURL(current[id]); } catch (e) {}
     }
     current[id] = URL.createObjectURL(blob);
-    window.__OVERRIDES = current;
+    window[globalKey] = current;
     return current[id];
   }
-
   function remove(id) {
     return tx("readwrite", store => { store.delete(id); });
   }
-
   function clear() {
     return tx("readwrite", store => { store.clear(); });
   }
-
   function list() {
-    return openDB().then(db => new Promise((resolve, reject) => {
-      const t = db.transaction(STORE, "readonly");
-      const store = t.objectStore(STORE);
+    return __dlOpenDB().then(db => new Promise((resolve, reject) => {
+      const t = db.transaction(storeName, "readonly");
+      const store = t.objectStore(storeName);
       const out = [];
       const req = store.openCursor();
       req.onsuccess = () => {
@@ -72,18 +71,14 @@ window.Overrides = (function () {
       req.onerror = () => reject(req.error);
     }));
   }
-
   function get(id) {
-    return openDB().then(db => new Promise((resolve, reject) => {
-      const t = db.transaction(STORE, "readonly");
-      const req = t.objectStore(STORE).get(id);
+    return __dlOpenDB().then(db => new Promise((resolve, reject) => {
+      const t = db.transaction(storeName, "readonly");
+      const req = t.objectStore(storeName).get(id);
       req.onsuccess = () => resolve(req.result || null);
       req.onerror = () => reject(req.error);
     }));
   }
-
-  // Populate a global map { id: objectURL } that scenes.js reads at render
-  // time. Old object URLs are revoked and replaced so repeated calls are safe.
   let current = {};
   function loadAll() {
     return list().then(items => {
@@ -94,13 +89,14 @@ window.Overrides = (function () {
       items.forEach(({ id, blob }) => {
         current[id] = URL.createObjectURL(blob);
       });
-      window.__OVERRIDES = current;
+      window[globalKey] = current;
       return current;
-    }).catch(() => (window.__OVERRIDES = current));
+    }).catch(() => (window[globalKey] = current));
   }
-
-  // Ensure a map exists even before loadAll resolves.
-  window.__OVERRIDES = current;
-
+  // Pre-seed empty map so game code can read it before loadAll resolves.
+  window[globalKey] = current;
   return { save, remove, clear, list, get, loadAll, refreshOne };
-})();
+}
+
+window.Overrides      = __dlMakeOverrideStore(__DL_IMG_STORE,   "__OVERRIDES");
+window.AudioOverrides = __dlMakeOverrideStore(__DL_AUDIO_STORE, "__AUDIO_OVERRIDES");

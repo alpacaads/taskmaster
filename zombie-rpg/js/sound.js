@@ -386,16 +386,55 @@ window.Sound = (function () {
     },
   };
 
+  // ---- Audio override playback ----
+  // window.__AUDIO_OVERRIDES is populated by AudioOverrides.loadAll()
+  // (overrides.js) — { slot: blobURL }. If a slot has an uploaded
+  // file, play that instead of the procedural cue. Music overrides
+  // loop; SFX overrides play once.
+  const audioPlayers = {}; // slot → reusable HTMLAudioElement
+  function playOverride(slot, opts) {
+    const o = opts || {};
+    const loop = !!o.loop;
+    const volume = typeof o.volume === "number" ? o.volume : 1;
+    if (!ensure() || muted) return false;
+    const map = window.__AUDIO_OVERRIDES;
+    if (!map || !map[slot]) return false;
+    let a = audioPlayers[slot];
+    if (!a || a.src !== map[slot]) {
+      if (a) { try { a.pause(); } catch (e) {} }
+      a = new Audio(map[slot]);
+      a.preload = "auto";
+      audioPlayers[slot] = a;
+    }
+    a.loop = loop;
+    a.volume = volume;
+    if (!loop) a.currentTime = 0;
+    try { a.play().catch(() => {}); } catch (e) {}
+    return true;
+  }
+  function stopOverride(slot) {
+    const a = audioPlayers[slot];
+    if (!a) return;
+    try { a.pause(); a.currentTime = 0; } catch (e) {}
+  }
+  function stopAllMusicOverrides() {
+    Object.keys(audioPlayers).forEach(s => {
+      if (s.startsWith("music_")) stopOverride(s);
+    });
+  }
+
   function play(name) {
     if (!ensure() || muted) return;
-    const fn = FX[name];
-    if (!fn) return;
     // Context may still be resuming after a tab-switch or first
     // gesture — queue the sound and let flushPending() pick it up.
     if (ctx.state !== "running") {
       pending.push(name);
       return;
     }
+    // Audio override file beats the procedural cue.
+    if (playOverride(name)) return;
+    const fn = FX[name];
+    if (!fn) return;
     try { fn(); } catch (e) { console.warn("sound", name, e); }
   }
 
@@ -410,6 +449,7 @@ window.Sound = (function () {
   function stopMusic() {
     musicTimers.forEach(t => clearInterval(t));
     musicTimers = [];
+    stopAllMusicOverrides();
     musicTrack = null;
   }
 
@@ -419,6 +459,8 @@ window.Sound = (function () {
     stopMusic();
     if (muted || !track) return;
     musicTrack = track;
+    // Audio override file beats the procedural pattern.
+    if (playOverride("music_" + track, { loop: true, volume: 0.55 })) return;
     if      (track === "combat")   startCombatTrack();
     else if (track === "romance")  startRomanceTrack();
     else if (track === "dialogue") startDialogueTrack();

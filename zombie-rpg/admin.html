@@ -577,6 +577,90 @@
     body.view-flow #grid { display: none; }
     body.view-flow #flow { display: block; }
     body.view-flow footer { display: none; }
+    body.view-audio #grid, body.view-audio #flow { display: none; }
+    body.view-audio #audio { display: block; }
+    body.view-audio footer { display: none; }
+    #audio { display: none; min-height: calc(100vh - 80px); }
+
+    /* ---- Audio admin ---- */
+    .audio-list {
+      max-width: 920px;
+      margin: 0 auto;
+      padding: 18px;
+      display: flex; flex-direction: column; gap: 8px;
+    }
+    .audio-section-head {
+      margin: 18px 0 4px;
+      padding: 8px 0;
+      border-bottom: 1px solid var(--border);
+      color: var(--accent-2);
+      font-size: 13px; letter-spacing: 3px; text-transform: uppercase;
+      font-weight: 700;
+    }
+    .audio-section-head:first-child { margin-top: 0; }
+    .audio-row {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 12px;
+      padding: 12px 14px;
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+    }
+    .audio-row.committed { border-left: 3px solid var(--accent); }
+    .audio-row.local-only { border-left: 3px solid var(--warn); }
+    .audio-row.empty { border-left: 3px solid var(--text-muted); }
+    .audio-row .audio-meta { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+    .audio-row .audio-name {
+      font-size: 14px; color: var(--text); font-weight: 700;
+      letter-spacing: 0.5px;
+    }
+    .audio-row .audio-id {
+      font-family: ui-monospace, "SF Mono", Menlo, monospace;
+      font-size: 11px; color: var(--text-muted); letter-spacing: 0.3px;
+    }
+    .audio-row .audio-desc {
+      font-size: 12px; color: var(--text-dim); line-height: 1.4;
+    }
+    .audio-row .audio-status {
+      font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase;
+      color: var(--text-muted); margin-top: 2px;
+    }
+    .audio-row .audio-status.local { color: var(--warn); }
+    .audio-row .audio-status.committed { color: var(--accent); }
+    .audio-row audio {
+      width: 100%; max-width: 360px;
+      margin-top: 6px;
+    }
+    .audio-row .audio-actions {
+      display: flex; flex-direction: column; gap: 6px;
+      align-items: stretch; min-width: 130px;
+    }
+    .audio-row .audio-actions button,
+    .audio-row .audio-actions label.upload-btn {
+      background: var(--panel-2); color: var(--text);
+      border: 1px solid var(--border); border-radius: 6px;
+      padding: 7px 12px; font-size: 12px; cursor: pointer;
+      text-align: center;
+      transition: background 120ms ease, border-color 120ms ease;
+    }
+    .audio-row .audio-actions button:hover,
+    .audio-row .audio-actions label.upload-btn:hover {
+      background: #2c3920; border-color: var(--accent);
+    }
+    .audio-row .audio-actions button.commit-btn {
+      background: var(--accent); color: #0b0f0a; border-color: var(--accent);
+      font-weight: 700;
+    }
+    .audio-row .audio-actions button.commit-btn:hover { background: var(--accent-2); }
+    .audio-row .audio-actions button.commit-btn[disabled] {
+      opacity: 0.4; cursor: not-allowed;
+    }
+    .audio-row .audio-actions button.danger {
+      background: transparent; color: var(--danger); border-color: var(--danger);
+    }
+    .audio-row .audio-actions input[type="file"] { display: none; }
+
     .view-toggle.active {
       background: var(--accent);
       color: #0b0f0a;
@@ -898,8 +982,9 @@
     <h1>🧟 SCENE ADMIN</h1>
     <span class="sub" id="count">…</span>
     <input type="search" id="search" placeholder="Filter scenes…" />
-    <button id="view-grid" class="view-toggle active" title="Scene cards grouped by chapter">🖼 Grid</button>
-    <button id="view-flow" class="view-toggle" title="Story flow — walk the choice graph from the start">🗺 Flow</button>
+    <button id="view-grid"  class="view-toggle active" title="Scene cards grouped by chapter">🖼 Grid</button>
+    <button id="view-flow"  class="view-toggle" title="Story flow — walk the choice graph from the start">🗺 Flow</button>
+    <button id="view-audio" class="view-toggle" title="Upload music + SFX overrides">🔊 Audio</button>
     <button id="commit-all" class="primary" title="Commit every override to the repo (main branch)">🚀 Commit all</button>
     <button id="refresh-thumbs" title="Re-fetch every image from the server">🔄 Refresh</button>
     <button id="download-all" title="Download all overrides as a single ZIP">⬇ ZIP</button>
@@ -933,6 +1018,7 @@
 
   <div class="grid" id="grid"></div>
   <div id="flow"></div>
+  <div id="audio"><div class="audio-list" id="audio-list"></div></div>
 
   <footer>
     <p><b>How to use:</b></p>
@@ -947,12 +1033,12 @@
   </footer>
 
   <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
-  <script src="js/overrides.js?v=239"></script>
-  <script src="js/scenes.js?v=239"></script>
+  <script src="js/overrides.js?v=240"></script>
+  <script src="js/scenes.js?v=240"></script>
   <!-- story.js is read-only here: we pull chapters / text / choices
        to annotate each scene card so the flow is legible without
        having to play through. -->
-  <script src="js/story.js?v=239"></script>
+  <script src="js/story.js?v=240"></script>
   <script>
     (async function () {
       const PROMPTS = (window.Scenes && window.Scenes.PROMPTS) || {};
@@ -1972,13 +2058,187 @@
       }
 
       function setView(which) {
-        document.body.classList.toggle("view-flow", which === "flow");
-        document.getElementById("view-grid").classList.toggle("active", which === "grid");
-        document.getElementById("view-flow").classList.toggle("active", which === "flow");
-        if (which === "flow") renderFlow();
+        document.body.classList.toggle("view-flow",  which === "flow");
+        document.body.classList.toggle("view-audio", which === "audio");
+        document.getElementById("view-grid").classList.toggle("active",  which === "grid");
+        document.getElementById("view-flow").classList.toggle("active",  which === "flow");
+        document.getElementById("view-audio").classList.toggle("active", which === "audio");
+        if (which === "flow")  renderFlow();
+        if (which === "audio") renderAudio();
       }
-      document.getElementById("view-grid").addEventListener("click", () => setView("grid"));
-      document.getElementById("view-flow").addEventListener("click", () => setView("flow"));
+      document.getElementById("view-grid").addEventListener("click",  () => setView("grid"));
+      document.getElementById("view-flow").addEventListener("click",  () => setView("flow"));
+      document.getElementById("view-audio").addEventListener("click", () => setView("audio"));
+
+      // ---------- Audio admin ----------
+      // One slot per cue. Categories show as section headers; each
+      // row is a self-contained file picker + audio preview + commit
+      // button. Files commit to zombie-rpg/audio/<id>.mp3.
+      const AUDIO_SLOTS = {
+        "Music (loops)": [
+          { id: "music_combat",   label: "Combat",   desc: "Slow horror dread, ~75 BPM. Loops." },
+          { id: "music_romance",  label: "Romance",  desc: "Soft pad, 60 BPM. Loops." },
+          { id: "music_dialogue", label: "Dialogue", desc: "Calm minor pad. Loops." },
+          { id: "music_tense",    label: "Tense",    desc: "Pre-combat dread, sub pulse. Loops." },
+          { id: "music_title",    label: "Title",    desc: "Brooding minor cycle. Loops." },
+        ],
+        "Firearms": [
+          { id: "shotPistol",   label: "Pistol shot",   desc: "Generic semi-auto crack." },
+          { id: "shotRevolver", label: "Revolver shot", desc: "Cho's .38 sharp report." },
+          { id: "shotRifle",    label: "Rifle shot",    desc: "Vega's bolt-action boom + bolt cycle." },
+        ],
+        "Zombie voices": [
+          { id: "groan",           label: "Walker groan",      desc: "Slow undead moan." },
+          { id: "runnerScream",    label: "Runner scream",     desc: "Sprinter snarl." },
+          { id: "bloaterGurgle",   label: "Bloater gurgle",    desc: "Wet bubbling." },
+          { id: "hunterSnarl",     label: "Hunter snarl",      desc: "Predator growl." },
+          { id: "abominationRoar", label: "Abomination roar",  desc: "Deep monstrous roar." },
+          { id: "calderGasp",      label: "Calder gasp",       desc: "Half-human turned voice." },
+        ],
+        "Death": [
+          { id: "argh",       label: "Zombie death rasp", desc: "Falling-pitch death breath." },
+          { id: "humanDeath", label: "Human death gasp",  desc: "Bandit / human last breath." },
+        ],
+        "Character voice lines (meet cards)": [
+          { id: "meet_maya_card",      label: "Meet Maya",          desc: "First-meet voice line." },
+          { id: "meet_ren_card",       label: "Meet Ren",           desc: "First-meet voice line." },
+          { id: "meet_vega_card",      label: "Meet Vega — gate",   desc: "Hostile first read." },
+          { id: "meet_vega_card_hero", label: "Meet Vega — hero",   desc: "Softer read after Nora rescue." },
+          { id: "meet_nora_card",      label: "Meet Nora",          desc: "Freezer voice line." },
+        ],
+      };
+      const AUDIO_PATH = "zombie-rpg/audio/"; // committed repo path
+
+      // Server-presence map: which slot ids exist as files in the repo.
+      // We probe each by HEAD request once per render so the badge
+      // accurately distinguishes 'committed already' vs 'local-only'.
+      const audioServerPresence = {};
+      async function probeAudioPresence(id) {
+        try {
+          const r = await fetch("audio/" + id + ".mp3", { method: "HEAD", cache: "no-store" });
+          audioServerPresence[id] = r.ok;
+        } catch (e) { audioServerPresence[id] = false; }
+      }
+
+      async function renderAudio() {
+        await Promise.resolve(); // let any in-flight loadAll settle
+        if (window.AudioOverrides) await window.AudioOverrides.loadAll();
+        // Probe server-side presence for slots we haven't checked.
+        const ids = [];
+        for (const sec of Object.keys(AUDIO_SLOTS)) {
+          AUDIO_SLOTS[sec].forEach(s => ids.push(s.id));
+        }
+        await Promise.all(ids
+          .filter(id => audioServerPresence[id] === undefined)
+          .map(probeAudioPresence));
+
+        const list = document.getElementById("audio-list");
+        list.innerHTML = "";
+        const localMap = window.__AUDIO_OVERRIDES || {};
+        for (const section of Object.keys(AUDIO_SLOTS)) {
+          const head = document.createElement("div");
+          head.className = "audio-section-head";
+          head.textContent = section;
+          list.appendChild(head);
+          for (const slot of AUDIO_SLOTS[section]) {
+            const row = document.createElement("div");
+            const localUrl = localMap[slot.id];
+            const onServer = audioServerPresence[slot.id];
+            const status = localUrl ? (onServer ? "committed" : "local") : "empty";
+            row.className = "audio-row " + (
+              status === "committed" ? "committed" :
+              status === "local"     ? "local-only" : "empty"
+            );
+            const previewSrc = localUrl
+              ? localUrl
+              : (onServer ? ("audio/" + slot.id + ".mp3") : "");
+            const previewHtml = previewSrc
+              ? `<audio controls preload="none" src="${previewSrc}"></audio>`
+              : `<div style="color:var(--text-muted);font-size:12px;font-style:italic;">No audio uploaded yet — procedural cue plays.</div>`;
+            const statusLabel =
+              status === "committed" ? '<span class="audio-status committed">✓ committed</span>' :
+              status === "local"     ? '<span class="audio-status local">● local only — not yet committed</span>' :
+                                       '<span class="audio-status">empty</span>';
+            row.innerHTML =
+              `<div class="audio-meta">` +
+                `<div class="audio-name">${slot.label}</div>` +
+                `<div class="audio-id">${slot.id}.mp3</div>` +
+                `<div class="audio-desc">${slot.desc}</div>` +
+                statusLabel +
+                previewHtml +
+              `</div>` +
+              `<div class="audio-actions">` +
+                `<label class="upload-btn" for="audio-up-${slot.id}">📁 Upload…</label>` +
+                `<input type="file" id="audio-up-${slot.id}" accept="audio/*,.mp3,.wav,.m4a,.ogg" />` +
+                (localUrl
+                  ? `<button class="commit-btn" data-action="commit-audio" data-id="${slot.id}">🚀 Commit</button>` +
+                    `<button class="danger" data-action="revert-audio" data-id="${slot.id}">Revert</button>`
+                  : "") +
+              `</div>`;
+            list.appendChild(row);
+            const fileInput = row.querySelector('input[type="file"]');
+            fileInput.addEventListener("change", () => onAudioPicked(slot.id, fileInput.files));
+          }
+        }
+      }
+
+      async function onAudioPicked(slotId, files) {
+        if (!files || files.length === 0) return;
+        const file = files[0];
+        if (!/^audio\//.test(file.type) && !/\.(mp3|wav|m4a|ogg)$/i.test(file.name)) {
+          toast("Pick an audio file (mp3 / wav / m4a / ogg).", "err");
+          return;
+        }
+        try {
+          await window.AudioOverrides.save(slotId, file);
+          await window.AudioOverrides.loadAll();
+          toast("Loaded " + slotId + " (preview only — Commit to push).", "ok");
+          renderAudio();
+        } catch (e) {
+          toast("Save failed: " + e.message, "err");
+        }
+      }
+
+      // Single delegated click handler attached once at startup —
+      // catches Commit / Revert clicks regardless of how many times
+      // the audio list re-renders.
+      document.getElementById("audio-list").addEventListener("click", (e) => {
+        const t = e.target;
+        if (!t.dataset || !t.dataset.action) return;
+        const id = t.dataset.id;
+        if (t.dataset.action === "commit-audio") commitAudio(id);
+        if (t.dataset.action === "revert-audio") revertAudio(id);
+      });
+
+      async function commitAudio(slotId) {
+        if (!GH.token) { toast("Add a GitHub token in Settings first.", "err"); return; }
+        const blob = await window.AudioOverrides.get(slotId);
+        if (!blob) { toast("No upload for " + slotId, "err"); return; }
+        try {
+          const commit = await GH.commitFiles(
+            [{ path: AUDIO_PATH + slotId + ".mp3", blob }],
+            "Update audio: " + slotId
+          );
+          audioServerPresence[slotId] = true;
+          // Bump the global cache-bust so the game re-fetches.
+          try { localStorage.setItem("dl_game_cache_bust", String(Date.now())); } catch (e) {}
+          toast("Committed " + slotId + " (" + commit.sha.slice(0, 7) + ").", "ok");
+          renderAudio();
+        } catch (e) {
+          toast("Commit failed: " + e.message, "err");
+        }
+      }
+
+      async function revertAudio(slotId) {
+        try {
+          await window.AudioOverrides.remove(slotId);
+          await window.AudioOverrides.loadAll();
+          toast("Cleared local " + slotId + ".", "ok");
+          renderAudio();
+        } catch (e) {
+          toast("Revert failed: " + e.message, "err");
+        }
+      }
 
       // Render grid with section headers.
       function renderGrid(idsInOrder) {
