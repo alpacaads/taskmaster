@@ -1225,11 +1225,13 @@ window.Combat = (function () {
       }
     }
 
-    // Passive stamina regen inside combat: if your action didn't cost
-    // stam (shoot / aim / flee / pass), you catch a breath. Capped at
-    // stamMax. Makes long fights survivable without making brace free.
-    const breathingActions = new Set(["shoot", "aim", "flee"]);
-    if (breathingActions.has(action) && s.stam < s.stamMax) {
+    // Passive stamina regen inside combat: any action that didn't
+    // already cost stam earns a +1 breath. Melee and Brace bleed the
+    // bar; everything else (shoot, aim, fire-point-blank, flee, close,
+    // break) hands a tick back. Bandits force a lot of Brace turns to
+    // interrupt their telegraphs, so without this you slowly starve.
+    const stamCostingActions = new Set(["melee", "brace"]);
+    if (!stamCostingActions.has(action) && s.stam < s.stamMax) {
       s.stam = Math.min(s.stamMax, s.stam + 1);
     }
 
@@ -1610,6 +1612,7 @@ window.Combat = (function () {
           flashCenterText("BROKE FREE!", "edge");
           state.range = "far";
           state.heldDown = false;
+          if (s.stam < s.stamMax) s.stam += 1; // earned breath
           refreshCombatStatus();
           companionTurn();
           state.turn += 1;
@@ -1747,6 +1750,7 @@ window.Combat = (function () {
           // Lurch failed. Telegraph / aim windows close; turn ends clean.
           state.telegraphPending = false;
           state.enemyAimed = false;
+          if (s.stam < s.stamMax) s.stam += 1; // earned breath
           refreshCombatStatus();
           companionTurn();
           state.turn += 1;
@@ -1805,6 +1809,7 @@ window.Combat = (function () {
           flashCenterText("DODGED!", "edge");
           state.enemyAimed = false;
           state.telegraphPending = false;
+          if (s.stam < s.stamMax) s.stam += 1; // earned breath
           refreshCombatStatus();
           companionTurn();
           state.turn += 1;
