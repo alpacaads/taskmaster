@@ -1410,6 +1410,79 @@ html, body {
 }
 .combat-btn:hover .label { color: #f0bb4b; }
 
+/* ---- QTE outcome flashes ----
+   Big center text + screen-wide effect on a successful or failed
+   reaction window so the player always sees the result. */
+.combat-flash {
+  position: absolute;
+  top: 46%; left: 50%;
+  transform: translate(-50%, -50%) scale(0.5);
+  z-index: 10;
+  pointer-events: none;
+  font-family: ui-monospace, "SF Mono", Menlo, monospace;
+  font-size: 36px;
+  font-weight: 800;
+  letter-spacing: 4px;
+  text-transform: uppercase;
+  white-space: nowrap;
+  text-shadow:
+    0 4px 12px rgba(0,0,0,0.95),
+    0 0 18px rgba(0,0,0,0.85);
+  animation: flashPop 900ms cubic-bezier(.2,.7,.3,1) forwards;
+}
+.combat-flash-edge   { color: #c8f08a; }
+.combat-flash-threat { color: #ff7a7a; }
+.combat-flash-neutral{ color: #f0bb4b; }
+@keyframes flashPop {
+  0%   { opacity: 0; transform: translate(-50%, -50%) scale(0.4); }
+  18%  { opacity: 1; transform: translate(-50%, -50%) scale(1.18); }
+  35%  {              transform: translate(-50%, -50%) scale(1.0); }
+  80%  { opacity: 0.85; transform: translate(-50%, -55%) scale(1.0); }
+  100% { opacity: 0;    transform: translate(-50%, -65%) scale(1.0); }
+}
+
+/* Successful dodge — cyan sweep across the screen. The width travels
+   left → right so it reads as the camera dodging with you. */
+.fx-evade-sweep {
+  position: absolute; inset: 0;
+  pointer-events: none;
+  z-index: 5;
+  background: linear-gradient(
+    100deg,
+    transparent 0%,
+    rgba(160,210,235,0.10) 30%,
+    rgba(190,230,250,0.55) 50%,
+    rgba(160,210,235,0.10) 70%,
+    transparent 100%);
+  mix-blend-mode: screen;
+  animation: evadeSweep 500ms ease-out forwards;
+}
+@keyframes evadeSweep {
+  0%   { opacity: 0; transform: translateX(-40%) skewX(-8deg); }
+  20%  { opacity: 1; }
+  100% { opacity: 0; transform: translateX( 40%) skewX(-8deg); }
+}
+
+/* Successful break — gold radial burst exploding outward, like the
+   dark grip-vignette breaking apart. */
+.fx-escape-burst {
+  position: absolute; inset: 0;
+  pointer-events: none;
+  z-index: 5;
+  background:
+    radial-gradient(circle at center,
+      rgba(255,225,140,0.65) 0%,
+      rgba(245,200,80,0.32)  20%,
+      rgba(245,200,80,0.10)  40%,
+      transparent            65%);
+  mix-blend-mode: screen;
+  animation: escapeBurst 600ms ease-out forwards;
+}
+@keyframes escapeBurst {
+  0%   { opacity: 1.0; transform: scale(0.35); }
+  100% { opacity: 0;   transform: scale(1.7);  }
+}
+
 /* Reactive QTE — Brace slot transforms during a dodge/break window.
    Big pulsing red disc with the countdown front-and-center. */
 .combat-btn.combat-btn-react {

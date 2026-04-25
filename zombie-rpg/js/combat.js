@@ -1344,6 +1344,38 @@ window.Combat = (function () {
     setTimeout(() => el.classList.remove("muzzle-flash"), 260);
   }
 
+  // ---- QTE outcome flashes ----
+  // Big center-screen text pop so the player always sees the result of
+  // a reactive dodge / break window even if they were focused on the
+  // button. Tone: 'edge' = green (good), 'threat' = red (bad).
+  function flashCenterText(text, tone) {
+    const host = document.getElementById("combat-screen");
+    if (!host) return;
+    const el = document.createElement("div");
+    el.className = `combat-flash combat-flash-${tone || "neutral"}`;
+    el.textContent = text;
+    host.appendChild(el);
+    setTimeout(() => el.remove(), 900);
+  }
+  // Lateral cyan sweep — feels like the camera dodging with you.
+  function flashEvade() {
+    const host = document.getElementById("combat-screen");
+    if (!host) return;
+    const el = document.createElement("div");
+    el.className = "fx-evade-sweep";
+    host.appendChild(el);
+    setTimeout(() => el.remove(), 520);
+  }
+  // Gold radial burst — the vignette ripping outward, you tear free.
+  function flashEscape() {
+    const host = document.getElementById("combat-screen");
+    if (!host) return;
+    const el = document.createElement("div");
+    el.className = "fx-escape-burst";
+    host.appendChild(el);
+    setTimeout(() => el.remove(), 620);
+  }
+
   // ---------- Reactive QTE (Brace slot transforms into a timed dodge
   // or break button). Triggered when the enemy initiates a dangerous
   // move (lurch / pin). Player has `seconds` to click; otherwise the
@@ -1475,6 +1507,8 @@ window.Combat = (function () {
         onSuccess: () => {
           log(`You wrench out of ${e.name}'s grip — back to range.`, "info");
           Sound.play("flee");
+          flashEscape();
+          flashCenterText("BROKE FREE!", "edge");
           state.range = "far";
           state.heldDown = false;
           refreshCombatStatus();
@@ -1483,6 +1517,7 @@ window.Combat = (function () {
           renderAllies();
         },
         onFail: () => {
+          flashCenterText("STILL PINNED!", "threat");
           // Toxic tick first (you're still in the cloud), then the bite.
           if (e.toxic && s.hp > 0) {
             const tick = e.toxic;
@@ -1604,6 +1639,8 @@ window.Combat = (function () {
           log(`You roll wide — ${e.name} closes on empty air.`, "info");
           Sound.play("dodge");
           spawnMark("miss");
+          flashEvade();
+          flashCenterText("DODGED!", "edge");
           // Lurch failed. Telegraph / aim windows close; turn ends clean.
           state.telegraphPending = false;
           state.enemyAimed = false;
@@ -1613,6 +1650,7 @@ window.Combat = (function () {
           renderAllies();
         },
         onFail: () => {
+          flashCenterText("GRABBED!", "threat");
           state.range = "close";
           state.heldDown = true;
           if (e.human) {
