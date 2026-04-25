@@ -373,8 +373,10 @@ window.Combat = (function () {
       // Surface the ready state one step early so it matches intent.
       const ready = (cd || 0) <= 1;
       const core = ready ? readyTxt : `CD ${cd}`;
-      const hpTxt = a ? ` · ❤${a.hp}/${a.hpMax}` : "";
-      const ammoTxt = (a && a.ammoMax > 0) ? ` · 🔫${a.ammo}` : "";
+      // Newline-separated so the side-panel chip wraps cleanly under
+      // the portrait. CSS .ally-state uses white-space: pre-line.
+      const hpTxt = a ? `\n❤${a.hp}/${a.hpMax}` : "";
+      const ammoTxt = (a && a.ammoMax > 0) ? `\n🔫${a.ammo}` : "";
       return core + hpTxt + ammoTxt;
     };
     const isAlive = (key) => !(st[key] && st[key].hp <= 0);
