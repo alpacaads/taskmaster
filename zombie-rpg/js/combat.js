@@ -598,6 +598,10 @@ window.Combat = (function () {
     const logEl = document.getElementById("combat-log");
     logEl.innerHTML = "";
 
+    // Switch the music to the combat track. The narrative scene's
+    // ambience will resume the moment combat ends (next goto() call).
+    Sound.playMusic("combat");
+
     // Combat opener — use the per-enemy voice when there is one, fall
     // back to the generic horde roar / dry-snap / groan for the rest.
     if (config.enemy === "horde") Sound.play("hordeRoar");

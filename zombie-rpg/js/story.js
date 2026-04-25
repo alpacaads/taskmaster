@@ -2212,6 +2212,7 @@ window.Story = {
   bonfire_invite: {
     scene: "bonfire_night",
     sceneClass: "night",
+    music: "romance",
     chapter: "Day 4 — Bonfire",
     text: function(s) {
       const m = s.bonds.maya, r = s.bonds.ren;
@@ -2293,6 +2294,7 @@ window.Story = {
   romance_maya: {
     scene: "intimate_bedroom",
     sceneClass: "indoor",
+    music: "romance",
     chapter: "Day 4 — Maya's tent",
     speaker: "Maya",
     text: function(s) {
@@ -2316,6 +2318,7 @@ window.Story = {
   romance_ren: {
     scene: "intimate_bedroom",
     sceneClass: "indoor",
+    music: "romance",
     chapter: "Day 4 — Ren's medbay",
     speaker: "Ren",
     text: function(s) {
@@ -2338,6 +2341,7 @@ window.Story = {
 
   morning_after_maya: {
     scene: "greenbelt_morning",
+    music: "romance",
     sceneClass: "forest",
     chapter: "Day 5 — Pre-dawn",
     speaker: "Maya",
@@ -2357,6 +2361,7 @@ window.Story = {
   morning_after_ren: {
     scene: "greenbelt_morning",
     sceneClass: "forest",
+    music: "romance",
     chapter: "Day 5 — Pre-dawn",
     speaker: "Ren",
     text: function(s) {

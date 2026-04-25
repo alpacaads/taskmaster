@@ -399,7 +399,175 @@ window.Sound = (function () {
     try { fn(); } catch (e) { console.warn("sound", name, e); }
   }
 
-  // --- Ambient drone ---
+  // --- Music engine ---
+  // Procedural looped tracks built from the same tone()/noise()
+  // primitives as SFX. Patterns are scheduled via setInterval; each
+  // tick fires the appropriate notes. armed() guards every tick so a
+  // track switch doesn't bleed notes from the prior pattern.
+  let musicTimers = [];
+  let musicTrack = null;
+
+  function stopMusic() {
+    musicTimers.forEach(t => clearInterval(t));
+    musicTimers = [];
+    musicTrack = null;
+  }
+
+  function playMusic(track) {
+    if (!ensure()) return;
+    if (track === musicTrack) return;
+    stopMusic();
+    if (muted || !track) return;
+    musicTrack = track;
+    if      (track === "combat")   startCombatTrack();
+    else if (track === "romance")  startRomanceTrack();
+    else if (track === "dialogue") startDialogueTrack();
+    else if (track === "tense")    startTenseTrack();
+    else if (track === "title")    startTitleTrack();
+  }
+
+  // --- Combat: 125 BPM kick + minor pad + offbeat hat + tense motif ---
+  function startCombatTrack() {
+    const beat = 480;
+    const armed = () => musicTrack === "combat" && !muted;
+    // Sub kick on beats 1 + 3
+    const kick = () => {
+      if (!armed()) return;
+      tone({ freq: 55, type: "sine", dur: 0.18, vol: 0.30, slideTo: 30, slideCurve: "exp", attack: 0.001 });
+    };
+    kick();
+    musicTimers.push(setInterval(kick, beat * 2));
+    // A-minor pad (A1 + C2 + E2), retrigger every 8 beats
+    const pad = () => {
+      if (!armed()) return;
+      const dur = beat * 8 / 1000;
+      tone({ freq: 55,    type: "triangle", dur, vol: 0.05 });
+      tone({ freq: 65.4,  type: "triangle", dur, vol: 0.04 });
+      tone({ freq: 82.4,  type: "triangle", dur, vol: 0.03 });
+    };
+    pad();
+    musicTimers.push(setInterval(pad, beat * 8));
+    // Hi-hat tick on every off-beat
+    const hat = () => {
+      if (!armed()) return;
+      noise({ dur: 0.025, cutoff: 6500, q: 0.5, vol: 0.022, type: "highpass" });
+    };
+    setTimeout(hat, beat / 2);
+    musicTimers.push(setInterval(hat, beat));
+    // Tense descending pentatonic motif every 16 beats
+    const motif = () => {
+      if (!armed()) return;
+      [659, 587, 523, 440].forEach((f, i) => {
+        setTimeout(() => {
+          if (!armed()) return;
+          tone({ freq: f, type: "triangle", dur: 0.28, vol: 0.05 });
+        }, i * beat / 2);
+      });
+    };
+    setTimeout(motif, beat * 4);
+    musicTimers.push(setInterval(motif, beat * 16));
+  }
+
+  // --- Romance: 60 BPM Cmaj7 pad + slow descent motif ---
+  function startRomanceTrack() {
+    const beat = 1000;
+    const armed = () => musicTrack === "romance" && !muted;
+    const pad = () => {
+      if (!armed()) return;
+      const dur = beat * 4 / 1000;
+      tone({ freq: 130.8, type: "sine", dur, vol: 0.05 });   // C3
+      tone({ freq: 164.8, type: "sine", dur, vol: 0.04 });   // E3
+      tone({ freq: 196.0, type: "sine", dur, vol: 0.04 });   // G3
+      tone({ freq: 246.9, type: "sine", dur, vol: 0.025 });  // B3
+    };
+    pad();
+    musicTimers.push(setInterval(pad, beat * 4));
+    // Sub bass every 4 bars
+    const bass = () => {
+      if (!armed()) return;
+      tone({ freq: 65.4, type: "triangle", dur: beat * 4 / 1000, vol: 0.10 }); // C2
+    };
+    bass();
+    musicTimers.push(setInterval(bass, beat * 4));
+    // Soft descending arpeggio every 8 beats
+    const arp = () => {
+      if (!armed()) return;
+      [523, 440, 392, 349].forEach((f, i) => {
+        setTimeout(() => {
+          if (!armed()) return;
+          tone({ freq: f, type: "sine", dur: 0.5, vol: 0.04 });
+        }, i * beat / 2);
+      });
+    };
+    setTimeout(arp, beat * 4);
+    musicTimers.push(setInterval(arp, beat * 8));
+  }
+
+  // --- Dialogue: 80 BPM minor pad with a sparse low note ---
+  function startDialogueTrack() {
+    const beat = 750;
+    const armed = () => musicTrack === "dialogue" && !muted;
+    const pad = () => {
+      if (!armed()) return;
+      const dur = beat * 8 / 1000;
+      tone({ freq: 110,   type: "sine", dur, vol: 0.05 });  // A2
+      tone({ freq: 130.8, type: "sine", dur, vol: 0.04 });  // C3
+      tone({ freq: 164.8, type: "sine", dur, vol: 0.03 });  // E3
+    };
+    pad();
+    musicTimers.push(setInterval(pad, beat * 8));
+    const sub = () => {
+      if (!armed()) return;
+      tone({ freq: 55, type: "triangle", dur: beat * 4 / 1000, vol: 0.06 });
+    };
+    sub();
+    musicTimers.push(setInterval(sub, beat * 8));
+  }
+
+  // --- Tense: dread sub pulse + dissonant low pad ---
+  function startTenseTrack() {
+    const beat = 700;
+    const armed = () => musicTrack === "tense" && !muted;
+    const pad = () => {
+      if (!armed()) return;
+      const dur = beat * 8 / 1000;
+      tone({ freq: 49,   type: "triangle", dur, vol: 0.06 }); // G1
+      tone({ freq: 58.3, type: "triangle", dur, vol: 0.04 }); // Bb1
+      tone({ freq: 69.3, type: "sine",     dur, vol: 0.03 }); // C#2 — tritone
+    };
+    pad();
+    musicTimers.push(setInterval(pad, beat * 8));
+    const pulse = () => {
+      if (!armed()) return;
+      tone({ freq: 42, type: "sine", dur: 0.25, vol: 0.18, slideTo: 28, slideCurve: "exp", attack: 0.001 });
+    };
+    pulse();
+    musicTimers.push(setInterval(pulse, beat * 2));
+  }
+
+  // --- Title: brooding minor cycle Am - F - G - Am ---
+  function startTitleTrack() {
+    const beat = 850;
+    const armed = () => musicTrack === "title" && !muted;
+    let bar = 0;
+    const chords = [
+      [110, 130.8, 164.8],  // Am
+      [87.3, 130.8, 174.6], // F
+      [98,  123.5, 146.8],  // G
+      [110, 130.8, 164.8],  // Am
+    ];
+    const pad = () => {
+      if (!armed()) return;
+      const dur = beat * 4 / 1000;
+      const c = chords[bar % chords.length];
+      c.forEach((f, i) => tone({ freq: f, type: "sine", dur, vol: i === 0 ? 0.06 : 0.04 }));
+      bar++;
+    };
+    pad();
+    musicTimers.push(setInterval(pad, beat * 4));
+  }
+
+  // --- Ambient drone (legacy, kept for back-compat callsites) ---
 
   function stopAmbient() {
     ambientNodes.forEach(n => { try { n.stop(); } catch (_) {} });
@@ -425,127 +593,34 @@ window.Sound = (function () {
     blood:  [49,   58.3, 73.4],    // G1 + Bb1 + D2 — dread, dissonant
   };
 
+  // setAmbience now routes a story-side scene tag (sceneClass or an
+  // explicit `music` field) into a music track. Combat is exclusive —
+  // once the combat track is on, scene-class changes are ignored until
+  // playMusic("combat") is replaced. Combat.start / end manage that.
   function setAmbience(scene) {
     if (!ensure()) return;
-    if (scene === ambientScene) return;
-    stopAmbient();
     ambientScene = scene;
-    if (muted || !scene) return;
-
-    const t0 = now();
-    const chord = SCENE_CHORDS[scene] || SCENE_CHORDS.night;
-
-    // Soft drone stack — detune each voice slightly so the chord
-    // breathes instead of phasing. Each voice lowpass-filtered to keep
-    // it warm and out of the way of dialogue / SFX.
-    chord.forEach((freq, i) => {
-      const o = ctx.createOscillator();
-      const g = ctx.createGain();
-      const f = ctx.createBiquadFilter();
-      o.type = "sine";
-      o.frequency.value = freq;
-      o.detune.value = (i - 1) * 4; // ±4 cents around center voice
-      f.type = "lowpass";
-      f.frequency.value = 800;
-      f.Q.value = 0.6;
-      const target = scene === "indoor" ? 0.02 : (i === 0 ? 0.04 : 0.025);
-      g.gain.setValueAtTime(0, t0);
-      g.gain.linearRampToValueAtTime(target, t0 + 2.0);
-      o.connect(f); f.connect(g); g.connect(master);
-      o.start(t0);
-      ambientNodes.push(o);
-    });
-
-    // ---- Scene-specific air ----
-    if (scene === "forest") {
-      // Distant wind through pines: noise → narrow band-pass + slow LFO.
-      // Much quieter and more focused than the old wide lowpass bed.
-      const len = ctx.sampleRate * 3;
-      const buf = ctx.createBuffer(1, len, ctx.sampleRate);
-      const d = buf.getChannelData(0);
-      for (let i = 0; i < len; i++) d[i] = Math.random() * 2 - 1;
-      const src = ctx.createBufferSource();
-      src.buffer = buf; src.loop = true;
-      const f = ctx.createBiquadFilter();
-      f.type = "bandpass"; f.frequency.value = 320; f.Q.value = 6;
-      const g = ctx.createGain();
-      g.gain.setValueAtTime(0, t0);
-      g.gain.linearRampToValueAtTime(0.018, t0 + 3);
-      const lfo = ctx.createOscillator();
-      const lfoGain = ctx.createGain();
-      lfo.frequency.value = 0.08;
-      lfoGain.gain.value = 0.012;
-      lfo.connect(lfoGain); lfoGain.connect(g.gain);
-      src.connect(f); f.connect(g); g.connect(master);
-      src.start(t0); lfo.start(t0);
-      ambientNodes.push(src, lfo);
-    }
-    else if (scene === "night") {
-      // A thin distant cricket-like pulse — sine LFO modulating a
-      // narrow bandpass on noise. Very low, just texture.
-      const len = ctx.sampleRate * 2;
-      const buf = ctx.createBuffer(1, len, ctx.sampleRate);
-      const d = buf.getChannelData(0);
-      for (let i = 0; i < len; i++) d[i] = Math.random() * 2 - 1;
-      const src = ctx.createBufferSource();
-      src.buffer = buf; src.loop = true;
-      const f = ctx.createBiquadFilter();
-      f.type = "bandpass"; f.frequency.value = 4800; f.Q.value = 18;
-      const g = ctx.createGain();
-      g.gain.value = 0;
-      const lfo = ctx.createOscillator();
-      const lfoGain = ctx.createGain();
-      lfo.type = "sine";
-      lfo.frequency.value = 4.5;
-      lfoGain.gain.value = 0.012;
-      lfo.connect(lfoGain); lfoGain.connect(g.gain);
-      src.connect(f); f.connect(g); g.connect(master);
-      src.start(t0); lfo.start(t0);
-      ambientNodes.push(src, lfo);
-    }
-    else if (scene === "city") {
-      // Distant low traffic rumble — heavily lowpassed noise, very low.
-      const len = ctx.sampleRate * 3;
-      const buf = ctx.createBuffer(1, len, ctx.sampleRate);
-      const d = buf.getChannelData(0);
-      for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * 0.5;
-      const src = ctx.createBufferSource();
-      src.buffer = buf; src.loop = true;
-      const f = ctx.createBiquadFilter();
-      f.type = "lowpass"; f.frequency.value = 140; f.Q.value = 0.7;
-      const g = ctx.createGain();
-      g.gain.setValueAtTime(0, t0);
-      g.gain.linearRampToValueAtTime(0.022, t0 + 2.5);
-      src.connect(f); f.connect(g); g.connect(master);
-      src.start(t0);
-      ambientNodes.push(src);
-    }
-    else if (scene === "blood") {
-      // Sub pulse — very low sine modulated slowly for dread.
-      const o = ctx.createOscillator();
-      const g = ctx.createGain();
-      const lfo = ctx.createOscillator();
-      const lfoGain = ctx.createGain();
-      o.type = "sine";
-      o.frequency.value = 36;
-      lfo.frequency.value = 0.22;
-      lfoGain.gain.value = 0.018;
-      g.gain.value = 0.022;
-      lfo.connect(lfoGain); lfoGain.connect(g.gain);
-      o.connect(g); g.connect(master);
-      o.start(t0); lfo.start(t0);
-      ambientNodes.push(o, lfo);
-    }
-    // 'indoor' has only the soft drone — no extra air, since the
-    // square fluorescent buzz was the worst offender.
+    // Stop the legacy drone if any was running.
+    stopAmbient();
+    if (musicTrack === "combat" && scene !== "combat") return; // hold during combat
+    let track = null;
+    if (!scene) track = null;
+    else if (scene === "combat" || scene === "romance" || scene === "tense"
+          || scene === "dialogue" || scene === "title") track = scene;
+    else if (scene === "blood") track = "tense";
+    else track = "dialogue"; // indoor / forest / night / city default
+    playMusic(track);
   }
 
   function toggleMute() {
     muted = !muted;
     try { localStorage.setItem(MUTE_KEY, muted ? "1" : "0"); } catch (_) {}
     if (master) master.gain.value = muted ? 0 : 0.55;
-    if (muted) stopAmbient();
-    else if (ambientScene) {
+    if (muted) {
+      stopAmbient();
+      stopMusic();
+    } else if (ambientScene) {
+      // Re-trigger whatever was playing.
       const s = ambientScene; ambientScene = null; setAmbience(s);
     }
     return muted;
@@ -566,6 +641,13 @@ window.Sound = (function () {
       else flushPending();
     } else if (ctx && ctx.state === "running") {
       flushPending();
+    }
+    // First-gesture title music: if nothing's playing and the title
+    // screen is visible, fade in the brooding pad. Browsers won't let
+    // us autoplay before a gesture, so this is the earliest chance.
+    if (!musicTrack && !muted && typeof document !== "undefined") {
+      const ts = document.getElementById("title-screen");
+      if (ts && !ts.classList.contains("hidden")) playMusic("title");
     }
   }
   if (typeof document !== "undefined") {
@@ -589,5 +671,10 @@ window.Sound = (function () {
     return play("shotPistol");
   }
 
-  return { init, play, fire, setAmbience, stopAmbient, toggleMute, isMuted };
+  return {
+    init, play, fire,
+    setAmbience, stopAmbient,
+    playMusic, stopMusic,
+    toggleMute, isMuted,
+  };
 })();

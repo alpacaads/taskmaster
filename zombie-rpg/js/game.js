@@ -209,6 +209,7 @@ window.Game = (function () {
 
   function quitToTitle() {
     Sound.stopAmbient();
+    Sound.playMusic("title");
     Sound.play("back");
     hide("game-screen");
     hide("combat-screen");
@@ -247,7 +248,9 @@ window.Game = (function () {
     if (node.sceneClass) classes.push(node.sceneClass);
     if (node.portraitCard) classes.push("portrait-card");
     sceneEl.className = classes.join(" ");
-    Sound.setAmbience(node.sceneClass || null);
+    // Per-node music override beats the sceneClass mapping. Lets us
+    // tag romance / dialogue / tense scenes explicitly.
+    Sound.setAmbience(node.music || node.sceneClass || null);
 
     // Scene-entry sting
     if (nodeId === "death") Sound.play("death");
