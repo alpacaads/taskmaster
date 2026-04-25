@@ -678,33 +678,59 @@ window.Combat = (function () {
       aimBtn.disabled = !canAim;
       aimBtn.hidden = !(s && s.bestRanged);
     }
-    // Close / Break / Strike toggle:
-    //   FAR:   [Close] + Fire/Aim available.
-    //   CLOSE: [Break] + Strike; Fire/Aim locked out.
+    // ---- Close / Strike share one slot; Aim / Break share another ----
+    // FAR  range: [Close]            ... [Aim]   (Fire / Brace / Flee)
+    // CLOSE range: [Strike]          ... [Break] (Fire & Aim disabled)
+    // The dedicated combat-btn-melee is retired — this lets us keep
+    // exactly six slots regardless of range.
     const closeBtn = document.getElementById("combat-btn-close");
     const meleeBtn = document.getElementById("combat-btn-melee");
     const fireBtn  = document.querySelector(".combat-btn[onclick*=\"'shoot'\"]");
     const aimBtnEl = document.getElementById("combat-btn-aim");
+    const isFar    = state && state.range === "far";
+    const isClose  = !isFar;
+
+    // SVG icon library — reused from the original index.html buttons.
+    const ICON = {
+      close:  '<svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12h10"/><path d="M10 6l6 6-6 6"/><path d="M20 4v16"/></svg>',
+      strike: '<svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="14.5 17.5 3 6 3 3 6 3 17.5 14.5"/><line x1="13" y1="19" x2="19" y2="13"/><line x1="16" y1="16" x2="20" y2="20"/><line x1="19" y1="21" x2="21" y2="19"/></svg>',
+      aim:    '<svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4"/><line x1="12" y1="3" x2="12" y2="7"/><line x1="12" y1="17" x2="12" y2="21"/><line x1="3" y1="12" x2="7" y2="12"/><line x1="17" y1="12" x2="21" y2="12"/></svg>',
+      // Break: arrow leaving a wall back to range.
+      break:  '<svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 12H10"/><path d="M14 6l-6 6 6 6"/><path d="M4 4v16"/></svg>',
+    };
+
     if (closeBtn) {
-      const isFar = state && state.range === "far";
       closeBtn.hidden = false;
-      closeBtn.dataset.mode = isFar ? "close" : "break";
-      const label = closeBtn.querySelector(".label");
-      if (label) label.textContent = isFar ? "Close" : "Break";
+      closeBtn.disabled = false;
+      closeBtn.dataset.mode = isFar ? "close" : "strike";
+      closeBtn.innerHTML = isFar
+        ? ICON.close  + '<span class="label">Close</span>'
+        : ICON.strike + '<span class="label">Strike</span>';
       closeBtn.setAttribute("onclick",
-        `Combat.act('${isFar ? "close" : "break"}')`);
+        `Combat.act('${isFar ? "close" : "melee"}')`);
     }
-    if (meleeBtn) {
-      const isClose = state && state.range === "close";
-      meleeBtn.hidden = !isClose;
-    }
-    if (fireBtn) {
-      const isClose = state && state.range === "close";
-      fireBtn.disabled = !!isClose;
-    }
+    // The dedicated Strike slot is gone — close-range melee now lives in
+    // the Close/Strike toggle above.
+    if (meleeBtn) meleeBtn.hidden = true;
+    if (fireBtn) fireBtn.disabled = !!isClose;
     if (aimBtnEl) {
-      const isClose = state && state.range === "close";
-      if (isClose) aimBtnEl.disabled = true;
+      const s = Game.state;
+      if (isClose) {
+        // Close range → button becomes Break (no aim is possible here).
+        aimBtnEl.hidden = false;
+        aimBtnEl.disabled = false;
+        aimBtnEl.dataset.mode = "break";
+        aimBtnEl.innerHTML = ICON.break + '<span class="label">Break</span>';
+        aimBtnEl.setAttribute("onclick", "Combat.act('break')");
+      } else {
+        // Far range → restore Aim. Hide entirely if hero has no firearm.
+        aimBtnEl.dataset.mode = "aim";
+        aimBtnEl.innerHTML = ICON.aim + '<span class="label">Aim</span>';
+        aimBtnEl.setAttribute("onclick", "Combat.act('aim')");
+        const canAim = !!(s && s.bestRanged && s.ammo > 0) && !(state && state.aimReady);
+        aimBtnEl.disabled = !canAim;
+        aimBtnEl.hidden = !(s && s.bestRanged);
+      }
     }
     renderEnemyStatus();
   }
