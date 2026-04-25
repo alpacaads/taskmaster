@@ -1059,7 +1059,10 @@ window.Combat = (function () {
       if (state.range === "close") { Game.toast("No room to aim — break away first."); return; }
       if (!s.bestRanged) { Game.toast("No firearm"); Sound.play("drySnap"); return; }
       if (s.ammo <= 0)   { Game.toast("No shot to aim"); Sound.play("drySnap"); return; }
-      state.counterReady = false;
+      // counterReady is melee-only and aimReady is ranged-only — they
+      // target different swings and don't conflict. Keep counter alive
+      // through Aim so a careful Brace → Aim → Fire → Strike combo
+      // actually pays off.
       state.aimReady = true;
       // Aim shouldn't clear an active telegraph — you're sighting,
       // not reacting. But the wind-up will still land as a big hit.
@@ -1105,8 +1108,10 @@ window.Combat = (function () {
       refreshCombatStatus();
     }
     else if (action === "brace") {
+      // Bracing means abandoning the sight picture, so aim is gone —
+      // but a pending melee counter from a previous brace shouldn't
+      // be wiped just because we stacked another brace on top.
       state.aimReady = false;
-      state.counterReady = false;
       if (!desperateBrace) s.stam -= 1;
       state.bracing = true;
       // Desperate brace: stay standing, absorb but no counter-setup.
