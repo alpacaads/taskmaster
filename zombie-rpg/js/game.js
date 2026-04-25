@@ -263,6 +263,9 @@ window.Game = (function () {
     const art = document.getElementById("scene-art");
     const sceneId = resolveScene(nodeId, node) || nodeId;
     art.innerHTML = Scenes.render(sceneId);
+    // Tag the rendered scene id so per-scene CSS effects can target
+    // it (Mrs. Cho's lampshade flicker reads this).
+    art.dataset.scene = sceneId;
     art.classList.remove("shake");
     if (node.sceneClass === "blood") {
       void art.offsetWidth;
