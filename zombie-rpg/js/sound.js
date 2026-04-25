@@ -391,18 +391,41 @@ window.Sound = (function () {
   // (overrides.js) — { slot: blobURL }. If a slot has an uploaded
   // file, play that instead of the procedural cue. Music overrides
   // loop; SFX overrides play once.
+  //
+  // Server fallback: when no IDB blob is present, fall back to the
+  // committed file at audio/<slot>.mp3. We probe each slot once with
+  // a HEAD request and remember the result so future plays don't
+  // re-fetch. This is what makes committed audio work on a fresh
+  // browser that's never visited admin.
   const audioPlayers = {}; // slot → reusable HTMLAudioElement
+  const audioServerUrl = {}; // slot → URL string when present, false when probed-missing
+  const audioServerProbed = {}; // slot → true once a probe has been kicked off
+  function probeServerAudio(slot) {
+    if (audioServerProbed[slot]) return;
+    audioServerProbed[slot] = true;
+    const url = "audio/" + slot + ".mp3";
+    fetch(url, { method: "HEAD", cache: "no-store" })
+      .then(r => { audioServerUrl[slot] = r.ok ? url : false; })
+      .catch(() => { audioServerUrl[slot] = false; });
+  }
+  function resolveOverrideUrl(slot) {
+    const map = window.__AUDIO_OVERRIDES;
+    if (map && map[slot]) return map[slot];           // local IDB blob — fastest
+    if (audioServerUrl[slot]) return audioServerUrl[slot]; // committed file
+    if (audioServerUrl[slot] === undefined) probeServerAudio(slot);
+    return null;
+  }
   function playOverride(slot, opts) {
     const o = opts || {};
     const loop = !!o.loop;
     const volume = typeof o.volume === "number" ? o.volume : 1;
     if (!ensure() || muted) return false;
-    const map = window.__AUDIO_OVERRIDES;
-    if (!map || !map[slot]) return false;
+    const url = resolveOverrideUrl(slot);
+    if (!url) return false;
     let a = audioPlayers[slot];
-    if (!a || a.src !== map[slot]) {
+    if (!a || a.src !== url) {
       if (a) { try { a.pause(); } catch (e) {} }
-      a = new Audio(map[slot]);
+      a = new Audio(url);
       a.preload = "auto";
       audioPlayers[slot] = a;
     }
@@ -685,6 +708,21 @@ window.Sound = (function () {
    // and iOS Safari require a user gesture before audio plays; without
    // this, sounds went hit-or-miss after tab-switches or scene
    // transitions that weren't directly inside a click handler.
+  // Slot ids that the game routinely tries to play. We pre-probe
+  // each one's server URL on first user gesture so committed audio
+  // can play instantly without missing the first attempt.
+  const PRE_PROBE_SLOTS = [
+    "music_combat", "music_romance", "music_dialogue",
+    "music_tense",  "music_title",
+    "shotPistol", "shotRevolver", "shotRifle",
+    "groan", "runnerScream", "bloaterGurgle",
+    "hunterSnarl", "abominationRoar", "calderGasp",
+    "argh", "humanDeath",
+    "meet_maya_card", "meet_ren_card", "meet_vega_card",
+    "meet_vega_card_hero", "meet_nora_card",
+  ];
+  let preProbeFired = false;
+
   function unlock() {
     if (!ctx) init();
     if (ctx && ctx.state === "suspended") {
@@ -693,6 +731,18 @@ window.Sound = (function () {
       else flushPending();
     } else if (ctx && ctx.state === "running") {
       flushPending();
+    }
+    // Background-probe every known slot's server URL exactly once.
+    // This is what makes a committed audio file play on the FIRST
+    // attempt, even when no IDB blob exists in this browser.
+    if (!preProbeFired) {
+      preProbeFired = true;
+      PRE_PROBE_SLOTS.forEach(probeServerAudio);
+    }
+    // Refresh local IDB-blob URLs in case the admin saved a new file
+    // in another tab. Uses the existing AudioOverrides API. Cheap.
+    if (window.AudioOverrides) {
+      try { window.AudioOverrides.loadAll(); } catch (e) {}
     }
     // First-gesture title music: if nothing's playing and the title
     // screen is visible, fade in the brooding pad. Browsers won't let

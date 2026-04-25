@@ -1033,12 +1033,12 @@
   </footer>
 
   <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
-  <script src="js/overrides.js?v=241"></script>
-  <script src="js/scenes.js?v=241"></script>
+  <script src="js/overrides.js?v=242"></script>
+  <script src="js/scenes.js?v=242"></script>
   <!-- story.js is read-only here: we pull chapters / text / choices
        to annotate each scene card so the flow is legible without
        having to play through. -->
-  <script src="js/story.js?v=241"></script>
+  <script src="js/story.js?v=242"></script>
   <script>
     (async function () {
       const PROMPTS = (window.Scenes && window.Scenes.PROMPTS) || {};
@@ -2109,77 +2109,119 @@
       };
       const AUDIO_PATH = "zombie-rpg/audio/"; // committed repo path
 
-      // Server-presence map: which slot ids exist as files in the repo.
-      // We probe each by HEAD request once per render so the badge
-      // accurately distinguishes 'committed already' vs 'local-only'.
+      // Server-presence map: which slot ids exist as files in the
+      // repo. Probed via HEAD per slot, in the background, so the tab
+      // appears instantly even on slow connections. Each completed
+      // probe updates only its own row.
       const audioServerPresence = {};
-      async function probeAudioPresence(id) {
-        try {
-          const r = await fetch("audio/" + id + ".mp3", { method: "HEAD", cache: "no-store" });
-          audioServerPresence[id] = r.ok;
-        } catch (e) { audioServerPresence[id] = false; }
+      function probeAudioPresence(id) {
+        // 6s timeout — don't let a slow CDN block the badge update
+        // forever. Treat timeout as 'not present, can retry later'.
+        const ctrl = (typeof AbortController !== "undefined") ? new AbortController() : null;
+        const t = setTimeout(() => { if (ctrl) ctrl.abort(); }, 6000);
+        return fetch("audio/" + id + ".mp3", {
+          method: "HEAD", cache: "no-store",
+          signal: ctrl ? ctrl.signal : undefined,
+        })
+        .then(r => { audioServerPresence[id] = r.ok; })
+        .catch(() => { audioServerPresence[id] = false; })
+        .finally(() => clearTimeout(t));
       }
 
-      async function renderAudio() {
-        await Promise.resolve(); // let any in-flight loadAll settle
-        if (window.AudioOverrides) await window.AudioOverrides.loadAll();
-        // Probe server-side presence for slots we haven't checked.
-        const ids = [];
-        for (const sec of Object.keys(AUDIO_SLOTS)) {
-          AUDIO_SLOTS[sec].forEach(s => ids.push(s.id));
-        }
-        await Promise.all(ids
-          .filter(id => audioServerPresence[id] === undefined)
-          .map(probeAudioPresence));
+      function buildAudioRow(slot) {
+        const localMap = window.__AUDIO_OVERRIDES || {};
+        const localUrl = localMap[slot.id];
+        const onServer = audioServerPresence[slot.id]; // may be undefined while probing
+        const status =
+          localUrl  ? (onServer ? "committed" : "local") :
+          onServer  ? "committed" :
+                      (audioServerPresence[slot.id] === undefined ? "probing" : "empty");
+        const row = document.createElement("div");
+        row.className = "audio-row " + (
+          status === "committed" ? "committed" :
+          status === "local"     ? "local-only" :
+          status === "probing"   ? "empty" : "empty"
+        );
+        row.dataset.slotId = slot.id;
+        const previewSrc = localUrl
+          ? localUrl
+          : (onServer ? ("audio/" + slot.id + ".mp3") : "");
+        const previewHtml = previewSrc
+          ? `<audio controls preload="none" src="${previewSrc}"></audio>`
+          : `<div style="color:var(--text-muted);font-size:12px;font-style:italic;">${
+              status === "probing" ? "Checking server…" : "No audio uploaded yet — procedural cue plays."
+            }</div>`;
+        const statusLabel =
+          status === "committed" ? '<span class="audio-status committed">✓ committed</span>' :
+          status === "local"     ? '<span class="audio-status local">● local only — not yet committed</span>' :
+          status === "probing"   ? '<span class="audio-status">checking…</span>' :
+                                   '<span class="audio-status">empty</span>';
+        row.innerHTML =
+          `<div class="audio-meta">` +
+            `<div class="audio-name">${slot.label}</div>` +
+            `<div class="audio-id">${slot.id}.mp3</div>` +
+            `<div class="audio-desc">${slot.desc}</div>` +
+            statusLabel +
+            previewHtml +
+          `</div>` +
+          `<div class="audio-actions">` +
+            `<label class="upload-btn" for="audio-up-${slot.id}">📁 Upload…</label>` +
+            `<input type="file" id="audio-up-${slot.id}" accept="audio/*,.mp3,.wav,.m4a,.ogg" />` +
+            (localUrl
+              ? `<button class="commit-btn" data-action="commit-audio" data-id="${slot.id}">🚀 Commit</button>` +
+                `<button class="danger" data-action="revert-audio" data-id="${slot.id}">Revert</button>`
+              : "") +
+          `</div>`;
+        const fileInput = row.querySelector('input[type="file"]');
+        fileInput.addEventListener("change", () => onAudioPicked(slot.id, fileInput.files));
+        return row;
+      }
 
+      function paintAudioList() {
         const list = document.getElementById("audio-list");
         list.innerHTML = "";
-        const localMap = window.__AUDIO_OVERRIDES || {};
         for (const section of Object.keys(AUDIO_SLOTS)) {
           const head = document.createElement("div");
           head.className = "audio-section-head";
           head.textContent = section;
           list.appendChild(head);
           for (const slot of AUDIO_SLOTS[section]) {
-            const row = document.createElement("div");
-            const localUrl = localMap[slot.id];
-            const onServer = audioServerPresence[slot.id];
-            const status = localUrl ? (onServer ? "committed" : "local") : "empty";
-            row.className = "audio-row " + (
-              status === "committed" ? "committed" :
-              status === "local"     ? "local-only" : "empty"
-            );
-            const previewSrc = localUrl
-              ? localUrl
-              : (onServer ? ("audio/" + slot.id + ".mp3") : "");
-            const previewHtml = previewSrc
-              ? `<audio controls preload="none" src="${previewSrc}"></audio>`
-              : `<div style="color:var(--text-muted);font-size:12px;font-style:italic;">No audio uploaded yet — procedural cue plays.</div>`;
-            const statusLabel =
-              status === "committed" ? '<span class="audio-status committed">✓ committed</span>' :
-              status === "local"     ? '<span class="audio-status local">● local only — not yet committed</span>' :
-                                       '<span class="audio-status">empty</span>';
-            row.innerHTML =
-              `<div class="audio-meta">` +
-                `<div class="audio-name">${slot.label}</div>` +
-                `<div class="audio-id">${slot.id}.mp3</div>` +
-                `<div class="audio-desc">${slot.desc}</div>` +
-                statusLabel +
-                previewHtml +
-              `</div>` +
-              `<div class="audio-actions">` +
-                `<label class="upload-btn" for="audio-up-${slot.id}">📁 Upload…</label>` +
-                `<input type="file" id="audio-up-${slot.id}" accept="audio/*,.mp3,.wav,.m4a,.ogg" />` +
-                (localUrl
-                  ? `<button class="commit-btn" data-action="commit-audio" data-id="${slot.id}">🚀 Commit</button>` +
-                    `<button class="danger" data-action="revert-audio" data-id="${slot.id}">Revert</button>`
-                  : "") +
-              `</div>`;
-            list.appendChild(row);
-            const fileInput = row.querySelector('input[type="file"]');
-            fileInput.addEventListener("change", () => onAudioPicked(slot.id, fileInput.files));
+            list.appendChild(buildAudioRow(slot));
           }
         }
+      }
+      function repaintAudioRow(slotId) {
+        // Replace just the row, keep the rest of the DOM. Useful for
+        // background probe completion so we don't blow away other
+        // open <audio> elements / scroll position.
+        const list = document.getElementById("audio-list");
+        const old = list.querySelector('.audio-row[data-slot-id="' + slotId + '"]');
+        if (!old) return;
+        let slot;
+        for (const sec of Object.keys(AUDIO_SLOTS)) {
+          const found = AUDIO_SLOTS[sec].find(s => s.id === slotId);
+          if (found) { slot = found; break; }
+        }
+        if (!slot) return;
+        old.replaceWith(buildAudioRow(slot));
+      }
+
+      async function renderAudio() {
+        // Refresh local IDB blob URLs first (cheap, in-process).
+        if (window.AudioOverrides) {
+          try { await window.AudioOverrides.loadAll(); } catch (e) {}
+        }
+        // Render IMMEDIATELY with whatever we know — never block the
+        // tab on network probes.
+        paintAudioList();
+        // Kick off probes in the background. As each resolves, swap
+        // its single row into place.
+        const ids = [];
+        for (const sec of Object.keys(AUDIO_SLOTS)) {
+          AUDIO_SLOTS[sec].forEach(s => ids.push(s.id));
+        }
+        ids.filter(id => audioServerPresence[id] === undefined)
+           .forEach(id => { probeAudioPresence(id).then(() => repaintAudioRow(id)); });
       }
 
       async function onAudioPicked(slotId, files) {
