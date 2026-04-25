@@ -1033,12 +1033,12 @@
   </footer>
 
   <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
-  <script src="js/overrides.js?v=247"></script>
-  <script src="js/scenes.js?v=247"></script>
+  <script src="js/overrides.js?v=248"></script>
+  <script src="js/scenes.js?v=248"></script>
   <!-- story.js is read-only here: we pull chapters / text / choices
        to annotate each scene card so the flow is legible without
        having to play through. -->
-  <script src="js/story.js?v=247"></script>
+  <script src="js/story.js?v=248"></script>
   <script>
     (async function () {
       const PROMPTS = (window.Scenes && window.Scenes.PROMPTS) || {};
@@ -2224,39 +2224,74 @@
            .forEach(id => { probeAudioPresence(id).then(() => repaintAudioRow(id)); });
       }
 
+      // Decode-test the picked file BEFORE saving to IDB. If the
+      // browser can't read its duration, the file isn't going to play
+      // in the game either — fail loudly here. Catches the iOS
+      // 'copy_*.mp3' case where iOS labels a file MP3 but it has
+      // duration 0:00 because the audio frames are missing/corrupt.
+      function verifyAudioFile(file) {
+        return new Promise((resolve, reject) => {
+          const url = URL.createObjectURL(file);
+          const a = new Audio();
+          a.preload = "metadata";
+          let done = false;
+          const finish = (ok, why) => {
+            if (done) return;
+            done = true;
+            try { URL.revokeObjectURL(url); } catch (e) {}
+            if (ok) resolve(a.duration || 0);
+            else reject(new Error(why));
+          };
+          a.addEventListener("loadedmetadata", () => {
+            const d = a.duration;
+            if (!isFinite(d) || d <= 0) {
+              finish(false, "duration 0 — file has no decodable audio");
+            } else {
+              finish(true);
+            }
+          });
+          a.addEventListener("error", () => finish(false, "browser can't decode as audio"));
+          setTimeout(() => finish(false, "timed out reading audio metadata"), 5000);
+          a.src = url;
+        });
+      }
+
       async function onAudioPicked(slotId, files) {
         if (!files || files.length === 0) return;
         const file = files[0];
-        // Must be an actual audio MIME type. Filename-only fallback
-        // would let a JPEG renamed to *.mp3 through, and the file
-        // would commit to the repo as a broken audio slot.
+        // Cheap MIME / extension / magic-byte sanity first.
         const isAudioMime = /^audio\//.test(file.type || "");
         const isAudioName = /\.(mp3|wav|m4a|ogg|webm|aac|flac)$/i.test(file.name);
-        if (!isAudioMime) {
-          if (file.type && /^image\//.test(file.type)) {
-            toast("That's an image. Audio files only — mp3 / wav / m4a / ogg.", "err");
-          } else if (!isAudioName) {
-            toast("Pick an audio file (mp3 / wav / m4a / ogg).", "err");
-          } else {
-            // Filename suggests audio but MIME says otherwise. Probe
-            // the first bytes — JPEG starts with FFD8FF, PNG with
-            // 89504E47, MP3 with FFFB or ID3.
-            const head = await file.slice(0, 4).arrayBuffer();
-            const b = new Uint8Array(head);
-            const isJpeg = b[0] === 0xFF && b[1] === 0xD8 && b[2] === 0xFF;
-            const isPng  = b[0] === 0x89 && b[1] === 0x50 && b[2] === 0x4E && b[3] === 0x47;
-            if (isJpeg || isPng) {
-              toast("That's an image masquerading as audio. Pick a real audio file.", "err");
-              return;
-            }
-            // Otherwise allow — could be a tagless MP3 / OGG.
-          }
-          if (!isAudioName) return;
+        if (!isAudioMime && !isAudioName) {
+          toast("Pick an audio file (mp3 / wav / m4a / ogg).", "err");
+          return;
+        }
+        if (file.type && /^image\//.test(file.type)) {
+          toast("That's an image. Audio files only.", "err");
+          return;
+        }
+        // Magic-byte check — catches a JPEG/PNG renamed to .mp3.
+        const head = await file.slice(0, 4).arrayBuffer();
+        const b = new Uint8Array(head);
+        const isJpeg = b[0] === 0xFF && b[1] === 0xD8 && b[2] === 0xFF;
+        const isPng  = b[0] === 0x89 && b[1] === 0x50 && b[2] === 0x4E && b[3] === 0x47;
+        if (isJpeg || isPng) {
+          toast("File bytes are an image despite the .mp3 name. Pick a real audio file.", "err");
+          return;
+        }
+        // Decode-test — only let it through if the browser CAN play it.
+        let durSec;
+        try {
+          durSec = await verifyAudioFile(file);
+        } catch (e) {
+          toast("Can't use this file — " + e.message + ".", "err");
+          console.warn("[audio] verify failed:", file.name, file.type, file.size, e);
+          return;
         }
         try {
           await window.AudioOverrides.save(slotId, file);
           await window.AudioOverrides.loadAll();
-          toast("Loaded " + slotId + " (preview only — Commit to push).", "ok");
+          toast("Loaded " + slotId + " · " + durSec.toFixed(1) + "s — Commit to push.", "ok");
           renderAudio();
         } catch (e) {
           toast("Save failed: " + e.message, "err");
