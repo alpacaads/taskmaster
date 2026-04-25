@@ -738,7 +738,7 @@ window.Scenes = (function () {
   // fresh image URLs automatically, so a commit on one device (PC)
   // shows up on another (phone) as soon as Pages rebuilds, without
   // relying on localStorage which is per-device.
-  const BUILD = "229";
+  const BUILD = "230";
 
   // Smart cache-bust: per-scene timestamp from the admin takes priority
   // (committer sees their upload immediately), then a device-wide global
@@ -915,6 +915,7 @@ window.Scenes = (function () {
     combat_runner_horde:  "fresh zombie runner sprinting out of smoke and dim muzzle flashes at a fortified camp fence at blood-red dawn, mid-lunge, snarling, other silhouettes behind, horror cinematic widescreen portrait",
     combat_bloater_horde: "massive bloated zombie pushing through a breached chainlink section of a fortified camp fence at blood-red dawn, smoke and flicker of nearby fire, swollen lumpy body, slow and heavy, horror cinematic widescreen portrait",
     combat_hunter_horde:  "fast turned zombie man in torn tactical clothing mid-sprint toward the camera at a fortified camp fence at blood-red dawn, snarling, teeth bared, smoke and silhouettes of the horde behind him, horror cinematic widescreen portrait, in the style of The Last of Us",
+    combat_abom_horde:    "towering grotesque zombie abomination of grown-together flesh and tumors crashing through a breached chainlink section of a fortified camp fence at blood-red dawn, smoke and flicker of nearby fire, swollen lumpy mass with multiple arms, slow and heavy, horror cinematic widescreen portrait, in the style of The Last of Us",
     // --- Flee-context variants: Day-5 flight from the camp, dawn in
     // the pine forest. Separate slot from the base combat portraits
     // so the admin can art each setting without clobbering the other.

@@ -1057,19 +1057,22 @@ window.Story = {
           const ready = !!s.flags.exposedTraitor;
           const waves = ready
             ? // 25 enemies — first is opener, next 24 are waves
-              // Mix: 13 walkers, 6 runners, 4 bloaters, 2 hunters
+              // Mix: 11 walkers, 6 runners, 4 bloaters, 2 hunters,
+              // 1 abomination (the climax wave at #20).
               ["walker_horde", "runner_horde", "walker_horde", "walker_horde",
                "bloater_horde", "walker_horde", "runner_horde", "walker_horde",
                "walker_horde", "bloater_horde", "runner_horde", "walker_horde",
                "hunter_horde", "walker_horde", "bloater_horde", "runner_horde",
-               "walker_horde", "walker_horde", "runner_horde", "bloater_horde",
-               "walker_horde", "hunter_horde", "walker_horde", "runner_horde"]
-            : // Meaner: 8 walkers, 9 runners, 5 bloaters, 3 hunters
+               "walker_horde", "walker_horde", "runner_horde", "abom_horde",
+               "walker_horde", "hunter_horde", "walker_horde", "bloater_horde"]
+            : // Meaner — 7 walkers, 8 runners, 5 bloaters, 3 hunters,
+              // 2 abominations (mid-wall + climax). Camp wasn't ready,
+              // it's worse on every axis.
               ["runner_horde", "walker_horde", "runner_horde", "bloater_horde",
                "walker_horde", "runner_horde", "hunter_horde", "bloater_horde",
-               "runner_horde", "walker_horde", "runner_horde", "bloater_horde",
+               "runner_horde", "walker_horde", "abom_horde", "bloater_horde",
                "hunter_horde", "walker_horde", "runner_horde", "bloater_horde",
-               "walker_horde", "runner_horde", "hunter_horde", "walker_horde",
+               "walker_horde", "runner_horde", "hunter_horde", "abom_horde",
                "bloater_horde", "runner_horde", "walker_horde", "runner_horde"];
           return {
             enemy: ready ? "walker_horde" : "walker_horde",

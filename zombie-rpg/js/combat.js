@@ -22,27 +22,27 @@ window.Combat = (function () {
   const ENEMIES = {
     // Ordinary walker: easy melee food, slight small-arms resist (one
     // round often isn't enough, aim for the head).
-    walker:       { name: "Walker",      art: "🧟",    hp: 4,  atk: [2, 3], speed: 1, desc: "Slow. Hungry. Relentless.", smallArmsResist: 1, headshotBonus: 2, aggressive: 0.35 },
+    walker:       { name: "Walker",      art: "🧟",    hp: 4,  atk: [2, 3], speed: 1, desc: "Slow. Hungry. Relentless.", smallArmsResist: 1, headshotBonus: 2, aggressive: 0.45 },
     // Mrs. Cho: she used to feed your cat. Shaky hands.
     walker_cho:   { name: "Mrs. Cho",    art: "🧟‍♀️", hp: 3,  atk: [2, 3], speed: 1, desc: "She used to feed your cat.", shaky: 0.2, smallArmsResist: 1, headshotBonus: 2, aggressive: 0.25 },
     walker_pair:  { name: "Two Walkers", art: "🧟🧟",  hp: 8,  atk: [2, 4], speed: 1, desc: "They move together.", pack: true, smallArmsResist: 1, headshotBonus: 2 },
     // Runners are accurate and fast — they make you panic, hurting your
     // own hit chance for a turn, but their bite isn't what kills you.
-    runner:       { name: "Runner",      art: "🧟‍♂️", hp: 4,  atk: [3, 4], speed: 2, desc: "Fresh. Fast. Furious.", panic: 0.3, aggressive: 0.5 },
+    runner:       { name: "Runner",      art: "🧟‍♂️", hp: 4,  atk: [3, 4], speed: 2, desc: "Fresh. Fast. Furious.", panic: 0.3, aggressive: 0.65 },
     // Bloater: slow clumsy giant — easy to dodge, hard to hurt, big hit.
-    bloater:      { name: "Bloater",     art: "🧟💀",  hp: 12, atk: [3, 5], speed: 1, desc: "A swollen, leaking thing. The air around it burns.", smallArmsResist: 2, heavySwing: true, aggressive: 0.2, toxic: 2, rangedFlavor: "gas" },
+    bloater:      { name: "Bloater",     art: "🧟💀",  hp: 12, atk: [3, 5], speed: 1, desc: "A swollen, leaking thing. The air around it burns.", smallArmsResist: 2, heavySwing: true, aggressive: 0.25, toxic: 2, rangedFlavor: "gas", telegraphEvery: 4 },
     bandit:       { name: "Bandit",      art: "🧔🔫",  hp: 10, atk: [3, 4], speed: 2, desc: "Smart. Armed. Desperate.", human: true, dodge: 0.22, telegraphEvery: 3 },
     // Older / Younger bandit — named variants for the ambush so the
     // two-person fight reads like two people, not one HP pool.
-    bandit_older:   { name: "Older Bandit",   art: "🧔🔫",  hp: 26, atk: [3, 5], speed: 2, desc: "Hand-tattoos. Steady aim. He's done this before.", human: true, dodge: 0.4, telegraphEvery: 3, repositionEvery: 5, enemyCanAim: true, enemyCanBrace: true },
-    bandit_younger: { name: "Younger Bandit", art: "🧑🔫",  hp: 12, atk: [3, 4], speed: 2, desc: "Skinny. Shaking. More dangerous for it.", human: true, dodge: 0.30, telegraphEvery: 3, repositionEvery: 6, enemyCanAim: true, enemyCanBrace: true, panic: 0.15 },
+    bandit_older:   { name: "Older Bandit",   art: "🧔🔫",  hp: 26, atk: [3, 5], speed: 2, desc: "Hand-tattoos. Steady aim. He's done this before.", human: true, dodge: 0.4, telegraphEvery: 3, repositionEvery: 5, enemyCanAim: true, enemyCanBrace: true, aggressive: 0.18 },
+    bandit_younger: { name: "Younger Bandit", art: "🧑🔫",  hp: 12, atk: [3, 4], speed: 2, desc: "Skinny. Shaking. More dangerous for it.", human: true, dodge: 0.30, telegraphEvery: 3, repositionEvery: 6, enemyCanAim: true, enemyCanBrace: true, panic: 0.15, aggressive: 0.25 },
     // Kept for legacy / save-compat. No story node references it now.
     bandit_pair:  { name: "Two Bandits",  art: "🧔🔫🧔", hp: 24, atk: [3, 5], speed: 2, desc: "Smart. Armed. Coordinated.", human: true, pack: true, dodge: 0.25, repositionEvery: 4, telegraphEvery: 3, enemyCanAim: true, enemyCanBrace: true, panic: 0.15 },
     horde:        { name: "The Horde",   art: "🧟🧟🧟", hp: 16, atk: [3, 5], speed: 1, desc: "A tide of the dead.", smallArmsResist: 1, headshotBonus: 2 },
     // Mini-boss: the thing that was sealed inside the meat locker.
     // Mass of ruptured bodies fused together — slow, heavy, armoured,
     // but headshots (aimed) punch through.
-    freezer_abom: { name: "Meatlocker Abomination", art: "🧟💀", hp: 60, atk: [3, 5], speed: 1, desc: "Grown together in the cold. It shouldn't still be moving.", savageRate: 0.2, boss: true, smallArmsResist: 3, headshotBonus: 4, heavySwing: true, aggressive: 0.4, accuracy: 0.45, breakStuns: true },
+    freezer_abom: { name: "Meatlocker Abomination", art: "🧟💀", hp: 60, atk: [3, 5], speed: 1, desc: "Grown together in the cold. It shouldn't still be moving.", savageRate: 0.2, boss: true, smallArmsResist: 3, headshotBonus: 4, heavySwing: true, aggressive: 0.45, accuracy: 0.45, breakStuns: true, telegraphEvery: 5 },
     // Calder turned — fast, sturdy, 9mm bounces off, but he's not quite
     // armoured against a crowbar to the skull.
     traitor:      { name: "Calder (Turned)", art: "🧟‍♂️", hp: 20, atk: [4, 6], speed: 2, desc: "Not Calder any more. Something wearing his face.", savageRate: 0.28, boss: true, smallArmsResist: 2, meleeVulnerable: 2, telegraphEvery: 4, aggressive: 0.4 },
@@ -51,16 +51,19 @@ window.Combat = (function () {
     hunter:       { name: "Hunter",      art: "🧟‍♂️", hp: 12, atk: [3, 5], speed: 2, desc: "Turned, but it remembers how to hunt.", smallArmsResist: 2, meleeVulnerable: 2, telegraphEvery: 4, aggressive: 0.55 },
     // ---- Horde variants: same stats as the base enemies, own ids
     // so the combat backdrop art can be unique per wave. ----
-    walker_horde:  { name: "Walker",   art: "🧟",    hp: 4,  atk: [2, 3], speed: 1, desc: "Slow. Hungry. Relentless.", smallArmsResist: 1, headshotBonus: 2, aggressive: 0.35 },
-    runner_horde:  { name: "Runner",   art: "🧟‍♂️", hp: 4,  atk: [3, 4], speed: 2, desc: "Fresh. Fast. Furious.", panic: 0.3, aggressive: 0.5 },
-    bloater_horde: { name: "Bloater",  art: "🧟💀",  hp: 12, atk: [3, 5], speed: 1, desc: "A swollen, leaking thing. The air around it burns.", smallArmsResist: 2, heavySwing: true, aggressive: 0.2, toxic: 2, rangedFlavor: "gas" },
-    hunter_horde:  { name: "Hunter",   art: "🧟‍♂️", hp: 12, atk: [3, 5], speed: 2, desc: "Turned, but it remembers how to hunt.", smallArmsResist: 2, meleeVulnerable: 2, telegraphEvery: 4, aggressive: 0.55 },
+    walker_horde:  { name: "Walker",   art: "🧟",    hp: 4,  atk: [2, 3], speed: 1, desc: "Slow. Hungry. Relentless.", smallArmsResist: 1, headshotBonus: 2, aggressive: 0.45 },
+    runner_horde:  { name: "Runner",   art: "🧟‍♂️", hp: 4,  atk: [3, 4], speed: 2, desc: "Fresh. Fast. Furious.", panic: 0.3, aggressive: 0.65 },
+    bloater_horde: { name: "Bloater",  art: "🧟💀",  hp: 12, atk: [3, 5], speed: 1, desc: "A swollen, leaking thing. The air around it burns.", smallArmsResist: 2, heavySwing: true, aggressive: 0.25, toxic: 2, rangedFlavor: "gas", telegraphEvery: 4 },
+    hunter_horde:  { name: "Hunter",   art: "🧟‍♂️", hp: 12, atk: [3, 5], speed: 2, desc: "Turned, but it remembers how to hunt.", smallArmsResist: 2, meleeVulnerable: 2, telegraphEvery: 4, aggressive: 0.6 },
+    // Flesh-walls — the abomination type that crashes the horde for
+    // climax waves. Same stats as freezer_abom so admin art is shared.
+    abom_horde:    { name: "Abomination", art: "🧟💀", hp: 50, atk: [3, 5], speed: 1, desc: "A tower of grown-together meat clawing through the smoke.", savageRate: 0.2, boss: true, smallArmsResist: 3, headshotBonus: 4, heavySwing: true, aggressive: 0.45, accuracy: 0.45, breakStuns: true, telegraphEvery: 5 },
     // ---- Flee variants: same stats as the base enemies, own ids so
     // the combat backdrop art can be unique to the Day-5 flight in the
     // pine forest at pre-dawn. ----
-    walker_flee:   { name: "Walker",   art: "🧟",    hp: 4,  atk: [2, 3], speed: 1, desc: "Slow. Hungry. Relentless.", smallArmsResist: 1, headshotBonus: 2, aggressive: 0.35 },
-    runner_flee:   { name: "Runner",   art: "🧟‍♂️", hp: 4,  atk: [3, 4], speed: 2, desc: "Fresh. Fast. Furious.", panic: 0.3, aggressive: 0.5 },
-    hunter_flee:   { name: "Hunter",   art: "🧟‍♂️", hp: 12, atk: [3, 5], speed: 2, desc: "Turned, but it remembers how to hunt.", smallArmsResist: 2, meleeVulnerable: 2, telegraphEvery: 4, aggressive: 0.55 },
+    walker_flee:   { name: "Walker",   art: "🧟",    hp: 4,  atk: [2, 3], speed: 1, desc: "Slow. Hungry. Relentless.", smallArmsResist: 1, headshotBonus: 2, aggressive: 0.45 },
+    runner_flee:   { name: "Runner",   art: "🧟‍♂️", hp: 4,  atk: [3, 4], speed: 2, desc: "Fresh. Fast. Furious.", panic: 0.3, aggressive: 0.65 },
+    hunter_flee:   { name: "Hunter",   art: "🧟‍♂️", hp: 12, atk: [3, 5], speed: 2, desc: "Turned, but it remembers how to hunt.", smallArmsResist: 2, meleeVulnerable: 2, telegraphEvery: 4, aggressive: 0.6 },
   };
 
   // ---------- Loot tables ----------
@@ -1438,7 +1441,7 @@ window.Combat = (function () {
   // null — they're human, no zombie voice.
   function voiceFor(enemyId) {
     if (!enemyId) return null;
-    if (enemyId === "freezer_abom") return "abominationRoar";
+    if (enemyId === "freezer_abom" || enemyId === "abom_horde") return "abominationRoar";
     if (enemyId === "traitor")      return "calderGasp";
     if (enemyId.startsWith("bloater")) return "bloaterGurgle";
     if (enemyId.startsWith("hunter"))  return "hunterSnarl";
@@ -1688,8 +1691,11 @@ window.Combat = (function () {
     if (e.telegraphEvery && !state.telegraphPending && !state.enemyAimed && !state.enemyBracing
         && state.turn > 0 && (state.turn % e.telegraphEvery === 0)
         && (e.hp > Math.ceil(e.maxHp / 2))) {
-      const opts = ["telegraph"];
-      if (e.enemyCanAim) opts.push("aim");
+      // Weighted picker — biased toward attack windups so the player
+      // sees dodge prompts more often than the passive 'brace' beat.
+      // telegraph counts twice, aim counts twice, brace counts once.
+      const opts = ["telegraph", "telegraph"];
+      if (e.enemyCanAim)   opts.push("aim", "aim");
       if (e.enemyCanBrace) opts.push("brace");
       const pick = opts[Math.floor(Math.random() * opts.length)];
       if (pick === "aim") {
@@ -2075,6 +2081,26 @@ window.Combat = (function () {
   function companionTurn() {
     const s = Game.state;
     if (!state || state.enemy.hp <= 0) return;
+
+    // Vega's ammo resupply — if you're empty and she's still got
+    // magazines, she tosses you a full one. Doesn't burn her cooldown
+    // on the regular fire block (that's a separate beat). Burns one
+    // unit of her own ammo (= one mag from her bandolier).
+    if (vegaPresent() && !(state.engaged && state.engaged.vega) && allyAlive("vega")
+        && s.ammo === 0 && allyHasAmmo("vega")) {
+      const mag = 6;
+      s.ammo = mag;
+      allyConsumeAmmo("vega");
+      log(`Vega slaps a fresh magazine into your hand — "Make it count." +${mag} rounds.`, "ally");
+      Game.toast(`🫡 Vega · magazine · +${mag} 🔫`);
+      Sound.play("pickup");
+      flashAlly("vega");
+      refreshHud();
+      // Short grace before her next shot — she just spent a beat
+      // throwing you the mag instead of firing.
+      state.vegaCd = Math.max(state.vegaCd || 0, 2);
+      state.vegaCdMax = Math.max(state.vegaCdMax || 0, 2);
+    }
 
     if (mayaPresent() && !(state.engaged && state.engaged.maya) && allyAlive("maya")) {
       state.mayaCd = (state.mayaCd || 0) - 1;
