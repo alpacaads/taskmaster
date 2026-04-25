@@ -1033,12 +1033,12 @@
   </footer>
 
   <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
-  <script src="js/overrides.js?v=240"></script>
-  <script src="js/scenes.js?v=240"></script>
+  <script src="js/overrides.js?v=241"></script>
+  <script src="js/scenes.js?v=241"></script>
   <!-- story.js is read-only here: we pull chapters / text / choices
        to annotate each scene card so the flow is legible without
        having to play through. -->
-  <script src="js/story.js?v=240"></script>
+  <script src="js/story.js?v=241"></script>
   <script>
     (async function () {
       const PROMPTS = (window.Scenes && window.Scenes.PROMPTS) || {};
@@ -2201,30 +2201,45 @@
 
       // Single delegated click handler attached once at startup —
       // catches Commit / Revert clicks regardless of how many times
-      // the audio list re-renders.
+      // the audio list re-renders. closest() walks up so a click on
+      // an emoji glyph or text node inside the button still resolves
+      // to the button's data-action.
       document.getElementById("audio-list").addEventListener("click", (e) => {
-        const t = e.target;
-        if (!t.dataset || !t.dataset.action) return;
-        const id = t.dataset.id;
-        if (t.dataset.action === "commit-audio") commitAudio(id);
-        if (t.dataset.action === "revert-audio") revertAudio(id);
+        const btn = e.target && e.target.closest && e.target.closest("[data-action]");
+        if (!btn) return;
+        const id = btn.dataset.id;
+        if (btn.dataset.action === "commit-audio") commitAudio(id);
+        if (btn.dataset.action === "revert-audio") revertAudio(id);
       });
 
       async function commitAudio(slotId) {
-        if (!GH.token) { toast("Add a GitHub token in Settings first.", "err"); return; }
-        const blob = await window.AudioOverrides.get(slotId);
-        if (!blob) { toast("No upload for " + slotId, "err"); return; }
+        console.log("[audio] commit clicked:", slotId);
+        if (!GH.token) {
+          toast("Open ⚙ Settings and paste a GitHub token first.", "err");
+          // Pop the settings modal so it's obvious where to go.
+          try { document.getElementById("settings-btn").click(); } catch (e) {}
+          return;
+        }
+        let blob;
+        try {
+          blob = await window.AudioOverrides.get(slotId);
+        } catch (e) {
+          console.error("[audio] AudioOverrides.get failed:", e);
+          toast("Couldn't read local upload: " + e.message, "err");
+          return;
+        }
+        if (!blob) { toast("No upload for " + slotId + ". Pick a file first.", "err"); return; }
         try {
           const commit = await GH.commitFiles(
             [{ path: AUDIO_PATH + slotId + ".mp3", blob }],
             "Update audio: " + slotId
           );
           audioServerPresence[slotId] = true;
-          // Bump the global cache-bust so the game re-fetches.
           try { localStorage.setItem("dl_game_cache_bust", String(Date.now())); } catch (e) {}
           toast("Committed " + slotId + " (" + commit.sha.slice(0, 7) + ").", "ok");
           renderAudio();
         } catch (e) {
+          console.error("[audio] commit failed:", e);
           toast("Commit failed: " + e.message, "err");
         }
       }
