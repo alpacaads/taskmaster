@@ -30,7 +30,7 @@ window.Combat = (function () {
     // own hit chance for a turn, but their bite isn't what kills you.
     runner:       { name: "Runner",      art: "🧟‍♂️", hp: 4,  atk: [3, 4], speed: 2, desc: "Fresh. Fast. Furious.", panic: 0.3, aggressive: 0.5 },
     // Bloater: slow clumsy giant — easy to dodge, hard to hurt, big hit.
-    bloater:      { name: "Bloater",     art: "🧟💀",  hp: 12, atk: [3, 5], speed: 1, desc: "A swollen, leaking thing.", smallArmsResist: 2, heavySwing: true, aggressive: 0.2 },
+    bloater:      { name: "Bloater",     art: "🧟💀",  hp: 12, atk: [3, 5], speed: 1, desc: "A swollen, leaking thing. The air around it burns.", smallArmsResist: 2, heavySwing: true, aggressive: 0.2, toxic: 2, rangedFlavor: "gas" },
     bandit:       { name: "Bandit",      art: "🧔🔫",  hp: 10, atk: [3, 4], speed: 2, desc: "Smart. Armed. Desperate.", human: true, dodge: 0.22, telegraphEvery: 3 },
     // Older / Younger bandit — named variants for the ambush so the
     // two-person fight reads like two people, not one HP pool.
@@ -53,7 +53,7 @@ window.Combat = (function () {
     // so the combat backdrop art can be unique per wave. ----
     walker_horde:  { name: "Walker",   art: "🧟",    hp: 4,  atk: [2, 3], speed: 1, desc: "Slow. Hungry. Relentless.", smallArmsResist: 1, headshotBonus: 2, aggressive: 0.35 },
     runner_horde:  { name: "Runner",   art: "🧟‍♂️", hp: 4,  atk: [3, 4], speed: 2, desc: "Fresh. Fast. Furious.", panic: 0.3, aggressive: 0.5 },
-    bloater_horde: { name: "Bloater",  art: "🧟💀",  hp: 12, atk: [3, 5], speed: 1, desc: "A swollen, leaking thing.", smallArmsResist: 2, heavySwing: true, aggressive: 0.2 },
+    bloater_horde: { name: "Bloater",  art: "🧟💀",  hp: 12, atk: [3, 5], speed: 1, desc: "A swollen, leaking thing. The air around it burns.", smallArmsResist: 2, heavySwing: true, aggressive: 0.2, toxic: 2, rangedFlavor: "gas" },
     hunter_horde:  { name: "Hunter",   art: "🧟‍♂️", hp: 12, atk: [3, 5], speed: 2, desc: "Turned, but it remembers how to hunt.", smallArmsResist: 2, meleeVulnerable: 2, telegraphEvery: 4, aggressive: 0.55 },
     // ---- Flee variants: same stats as the base enemies, own ids so
     // the combat backdrop art can be unique to the Day-5 flight in the
@@ -1263,6 +1263,26 @@ window.Combat = (function () {
       return;
     }
 
+    // Toxic aura — bloater-types radiate poison at close range. A
+    // small chip of damage applied every hostile turn while you're
+    // nose-to-nose (and implicitly while they have you held down).
+    // Stacks on top of whatever the enemy does next; closing with a
+    // bloater should feel like a slow burn.
+    if (e.toxic && state.range === "close" && s.hp > 0) {
+      const tick = e.toxic;
+      s.hp -= tick;
+      log(`The toxic cloud burns your lungs — ${tick} damage.`, "enemy");
+      Sound.play("damage");
+      floatDamage(tick);
+      refreshHud();
+      if (s.hp <= 0) {
+        log("You collapse, choking.", "crit");
+        Sound.play("death");
+        setTimeout(() => end("lose"), 900);
+        return;
+      }
+    }
+
     // Telegraph turn — smart humans wind up. If the enemy can also
     // aim and brace (bandit_pair), pick randomly between: telegraph
     // a kill shot, line up an aimed shot (next hit auto-crit, +3
@@ -1439,9 +1459,25 @@ window.Combat = (function () {
         screenShake();
       } else {
         s.hp -= dmg;
-        const line = savage
-          ? `${e.name} catches you — ${dmg} damage.`
-          : `${e.name} strikes — ${dmg} damage.`;
+        // Bloater-type enemies "belch" gas at range instead of swinging.
+        // Up close the flavor is a thrown sac of bile — same damage,
+        // different language so the player feels the enemy's nature.
+        const gas = e.rangedFlavor === "gas";
+        const atFar = state.range === "far";
+        let line;
+        if (gas && atFar) {
+          line = savage
+            ? `${e.name} belches a thick cloud of spores — you gasp, ${dmg} damage.`
+            : `${e.name} sprays a jet of black bile — ${dmg} damage.`;
+        } else if (gas) {
+          line = savage
+            ? `${e.name} bursts a sac against your chest — ${dmg} damage.`
+            : `${e.name} slams into you, seeping — ${dmg} damage.`;
+        } else {
+          line = savage
+            ? `${e.name} catches you — ${dmg} damage.`
+            : `${e.name} strikes — ${dmg} damage.`;
+        }
         log(line, savage ? "crit" : "enemy");
         Sound.play(savage ? "crit" : "damage");
         spawnEnemyBlood();

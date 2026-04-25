@@ -1903,15 +1903,15 @@ window.Story = {
     sceneClass: "blood",
     chapter: "Day 4 — Pharmacy",
     text: function(s) {
-      let base = "Two of them lurch out of the dark between the shelves. Pill bottles roll under your boots.";
+      let base = "Something heavy shifts at the back of the aisle — wrong-shaped, bloated, its skin split open in seeping black fissures. A bloater. The air around it shimmers; your eyes sting before it even turns.\n\nDon't close. Don't let it grab you.";
       if (s.flags.bringNora) {
-        base += "\n\nYou shove Nora down behind the checkout counter and put yourself between her and the aisle.";
+        base += "\n\nYou shove Nora down behind the checkout counter and wave her farther back. The gas drifts low.";
       }
       return base;
     },
     choices: [
       { label: "Fight", tag: "COMBAT", tagClass: "danger",
-        combat: { enemy: "walker_pair", onWin: "hospital_lobby", onLose: "death" } },
+        combat: { enemy: "bloater", onWin: "hospital_lobby", onLose: "death" } },
     ]
   },
 
