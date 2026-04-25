@@ -10,7 +10,7 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <title>Dead Light — A Zombie RPG</title>
-  <link rel="stylesheet" href="css/style.css?v=218" />
+  <link rel="stylesheet" href="css/style.css?v=219" />
 </head>
 <body>
 
@@ -20,7 +20,7 @@
     <div id="title-screen" class="screen">
       <div class="title-bg">
         <img class="title-image" id="title-image" alt=""
-             src="images/title.jpg?v=218"
+             src="images/title.jpg?v=219"
              onerror="this.closest('.title-bg').classList.add('no-image')" />
         <div class="title-vignette"></div>
       </div>
@@ -83,6 +83,23 @@
     <div id="combat-screen" class="screen hidden">
       <div class="combat-backdrop" id="combat-backdrop"></div>
       <div class="combat-grain"></div>
+
+      <!-- Full-screen status effects. Each layer toggles on for its
+           status flag; multiple layers can be active at once. Sit
+           between the backdrop and the foreground UI. -->
+      <div class="combat-fx-stack">
+        <div class="fx fx-grip" hidden></div>
+        <div class="fx fx-toxic" hidden></div>
+        <div class="fx fx-windup" hidden></div>
+        <div class="fx fx-enemy-aim" hidden></div>
+        <div class="fx fx-enemy-braced" hidden></div>
+        <div class="fx fx-player-aim" hidden></div>
+        <div class="fx fx-counter" hidden></div>
+        <div class="fx fx-braced" hidden></div>
+        <div class="fx fx-panic" hidden></div>
+        <div class="fx fx-reeling" hidden></div>
+        <div class="fx fx-stagger" hidden></div>
+      </div>
 
       <div class="combat-slug">
         <span id="combat-chapter" hidden></span>
@@ -211,11 +228,11 @@
 
   </div>
 
-  <script src="js/sound.js?v=218"></script>
-  <script src="js/overrides.js?v=218"></script>
-  <script src="js/scenes.js?v=218"></script>
-  <script src="js/story.js?v=218"></script>
-  <script src="js/combat.js?v=218"></script>
-  <script src="js/game.js?v=218"></script>
+  <script src="js/sound.js?v=219"></script>
+  <script src="js/overrides.js?v=219"></script>
+  <script src="js/scenes.js?v=219"></script>
+  <script src="js/story.js?v=219"></script>
+  <script src="js/combat.js?v=219"></script>
+  <script src="js/game.js?v=219"></script>
 </body>
 </html>

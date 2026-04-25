@@ -993,6 +993,125 @@ html, body {
 }
 
 /* Ally readout — faces with cooldown + ready pulse */
+/* ---- Full-screen status effects ----
+   Each .fx-* layer is a sibling overlay; the enabled set composites.
+   z-index sits above the backdrop+grain (which are 0/1) but BELOW
+   the slug / enemy / log / hero / actions chrome (which are z-2+). */
+.combat-fx-stack {
+  position: absolute; inset: 0;
+  pointer-events: none;
+  z-index: 1;
+}
+.combat-fx-stack .fx {
+  position: absolute; inset: 0;
+  pointer-events: none;
+}
+.combat-fx-stack .fx[hidden] { display: none; }
+
+/* GRIP / PINNED — claustrophobic dark vignette closing in. */
+.fx.fx-grip {
+  background: radial-gradient(ellipse at center, transparent 28%, rgba(0,0,0,0.7) 95%);
+  animation: fxGripBreathe 2.4s ease-in-out infinite;
+}
+@keyframes fxGripBreathe {
+  0%,100% { opacity: 0.85; }
+  50%     { opacity: 1.00; }
+}
+
+/* TOXIC AURA / IN GAS — sickly green wash with slow drift. */
+.fx.fx-toxic {
+  background:
+    radial-gradient(ellipse at 30% 65%, rgba(120,180,60,0.22) 0%, transparent 55%),
+    radial-gradient(ellipse at 70% 40%, rgba(80,140,40,0.20) 0%, transparent 60%),
+    linear-gradient(180deg, rgba(60,100,30,0.15) 0%, rgba(30,60,15,0.30) 100%);
+  mix-blend-mode: multiply;
+  animation: fxToxicDrift 6s ease-in-out infinite alternate;
+}
+@keyframes fxToxicDrift {
+  0%   { transform: translate(0, 0) scale(1); opacity: 0.85; }
+  100% { transform: translate(2%, -1%) scale(1.06); opacity: 1; }
+}
+
+/* WIND-UP — pulsing red edge, fast & urgent. Telegraph warning. */
+.fx.fx-windup {
+  background: radial-gradient(ellipse at center, transparent 38%, rgba(220,40,40,0.34) 92%);
+  animation: fxWindupPulse 0.7s ease-in-out infinite;
+  mix-blend-mode: screen;
+}
+@keyframes fxWindupPulse {
+  0%,100% { opacity: 0.55; }
+  50%     { opacity: 1.00; }
+}
+
+/* ENEMY AIMED — narrow horizontal scope vignette, slower pulse. */
+.fx.fx-enemy-aim {
+  background:
+    linear-gradient(180deg, rgba(180,30,30,0.22) 0%, transparent 14%, transparent 86%, rgba(180,30,30,0.22) 100%);
+  animation: fxEnemyAimPulse 1.6s ease-in-out infinite;
+}
+@keyframes fxEnemyAimPulse {
+  0%,100% { opacity: 0.6; }
+  50%     { opacity: 1.0; }
+}
+
+/* ENEMY BRACED — neutral steel-blue tint, low intensity. */
+.fx.fx-enemy-braced {
+  background: linear-gradient(180deg, rgba(100,140,180,0.10) 0%, rgba(80,110,160,0.18) 100%);
+  mix-blend-mode: screen;
+}
+
+/* PLAYER AIMED — gold scope vignette, narrow center focus. */
+.fx.fx-player-aim {
+  background: radial-gradient(circle at center, transparent 26%, rgba(0,0,0,0.5) 90%);
+}
+.fx.fx-player-aim::after {
+  content: ""; position: absolute; inset: 0;
+  background: radial-gradient(circle at center, rgba(245,200,80,0.12) 0%, transparent 30%);
+  mix-blend-mode: screen;
+}
+
+/* COUNTER READY — soft amber edge glow. */
+.fx.fx-counter {
+  box-shadow: inset 0 0 80px rgba(245,200,80,0.22);
+  animation: fxCounterPulse 1.8s ease-in-out infinite;
+}
+@keyframes fxCounterPulse {
+  0%,100% { box-shadow: inset 0 0 60px rgba(245,200,80,0.18); }
+  50%     { box-shadow: inset 0 0 90px rgba(245,200,80,0.30); }
+}
+
+/* BRACED (player) — steel-blue inset edge glow. */
+.fx.fx-braced {
+  box-shadow: inset 0 0 60px rgba(120,160,200,0.24);
+}
+
+/* PANIC — slight red flicker, low jitter. */
+.fx.fx-panic {
+  background: radial-gradient(ellipse at center, transparent 50%, rgba(220,40,40,0.20) 100%);
+  animation: fxPanicJitter 0.45s ease-in-out infinite;
+}
+@keyframes fxPanicJitter {
+  0%,100% { transform: translate(0, 0); opacity: 0.7; }
+  25%     { transform: translate(-1px, 0); opacity: 0.95; }
+  75%     { transform: translate(1px, 0); opacity: 0.95; }
+}
+
+/* REELING — soft amber wash, brief feel of "we have the upper hand." */
+.fx.fx-reeling {
+  background: radial-gradient(circle at center, rgba(245,200,80,0.16) 0%, transparent 65%);
+  animation: fxReelingFade 1.2s ease-out;
+}
+@keyframes fxReelingFade {
+  0%   { opacity: 1; }
+  100% { opacity: 0.65; }
+}
+
+/* STAGGERED — slightly stronger amber wash for the heavier break-stun. */
+.fx.fx-stagger {
+  background: radial-gradient(circle at center, rgba(245,200,80,0.22) 0%, transparent 55%);
+  animation: fxReelingFade 1.2s ease-out;
+}
+
 /* ---- Status badges: enemy vertical strip on the left, player
    horizontal strip just above the hero stats. Both render multiple
    small pills so simultaneous states (AIMED + GRIP + TOXIC, etc.) are

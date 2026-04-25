@@ -716,6 +716,30 @@ window.Combat = (function () {
     paint("player-status-badges", computePlayerBadges());
   }
 
+  // Toggle the full-screen status-effect layers. Each .fx-* div is a
+  // dedicated overlay so multiple effects layer cleanly (e.g. WIND-UP
+  // red pulse + GRIP dark vignette + TOXIC green wash all at once).
+  function renderFxLayer() {
+    const stack = document.querySelector(".combat-fx-stack");
+    if (!stack) return;
+    const live = !!(state && state.enemy && state.enemy.hp > 0);
+    const set = (cls, on) => {
+      const el = stack.querySelector("." + cls);
+      if (el) el.hidden = !(on && live);
+    };
+    set("fx-grip",         state && state.heldDown);
+    set("fx-toxic",        state && state.range === "close" && state.enemy && state.enemy.toxic);
+    set("fx-windup",       state && state.telegraphPending);
+    set("fx-enemy-aim",    state && state.enemyAimed);
+    set("fx-enemy-braced", state && state.enemyBracing);
+    set("fx-player-aim",   state && state.aimReady);
+    set("fx-counter",      state && state.counterReady);
+    set("fx-braced",       state && state.bracing);
+    set("fx-panic",        state && state.playerPanicked);
+    set("fx-reeling",      state && state.interruptedEnemy);
+    set("fx-stagger",      state && state.enemyStunnedFromBreak);
+  }
+
   // Status chip in the combat slug — 'AIMED' when next shot is primed,
   // '⚠ TELEGRAPHED' when the enemy is winding up (player should read
   // and decide). Also toggles the Aim button's availability.
@@ -797,6 +821,7 @@ window.Combat = (function () {
     }
     renderEnemyStatus();
     renderStatusBadges();
+    renderFxLayer();
   }
 
   function refreshHud() {
