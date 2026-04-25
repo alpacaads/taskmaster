@@ -34,8 +34,8 @@ window.Combat = (function () {
     bandit:       { name: "Bandit",      art: "🧔🔫",  hp: 10, atk: [3, 4], speed: 2, desc: "Smart. Armed. Desperate.", human: true, dodge: 0.22, telegraphEvery: 3 },
     // Older / Younger bandit — named variants for the ambush so the
     // two-person fight reads like two people, not one HP pool.
-    bandit_older:   { name: "Older Bandit",   art: "🧔🔫",  hp: 20, atk: [3, 5], speed: 2, desc: "Hand-tattoos. Steady aim. He's done this before.", human: true, dodge: 0.25, telegraphEvery: 3, enemyCanBrace: true },
-    bandit_younger: { name: "Younger Bandit", art: "🧑🔫",  hp: 9,  atk: [3, 4], speed: 2, desc: "Skinny. Shaking. More dangerous for it.", human: true, dodge: 0.2, telegraphEvery: 3, panic: 0.15 },
+    bandit_older:   { name: "Older Bandit",   art: "🧔🔫",  hp: 20, atk: [3, 5], speed: 2, desc: "Hand-tattoos. Steady aim. He's done this before.", human: true, dodge: 0.35, telegraphEvery: 3, repositionEvery: 5, enemyCanAim: true, enemyCanBrace: true },
+    bandit_younger: { name: "Younger Bandit", art: "🧑🔫",  hp: 12, atk: [3, 4], speed: 2, desc: "Skinny. Shaking. More dangerous for it.", human: true, dodge: 0.30, telegraphEvery: 3, repositionEvery: 6, enemyCanAim: true, enemyCanBrace: true, panic: 0.15 },
     // Kept for legacy / save-compat. No story node references it now.
     bandit_pair:  { name: "Two Bandits",  art: "🧔🔫🧔", hp: 24, atk: [3, 5], speed: 2, desc: "Smart. Armed. Coordinated.", human: true, pack: true, dodge: 0.25, repositionEvery: 4, telegraphEvery: 3, enemyCanAim: true, enemyCanBrace: true, panic: 0.15 },
     horde:        { name: "The Horde",   art: "🧟🧟🧟", hp: 16, atk: [3, 5], speed: 1, desc: "A tide of the dead.", smallArmsResist: 1, headshotBonus: 2 },
@@ -929,8 +929,12 @@ window.Combat = (function () {
       // 'shaky' / 'panicked' states drop your accuracy further.
       let baseHit = state.enemy.speed === 2 ? 0.75 : 0.9;
       baseHit -= (state.enemy.shaky || 0);          // hard to shoot someone you knew
+      // Smart human enemies (bandits) duck and weave at range too —
+      // their dodge stat used to only matter for melee. Aimed shots and
+      // telegraph-interrupts still bypass — those are guaranteed crits.
+      if (!aimed && !interrupted) baseHit -= (state.enemy.dodge || 0);
       if (state.playerPanicked) baseHit -= 0.25;    // runner bit scared you
-      const hit = aimed || interrupted || Math.random() < Math.max(0.3, baseHit);
+      const hit = aimed || interrupted || Math.random() < Math.max(0.2, baseHit);
       state.playerPanicked = false; // consumed either way
       if (!hit) {
         log("The shot misses. The sound draws more attention.", "info");
@@ -1859,20 +1863,47 @@ window.Combat = (function () {
   // plays the victory sting and exits combat.
   function finishOrAdvance() {
     applyLoot(state.enemyId);
-    // If the ally was still mid-fight when you finished yours, close
-    // hers out narratively too — she finishes a beat behind you. The
-    // post-combat scene narrates 'two bodies, both of theirs'; we
-    // can't have her bandit still standing.
+    // Ally still locked with their parallel target? Promote that
+    // target to YOUR main enemy. The ally drops her engagement and
+    // helps you finish the fight. No more free-kill shortcut where
+    // killing yours "auto-clears" hers — the threat is real until
+    // somebody actually puts the second one down.
     if (state.allyEnemy && state.allyEnemy.hp > 0) {
       const ae = state.allyEnemy;
+      const aeId = ae.id;
+      const aeHp = ae.hp;
+      const aeMax = ae.maxHp;
       const niceName = ae.allyKey === "maya" ? "Maya" :
                        ae.allyKey === "ren"  ? "Ren"  :
                        ae.allyKey === "vega" ? "Vega" : ae.allyKey;
-      log(`${niceName} finishes hers right after — a clean shot.`, "ally");
-      ae.hp = 0;
+      const def = ENEMIES[aeId];
+      // Drop the parallel engagement; ally swings back to firing on
+      // your main target (which is now hers).
       state.allyEnemy = null;
       if (state.engaged) state.engaged[ae.allyKey] = false;
-      renderAllies();
+      if (def) {
+        log(`${niceName} swings off hers — yours is still up. Yours now.`, "warn");
+        state.enemy = { ...def, hp: aeHp, maxHp: aeMax, atk: def.atk };
+        state.enemyId = aeId;
+        // Per-enemy windows reset for the new fighter.
+        state.telegraphPending = false;
+        state.enemyAimed = false;
+        state.enemyBracing = false;
+        state.interruptedEnemy = false;
+        state.enemyStunnedFromBreak = false;
+        state.heldDown = false;
+        state.range = "far";
+        // Refresh combat UI for the swap.
+        document.getElementById("enemy-art").textContent = state.enemy.art;
+        document.getElementById("enemy-name").textContent = state.enemy.name;
+        const descEl = document.getElementById("enemy-desc");
+        if (descEl) descEl.textContent = state.enemy.desc || "";
+        setCombatBackdrop(aeId);
+        updateEnemyHp();
+        renderAllies();
+        refreshCombatStatus();
+        return;
+      }
     }
     if (state.waveQueue && state.waveQueue.length > 0) {
       setTimeout(() => advanceToNextWave(), 950);
