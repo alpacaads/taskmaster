@@ -457,6 +457,14 @@ window.Sound = (function () {
       if (s.startsWith("music_")) stopOverride(s);
     });
   }
+  // Cut any non-music override that's still playing — long uploaded
+  // groan / shot / voice files would otherwise bleed into the next
+  // scene if the file outlives the moment that triggered it.
+  function stopAllSFXOverrides() {
+    Object.keys(audioPlayers).forEach(s => {
+      if (!s.startsWith("music_")) stopOverride(s);
+    });
+  }
 
   function play(name) {
     if (!ensure() || muted) return;
@@ -689,6 +697,10 @@ window.Sound = (function () {
     ambientScene = scene;
     // Stop the legacy drone if any was running.
     stopAmbient();
+    // Cut any SFX override that's still mid-playback — uploaded
+    // groans / shots can be longer than the procedural cue and
+    // would otherwise carry into the post-combat / post-event scene.
+    stopAllSFXOverrides();
     // Hold combat music ONLY while combat is actively running. The
     // moment Combat.end() clears its state, isActive() returns false
     // and the next scene's setAmbience is allowed to swap tracks.
