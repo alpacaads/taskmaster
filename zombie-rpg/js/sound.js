@@ -94,10 +94,11 @@ window.Sound = (function () {
   // --- SFX ---
 
   const FX = {
-    click:   () => tone({ freq: 560, type: "square",   dur: 0.05, vol: 0.1 }),
-    select:  () => { tone({ freq: 660, type: "sine", dur: 0.07, vol: 0.15 });
-                     tone({ freq: 990, type: "sine", dur: 0.09, vol: 0.1, delay: 0.06 }); },
-    back:    () => { tone({ freq: 420, type: "sine", dur: 0.08, vol: 0.15, slideTo: 260 }); },
+    // Softer UI feedback — sine waves only, no square buzz.
+    click:   () => tone({ freq: 480, type: "sine", dur: 0.04, vol: 0.07 }),
+    select:  () => { tone({ freq: 540, type: "sine", dur: 0.06, vol: 0.10 });
+                     tone({ freq: 760, type: "sine", dur: 0.08, vol: 0.07, delay: 0.05 }); },
+    back:    () => { tone({ freq: 380, type: "sine", dur: 0.07, vol: 0.10, slideTo: 240 }); },
 
     pickup:  () => {
       tone({ freq: 523, type: "triangle", dur: 0.08, vol: 0.2 });
@@ -111,134 +112,137 @@ window.Sound = (function () {
     },
 
     groan:   () => {
-      // Low sawtooth moan, low-passed
-      if (!ensure() || muted) return;
-      const t0 = now();
-      const o = ctx.createOscillator();
-      const g = ctx.createGain();
-      const f = ctx.createBiquadFilter();
-      o.type = "sawtooth";
-      o.frequency.setValueAtTime(88, t0);
-      o.frequency.linearRampToValueAtTime(62, t0 + 0.4);
-      o.frequency.linearRampToValueAtTime(78, t0 + 0.85);
-      f.type = "lowpass"; f.frequency.value = 420; f.Q.value = 4;
-      g.gain.setValueAtTime(0, t0);
-      g.gain.linearRampToValueAtTime(0.28, t0 + 0.12);
-      g.gain.exponentialRampToValueAtTime(0.0008, t0 + 1.0);
-      o.connect(f); f.connect(g); g.connect(master);
-      o.start(t0); o.stop(t0 + 1.05);
-    },
-
-    runnerScream: () => {
-      if (!ensure() || muted) return;
-      const t0 = now();
-      const o = ctx.createOscillator();
-      const g = ctx.createGain();
-      o.type = "sawtooth";
-      o.frequency.setValueAtTime(180, t0);
-      o.frequency.exponentialRampToValueAtTime(540, t0 + 0.35);
-      g.gain.setValueAtTime(0, t0);
-      g.gain.linearRampToValueAtTime(0.25, t0 + 0.05);
-      g.gain.exponentialRampToValueAtTime(0.0008, t0 + 0.5);
-      o.connect(g); g.connect(master);
-      o.start(t0); o.stop(t0 + 0.55);
-      noise({ dur: 0.4, cutoff: 1600, q: 2, vol: 0.15 });
-    },
-
-    // Bloater — wet, low-frequency gurgle with a bubbling tail.
-    // Sounds bloated and infected, like something speaking through fluid.
-    bloaterGurgle: () => {
-      if (!ensure() || muted) return;
-      const t0 = now();
-      const o = ctx.createOscillator();
-      const g = ctx.createGain();
-      const f = ctx.createBiquadFilter();
-      o.type = "sawtooth";
-      o.frequency.setValueAtTime(70, t0);
-      o.frequency.linearRampToValueAtTime(54, t0 + 0.55);
-      o.frequency.linearRampToValueAtTime(62, t0 + 0.95);
-      f.type = "lowpass"; f.frequency.value = 320; f.Q.value = 5;
-      g.gain.setValueAtTime(0, t0);
-      g.gain.linearRampToValueAtTime(0.30, t0 + 0.10);
-      g.gain.exponentialRampToValueAtTime(0.0008, t0 + 1.10);
-      o.connect(f); f.connect(g); g.connect(master);
-      o.start(t0); o.stop(t0 + 1.15);
-      // Bubbling tail — narrow lowpass noise that sounds like fluid
-      // gurgling in the throat.
-      noise({ dur: 0.5, cutoff: 220, q: 6, vol: 0.18, delay: 0.32 });
-      noise({ dur: 0.25, cutoff: 180, q: 8, vol: 0.12, delay: 0.7 });
-    },
-
-    // Hunter — sharper, faster, predatory snarl. Mid-range, rises and
-    // bites quickly. Reads as the smart-zombie that remembers how to hunt.
-    hunterSnarl: () => {
-      if (!ensure() || muted) return;
-      const t0 = now();
-      const o = ctx.createOscillator();
-      const g = ctx.createGain();
-      const f = ctx.createBiquadFilter();
-      o.type = "sawtooth";
-      o.frequency.setValueAtTime(135, t0);
-      o.frequency.exponentialRampToValueAtTime(225, t0 + 0.18);
-      o.frequency.exponentialRampToValueAtTime(105, t0 + 0.50);
-      f.type = "bandpass"; f.frequency.value = 850; f.Q.value = 3;
-      g.gain.setValueAtTime(0, t0);
-      g.gain.linearRampToValueAtTime(0.28, t0 + 0.06);
-      g.gain.exponentialRampToValueAtTime(0.0008, t0 + 0.6);
-      o.connect(f); f.connect(g); g.connect(master);
-      o.start(t0); o.stop(t0 + 0.65);
-      // Breath/rasp tail — high noise burst.
-      noise({ dur: 0.32, cutoff: 1900, q: 2, vol: 0.16, delay: 0.05 });
-    },
-
-    // Abomination — deep, monstrous, multi-layered roar. Two oscillators
-    // detuned + a wet noise bottom for body. Long sustain so the freezer
-    // mini-boss feels physically larger than everything else.
-    abominationRoar: () => {
-      if (!ensure() || muted) return;
-      const t0 = now();
-      // Sub layer.
-      const o1 = ctx.createOscillator();
-      const g1 = ctx.createGain();
-      o1.type = "sawtooth";
-      o1.frequency.setValueAtTime(46, t0);
-      o1.frequency.linearRampToValueAtTime(38, t0 + 1.2);
-      o1.frequency.linearRampToValueAtTime(52, t0 + 1.65);
-      g1.gain.setValueAtTime(0, t0);
-      g1.gain.linearRampToValueAtTime(0.42, t0 + 0.22);
-      g1.gain.exponentialRampToValueAtTime(0.0008, t0 + 1.85);
-      o1.connect(g1); g1.connect(master);
-      o1.start(t0); o1.stop(t0 + 1.9);
-      // Mid harmonic.
-      const o2 = ctx.createOscillator();
-      const g2 = ctx.createGain();
-      o2.type = "square";
-      o2.frequency.setValueAtTime(96, t0);
-      o2.frequency.linearRampToValueAtTime(78, t0 + 1.3);
-      g2.gain.setValueAtTime(0, t0);
-      g2.gain.linearRampToValueAtTime(0.16, t0 + 0.30);
-      g2.gain.exponentialRampToValueAtTime(0.0008, t0 + 1.6);
-      o2.connect(g2); g2.connect(master);
-      o2.start(t0); o2.stop(t0 + 1.65);
-      // Wet body.
-      noise({ dur: 1.20, cutoff: 200, q: 1.2, vol: 0.22, delay: 0.10 });
-    },
-
-    // Calder (traitor) — half-human gasp followed by a zombie groan
-    // tail. The bite has already won, but his voice is still in there.
-    calderGasp: () => {
+      // Low triangle moan, soft lowpass — no sawtooth buzz.
       if (!ensure() || muted) return;
       const t0 = now();
       const o = ctx.createOscillator();
       const g = ctx.createGain();
       const f = ctx.createBiquadFilter();
       o.type = "triangle";
-      o.frequency.setValueAtTime(225, t0);
-      o.frequency.exponentialRampToValueAtTime(290, t0 + 0.16);
-      o.frequency.exponentialRampToValueAtTime(170, t0 + 0.65);
-      f.type = "bandpass"; f.frequency.value = 620; f.Q.value = 4;
+      o.frequency.setValueAtTime(88, t0);
+      o.frequency.linearRampToValueAtTime(62, t0 + 0.4);
+      o.frequency.linearRampToValueAtTime(78, t0 + 0.85);
+      f.type = "lowpass"; f.frequency.value = 380; f.Q.value = 1.2;
       g.gain.setValueAtTime(0, t0);
-      g.gain.linearRampToValueAtTime(0.22, t0 + 0.08);
+      g.gain.linearRampToValueAtTime(0.22, t0 + 0.12);
+      g.gain.exponentialRampToValueAtTime(0.0008, t0 + 1.0);
+      o.connect(f); f.connect(g); g.connect(master);
+      o.start(t0); o.stop(t0 + 1.05);
+    },
+
+    runnerScream: () => {
+      // Triangle base, lower top end so it's not piercing.
+      if (!ensure() || muted) return;
+      const t0 = now();
+      const o = ctx.createOscillator();
+      const g = ctx.createGain();
+      o.type = "triangle";
+      o.frequency.setValueAtTime(190, t0);
+      o.frequency.exponentialRampToValueAtTime(420, t0 + 0.30);
+      g.gain.setValueAtTime(0, t0);
+      g.gain.linearRampToValueAtTime(0.18, t0 + 0.05);
+      g.gain.exponentialRampToValueAtTime(0.0008, t0 + 0.42);
+      o.connect(g); g.connect(master);
+      o.start(t0); o.stop(t0 + 0.45);
+      noise({ dur: 0.30, cutoff: 1100, q: 0.8, vol: 0.08 });
+    },
+
+    // Bloater — wet, low-frequency gurgle with a bubbling tail.
+    // Sounds bloated and infected, like something speaking through fluid.
+    bloaterGurgle: () => {
+      // Triangle base, low Q lowpass — wet body without ringing.
+      if (!ensure() || muted) return;
+      const t0 = now();
+      const o = ctx.createOscillator();
+      const g = ctx.createGain();
+      const f = ctx.createBiquadFilter();
+      o.type = "triangle";
+      o.frequency.setValueAtTime(72, t0);
+      o.frequency.linearRampToValueAtTime(56, t0 + 0.55);
+      o.frequency.linearRampToValueAtTime(64, t0 + 0.95);
+      f.type = "lowpass"; f.frequency.value = 280; f.Q.value = 1.0;
+      g.gain.setValueAtTime(0, t0);
+      g.gain.linearRampToValueAtTime(0.24, t0 + 0.10);
+      g.gain.exponentialRampToValueAtTime(0.0008, t0 + 1.10);
+      o.connect(f); f.connect(g); g.connect(master);
+      o.start(t0); o.stop(t0 + 1.15);
+      // Bubbling tail — softer lowpass, no ring.
+      noise({ dur: 0.45, cutoff: 200, q: 1.2, vol: 0.10, delay: 0.32 });
+    },
+
+    // Hunter — sharper, faster, predatory snarl. Mid-range, rises and
+    // bites quickly. Reads as the smart-zombie that remembers how to hunt.
+    hunterSnarl: () => {
+      // Triangle on a soft lowpass — predator without the bandpass ring.
+      if (!ensure() || muted) return;
+      const t0 = now();
+      const o = ctx.createOscillator();
+      const g = ctx.createGain();
+      const f = ctx.createBiquadFilter();
+      o.type = "triangle";
+      o.frequency.setValueAtTime(120, t0);
+      o.frequency.exponentialRampToValueAtTime(180, t0 + 0.18);
+      o.frequency.exponentialRampToValueAtTime(95, t0 + 0.50);
+      f.type = "lowpass"; f.frequency.value = 700; f.Q.value = 0.9;
+      g.gain.setValueAtTime(0, t0);
+      g.gain.linearRampToValueAtTime(0.22, t0 + 0.06);
+      g.gain.exponentialRampToValueAtTime(0.0008, t0 + 0.6);
+      o.connect(f); f.connect(g); g.connect(master);
+      o.start(t0); o.stop(t0 + 0.65);
+      // Breath rasp — gentler, lower cutoff so it's air, not hiss.
+      noise({ dur: 0.25, cutoff: 1200, q: 0.7, vol: 0.07, delay: 0.05 });
+    },
+
+    // Abomination — deep, monstrous, multi-layered roar. Two oscillators
+    // detuned + a wet noise bottom for body. Long sustain so the freezer
+    // mini-boss feels physically larger than everything else.
+    abominationRoar: () => {
+      // Triangle sub + sine harmonic — body without the square buzz.
+      if (!ensure() || muted) return;
+      const t0 = now();
+      // Sub layer.
+      const o1 = ctx.createOscillator();
+      const g1 = ctx.createGain();
+      o1.type = "triangle";
+      o1.frequency.setValueAtTime(46, t0);
+      o1.frequency.linearRampToValueAtTime(38, t0 + 1.2);
+      o1.frequency.linearRampToValueAtTime(52, t0 + 1.65);
+      g1.gain.setValueAtTime(0, t0);
+      g1.gain.linearRampToValueAtTime(0.34, t0 + 0.22);
+      g1.gain.exponentialRampToValueAtTime(0.0008, t0 + 1.85);
+      o1.connect(g1); g1.connect(master);
+      o1.start(t0); o1.stop(t0 + 1.9);
+      // Mid harmonic — sine, not square.
+      const o2 = ctx.createOscillator();
+      const g2 = ctx.createGain();
+      o2.type = "sine";
+      o2.frequency.setValueAtTime(96, t0);
+      o2.frequency.linearRampToValueAtTime(78, t0 + 1.3);
+      g2.gain.setValueAtTime(0, t0);
+      g2.gain.linearRampToValueAtTime(0.13, t0 + 0.30);
+      g2.gain.exponentialRampToValueAtTime(0.0008, t0 + 1.6);
+      o2.connect(g2); g2.connect(master);
+      o2.start(t0); o2.stop(t0 + 1.65);
+      // Wet body — gentler.
+      noise({ dur: 1.10, cutoff: 180, q: 0.8, vol: 0.16, delay: 0.10 });
+    },
+
+    // Calder (traitor) — half-human gasp followed by a zombie groan
+    // tail. The bite has already won, but his voice is still in there.
+    calderGasp: () => {
+      // Sine on a gentle lowpass — human warmth, no bandpass ring.
+      if (!ensure() || muted) return;
+      const t0 = now();
+      const o = ctx.createOscillator();
+      const g = ctx.createGain();
+      const f = ctx.createBiquadFilter();
+      o.type = "sine";
+      o.frequency.setValueAtTime(220, t0);
+      o.frequency.exponentialRampToValueAtTime(280, t0 + 0.16);
+      o.frequency.exponentialRampToValueAtTime(170, t0 + 0.65);
+      f.type = "lowpass"; f.frequency.value = 600; f.Q.value = 0.9;
+      g.gain.setValueAtTime(0, t0);
+      g.gain.linearRampToValueAtTime(0.18, t0 + 0.08);
       g.gain.exponentialRampToValueAtTime(0.0008, t0 + 0.75);
       o.connect(f); f.connect(g); g.connect(master);
       o.start(t0); o.stop(t0 + 0.80);
@@ -251,68 +255,77 @@ window.Sound = (function () {
       for (let i = 0; i < 4; i++) setTimeout(() => FX.groan(), i * 320 + Math.random() * 200);
     },
 
+    // Gunshot — softened: less treble in the noise crack, deeper body.
     gunshot: () => {
-      noise({ dur: 0.08, cutoff: 2400, q: 0.5, vol: 0.7, decay: 0.12 });
-      tone({ freq: 90, type: "sine", dur: 0.18, vol: 0.5, slideTo: 40 });
-      noise({ dur: 0.35, cutoff: 700, q: 0.5, vol: 0.18, delay: 0.06, decay: 0.35 }); // tail
+      noise({ dur: 0.06, cutoff: 1600, q: 0.4, vol: 0.45, decay: 0.10 });
+      tone({ freq: 75, type: "sine", dur: 0.20, vol: 0.45, slideTo: 35, slideCurve: "exp" });
+      noise({ dur: 0.30, cutoff: 500, q: 0.4, vol: 0.10, delay: 0.06, decay: 0.30 });
     },
-    drySnap: () => { // failed shot / dud
-      noise({ dur: 0.04, cutoff: 3200, q: 1, vol: 0.25 });
-      tone({ freq: 220, type: "square", dur: 0.05, vol: 0.08 });
+    drySnap: () => { // failed shot / dud — soft tick, no square buzz
+      noise({ dur: 0.03, cutoff: 1800, q: 0.6, vol: 0.16 });
+      tone({ freq: 200, type: "triangle", dur: 0.04, vol: 0.05 });
     },
 
+    // Melee — wood-thump rather than buzzy slide.
     melee:   () => {
-      tone({ freq: 260, type: "square", dur: 0.06, vol: 0.15, slideTo: 140 });
-      noise({ dur: 0.14, cutoff: 700, q: 2, vol: 0.35, delay: 0.04 });
+      tone({ freq: 220, type: "triangle", dur: 0.07, vol: 0.13, slideTo: 110 });
+      noise({ dur: 0.12, cutoff: 500, q: 0.7, vol: 0.22, delay: 0.04 });
     },
+    // Hit — low body thump, sine slide, no square ping.
     hit:     () => {
-      noise({ dur: 0.1, cutoff: 500, q: 1, vol: 0.35 });
-      tone({ freq: 120, type: "square", dur: 0.12, vol: 0.22, slideTo: 60 });
+      noise({ dur: 0.08, cutoff: 380, q: 0.5, vol: 0.26 });
+      tone({ freq: 90, type: "sine", dur: 0.14, vol: 0.20, slideTo: 50, slideCurve: "exp" });
     },
+    // Crit — solid hit + warm triangle accent (no high square).
     crit:    () => {
-      tone({ freq: 660, type: "square", dur: 0.05, vol: 0.2 });
-      FX.hit();
-      tone({ freq: 880, type: "triangle", dur: 0.1, vol: 0.2, delay: 0.08 });
+      noise({ dur: 0.08, cutoff: 380, q: 0.5, vol: 0.30 });
+      tone({ freq: 80, type: "sine", dur: 0.18, vol: 0.24, slideTo: 45, slideCurve: "exp" });
+      tone({ freq: 660, type: "triangle", dur: 0.12, vol: 0.12, delay: 0.06 });
     },
 
+    // Player took damage — sine slide, gentler noise tail.
     damage:  () => {
-      tone({ freq: 200, type: "sawtooth", dur: 0.18, vol: 0.3, slideTo: 80, slideCurve: "exp" });
-      noise({ dur: 0.1, cutoff: 900, q: 1.5, vol: 0.15 });
+      tone({ freq: 160, type: "sine", dur: 0.18, vol: 0.26, slideTo: 70, slideCurve: "exp" });
+      noise({ dur: 0.10, cutoff: 600, q: 0.6, vol: 0.10 });
     },
+    // Dodge — soft air-whoosh, less hiss.
     dodge:   () => {
-      noise({ dur: 0.08, cutoff: 3800, q: 0.6, vol: 0.15 });
+      noise({ dur: 0.10, cutoff: 1900, q: 0.4, vol: 0.10 });
     },
+    // Brace — wood-thump pair, no square buzz.
     brace:   () => {
-      tone({ freq: 300, type: "square", dur: 0.06, vol: 0.18 });
-      tone({ freq: 220, type: "square", dur: 0.08, vol: 0.14, delay: 0.06 });
+      tone({ freq: 220, type: "triangle", dur: 0.06, vol: 0.13 });
+      tone({ freq: 165, type: "triangle", dur: 0.08, vol: 0.10, delay: 0.05 });
     },
     flee:    () => {
       for (let i = 0; i < 4; i++) {
-        noise({ dur: 0.06, cutoff: 180, q: 1, vol: 0.18, delay: i * 0.12 });
+        noise({ dur: 0.05, cutoff: 140, q: 0.6, vol: 0.13, delay: i * 0.11 });
       }
     },
-    footstep:() => noise({ dur: 0.05, cutoff: 160, q: 1, vol: 0.15 }),
+    footstep:() => noise({ dur: 0.04, cutoff: 130, q: 0.6, vol: 0.10 }),
 
+    // Death — soft fading sub. No sawtooth.
     death:   () => {
-      tone({ freq: 220, type: "sawtooth", dur: 0.5, vol: 0.35, slideTo: 55, slideCurve: "exp" });
-      setTimeout(() => noise({ dur: 0.9, cutoff: 250, q: 0.8, vol: 0.35 }), 250);
+      tone({ freq: 200, type: "sine", dur: 0.55, vol: 0.30, slideTo: 50, slideCurve: "exp" });
+      setTimeout(() => noise({ dur: 0.85, cutoff: 200, q: 0.6, vol: 0.22 }), 250);
     },
     victory: () => {
       const notes = [523, 659, 784, 1046];
       notes.forEach((f, i) => setTimeout(() => tone({
-        freq: f, type: "triangle", dur: 0.22, vol: 0.22,
+        freq: f, type: "triangle", dur: 0.22, vol: 0.18,
       }), i * 140));
     },
+    // Tense / wind-up — low warble on sine, not sawtooth.
     tense:   () => {
-      tone({ freq: 180, type: "sawtooth", dur: 0.6, vol: 0.22, slideTo: 80 });
+      tone({ freq: 160, type: "sine", dur: 0.50, vol: 0.16, slideTo: 90 });
     },
     door:    () => {
-      tone({ freq: 180, type: "sawtooth", dur: 0.35, vol: 0.15, slideTo: 85 });
-      noise({ dur: 0.2, cutoff: 400, q: 2, vol: 0.1, delay: 0.05 });
+      tone({ freq: 160, type: "sine", dur: 0.32, vol: 0.13, slideTo: 80 });
+      noise({ dur: 0.18, cutoff: 380, q: 1.0, vol: 0.07, delay: 0.05 });
     },
     radio:   () => {
-      noise({ dur: 0.35, cutoff: 1800, q: 1, vol: 0.12 });
-      tone({ freq: 800, type: "square", dur: 0.08, vol: 0.08, delay: 0.1 });
+      noise({ dur: 0.30, cutoff: 1600, q: 0.8, vol: 0.10 });
+      tone({ freq: 720, type: "triangle", dur: 0.07, vol: 0.06, delay: 0.10 });
     },
   };
 
