@@ -1483,6 +1483,57 @@ html, body {
   100% { opacity: 0;   transform: scale(1.7);  }
 }
 
+/* ---- Cooldown rings (reaction button + ally portrait) ----
+   SVG circle pair: a faint dark track underneath, an active stroke
+   on top whose dashoffset shrinks to drain the ring clockwise. */
+
+/* Reaction button — ring drains continuously over the timer. */
+.reaction-ring {
+  position: absolute; inset: 0;
+  width: 100%; height: 100%;
+  pointer-events: none;
+  transform: rotate(-90deg); /* start at 12 o'clock */
+}
+.reaction-ring .ring-bg {
+  fill: none;
+  stroke: rgba(0,0,0,0.45);
+  stroke-width: 3;
+}
+.reaction-ring .ring-fg {
+  fill: none;
+  stroke: #ffd0d0;
+  stroke-width: 3;
+  stroke-linecap: round;
+  filter: drop-shadow(0 0 4px rgba(255,140,140,0.85));
+  stroke-dashoffset: 0;
+  animation: reactionDrain var(--cd-duration, 3s) linear forwards;
+}
+@keyframes reactionDrain {
+  to { stroke-dashoffset: var(--cd-circ, 138.23); }
+}
+
+/* Ally portrait — ring drains in discrete steps as cd ticks down. */
+.ally-ring {
+  position: absolute; inset: 0;
+  width: 100%; height: 100%;
+  pointer-events: none;
+  z-index: 2;
+  transform: rotate(-90deg); /* start at 12 o'clock */
+}
+.ally-ring .ring-bg {
+  fill: none;
+  stroke: rgba(0,0,0,0.55);
+  stroke-width: 3.5;
+}
+.ally-ring .ring-fg {
+  fill: none;
+  stroke: rgba(245,200,80,0.92);
+  stroke-width: 3.5;
+  stroke-linecap: round;
+  filter: drop-shadow(0 0 3px rgba(245,200,80,0.7));
+  transition: stroke-dashoffset 380ms cubic-bezier(.2,.7,.3,1);
+}
+
 /* Reactive QTE — Brace slot transforms during a dodge/break window.
    Big pulsing red disc with the countdown front-and-center. */
 .combat-btn.combat-btn-react {

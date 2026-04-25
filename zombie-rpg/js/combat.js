@@ -336,7 +336,29 @@ window.Combat = (function () {
         ? window.sceneImageURL(id)
         : "images/" + id + ".png";
     };
-    const build = (key, face, label, ready, status) => {
+    // Ally cooldown ring — SVG circle around the portrait, drains
+    // clockwise as the cooldown ticks down. r=22 in a 50-unit viewBox,
+    // circumference ≈ 138.23. dashoffset = circ * (1 - cd/cdMax) so a
+    // fresh-fire ally (cd=cdMax) shows a full ring; a ready ally (cd=0)
+    // shows nothing. CSS smooths the per-turn jumps with a transition.
+    const RING_CIRC = 138.23;
+    const ringFor = (cd, cdMax) => {
+      if (!cdMax || cd <= 0) {
+        // Empty / ready — no visible foreground ring.
+        return `<svg class="ally-ring" viewBox="0 0 50 50" aria-hidden="true">` +
+                 `<circle class="ring-bg" cx="25" cy="25" r="22"></circle>` +
+               `</svg>`;
+      }
+      const pct = Math.min(1, Math.max(0, cd / cdMax));
+      const offset = RING_CIRC * (1 - pct);
+      return `<svg class="ally-ring" viewBox="0 0 50 50" aria-hidden="true">` +
+               `<circle class="ring-bg" cx="25" cy="25" r="22"></circle>` +
+               `<circle class="ring-fg" cx="25" cy="25" r="22"` +
+               ` stroke-dasharray="${RING_CIRC}"` +
+               ` stroke-dashoffset="${offset.toFixed(2)}"></circle>` +
+             `</svg>`;
+    };
+    const build = (key, face, label, ready, status, cd, cdMax) => {
       const src = portraitURL(key);
       // Image overlays the emoji. If it fails to load, onerror hides it
       // and the emoji underneath becomes visible — graceful fallback
@@ -345,6 +367,7 @@ window.Combat = (function () {
       return `<span class="ally-chip ${ready ? "ready" : ""}" data-ally="${key}">` +
         `<span class="ally-face"><span class="ally-emoji">${face}</span>` +
           `<img class="ally-portrait" alt="" src="${src}" onerror="${onErr}" />` +
+          ringFor(cd, cdMax) +
         `</span>` +
         `<span class="ally-body">` +
           `<span class="ally-name">${label}</span>` +
@@ -372,25 +395,39 @@ window.Combat = (function () {
       // by render time — the post-fire render already shows cd=3.
       // Surface the ready state one step early so it matches intent.
       const ready = (cd || 0) <= 1;
-      const core = ready ? readyTxt : `CD ${cd}`;
+      // The cooldown ring around the portrait shows ticks visually;
+      // text just calls out READY or stays quiet during the cooldown.
+      const core = ready ? readyTxt : "";
       // Newline-separated so the side-panel chip wraps cleanly under
       // the portrait. CSS .ally-state uses white-space: pre-line.
       const hpTxt = a ? `\n❤${a.hp}/${a.hpMax}` : "";
       const ammoTxt = (a && a.ammoMax > 0) ? `\n🔫${a.ammo}` : "";
-      return core + hpTxt + ammoTxt;
+      return (core + hpTxt + ammoTxt).trim();
     };
     const isAlive = (key) => !(st[key] && st[key].hp <= 0);
     if (mayaPresent()) {
-      chips.push(build("maya", "👩‍🦰", "MAYA", !eng.maya && isAlive("maya") && (state.mayaCd || 0) <= 1, allyLabel("maya", state.mayaCd, "NEXT SHOT")));
+      chips.push(build("maya", "👩‍🦰", "MAYA",
+        !eng.maya && isAlive("maya") && (state.mayaCd || 0) <= 1,
+        allyLabel("maya", state.mayaCd, "NEXT SHOT"),
+        state.mayaCd, state.mayaCdMax));
     }
     if (renPresent()) {
-      chips.push(build("ren", "🧑‍⚕️", "REN", !eng.ren && isAlive("ren") && (state.renCd || 0) <= 1, allyLabel("ren", state.renCd, "TRIAGE")));
+      chips.push(build("ren", "🧑‍⚕️", "REN",
+        !eng.ren && isAlive("ren") && (state.renCd || 0) <= 1,
+        allyLabel("ren", state.renCd, "TRIAGE"),
+        state.renCd, state.renCdMax));
     }
     if (vegaPresent()) {
-      chips.push(build("vega", "🫡", "VEGA", !eng.vega && isAlive("vega") && (state.vegaCd || 0) <= 1, allyLabel("vega", state.vegaCd, "RIFLE READY")));
+      chips.push(build("vega", "🫡", "VEGA",
+        !eng.vega && isAlive("vega") && (state.vegaCd || 0) <= 1,
+        allyLabel("vega", state.vegaCd, "RIFLE READY"),
+        state.vegaCd, state.vegaCdMax));
     }
     if (noraPresent()) {
-      chips.push(build("nora", "👧", "NORA", !eng.nora && isAlive("nora") && (state.noraCd || 0) <= 0, allyLabel("nora", state.noraCd, "SPOTTER")));
+      chips.push(build("nora", "👧", "NORA",
+        !eng.nora && isAlive("nora") && (state.noraCd || 0) <= 0,
+        allyLabel("nora", state.noraCd, "SPOTTER"),
+        state.noraCd, state.noraCdMax));
     }
     wrap.innerHTML = chips.join("");
   }
@@ -1401,20 +1438,24 @@ window.Combat = (function () {
     // Lock every other action button while the timer runs.
     allBtns.forEach(b => { if (b !== braceBtn) b.disabled = true; });
 
-    let remaining = seconds;
-    const drawButton = () => {
-      braceBtn.innerHTML =
-        `<span class="reaction-icon">${icon}</span>` +
-        `<span class="reaction-count">${remaining}</span>` +
-        `<span class="label">${label}</span>`;
-    };
-    drawButton();
+    // SVG cooldown ring drains clockwise over `seconds` via a CSS
+    // animation. r=22, circumference ≈ 138.23 — keep dasharray in sync.
+    const RING_CIRC = 138.23;
+    braceBtn.innerHTML =
+      `<svg class="reaction-ring" viewBox="0 0 50 50" aria-hidden="true">` +
+        `<circle class="ring-bg" cx="25" cy="25" r="22"></circle>` +
+        `<circle class="ring-fg" cx="25" cy="25" r="22"` +
+        ` stroke-dasharray="${RING_CIRC}"` +
+        ` style="--cd-circ:${RING_CIRC}; --cd-duration:${seconds}s;"></circle>` +
+      `</svg>` +
+      `<span class="reaction-icon">${icon}</span>` +
+      `<span class="label">${label}</span>`;
     braceBtn.classList.add("combat-btn-react");
     braceBtn.setAttribute("onclick", "Combat.reactNow()");
 
     let handle = null;
     const cleanup = (succeeded, skipCallbacks) => {
-      if (handle) { clearInterval(handle); handle = null; }
+      if (handle) { clearTimeout(handle); handle = null; }
       braceBtn.classList.remove("combat-btn-react");
       braceBtn.innerHTML = cachedHTML;
       braceBtn.setAttribute("onclick", cachedOnClick);
@@ -1433,14 +1474,8 @@ window.Combat = (function () {
     };
     Sound.play("tense");
 
-    handle = setInterval(() => {
-      remaining -= 1;
-      if (remaining <= 0) {
-        cleanup(false);
-        return;
-      }
-      drawButton();
-    }, 1000);
+    // Single timeout — the SVG ring animation handles the visuals.
+    handle = setTimeout(() => cleanup(false), seconds * 1000);
   }
 
   // Public hook: clicked the reaction button in time.
@@ -1688,6 +1723,49 @@ window.Combat = (function () {
       return;
     }
 
+    // Ranged dodge — last chance to evade a queued aimed/telegraph
+    // shot before it lands. Faster window than the lurch (1.5s) — a
+    // bullet doesn't wait. Pass the dodge: shot whiffs, no damage. Eat
+    // the timer: regularAttack() resolves with full bonus damage.
+    if (state.range === "far" && (state.enemyAimed || state.telegraphPending)) {
+      const incoming = state.telegraphPending ? "kill shot" : "aimed shot";
+      log(`${e.name} squeezes off — DODGE!`, "warn");
+      promptReaction({
+        kind: "dodge_ranged",
+        seconds: 1.5,
+        icon: "🤸", label: "DODGE",
+        onSuccess: () => {
+          log(`The ${incoming} cracks past your ear.`, "info");
+          Sound.play("dodge");
+          spawnMark("miss");
+          flashEvade();
+          flashCenterText("DODGED!", "edge");
+          state.enemyAimed = false;
+          state.telegraphPending = false;
+          refreshCombatStatus();
+          companionTurn();
+          state.turn += 1;
+          renderAllies();
+        },
+        onFail: () => {
+          flashCenterText("HIT!", "threat");
+          regularAttack();
+        },
+      });
+      return;
+    }
+
+    regularAttack();
+  }
+
+  // The vanilla attack roll — extracted so a failed reactive ranged
+  // dodge can call straight into it without re-running every upstream
+  // gate (telegraph setup, reposition, lurch). Kept identical to the
+  // original inline body.
+  function regularAttack() {
+    if (!state) return;
+    const s = Game.state;
+    const e = state.enemy;
     let dmg = rand(e.atk[0], e.atk[1]);
     // Rare savage hit — ignores 1 of brace.
     let savage = Math.random() < 0.12;
@@ -1953,6 +2031,7 @@ window.Combat = (function () {
         hitFlash();
         updateEnemyHp();
         state.mayaCd = lovedMaya() ? 2 : 3;
+        state.mayaCdMax = state.mayaCd;
         flashAlly("maya");
         if (state.enemy.hp <= 0) {
           log(`${state.enemy.name} falls.`, "crit");
@@ -1993,6 +2072,7 @@ window.Combat = (function () {
         floatDamage(heal, "heal");
         refreshHud();
         state.renCd = cd;
+        state.renCdMax = cd;
         flashAlly("ren");
       } else if (state.renCd <= 0 && !lowHp && !fullBenefit) {
         // Not needed for healing — she uses the window to cover you
@@ -2017,6 +2097,7 @@ window.Combat = (function () {
         floatDamage(dmg);
         updateEnemyHp();
         state.renCd = cd;
+        state.renCdMax = cd;
         flashAlly("ren");
         if (state.enemy.hp <= 0) {
           log(`${state.enemy.name} falls.`, "crit");
@@ -2058,6 +2139,7 @@ window.Combat = (function () {
         hitFlash();
         updateEnemyHp();
         state.vegaCd = 3; // sniper cadence — slower than Maya
+        state.vegaCdMax = state.vegaCd;
         flashAlly("vega");
         if (state.enemy.hp <= 0) {
           log(`${state.enemy.name} falls.`, "crit");
@@ -2087,6 +2169,7 @@ window.Combat = (function () {
         Sound.play("dodge");
         flashAlly("nora");
         state.noraCd = 4;
+        state.noraCdMax = 4;
       } else if (state.noraCd < 0) {
         state.noraCd = 0;
       }
