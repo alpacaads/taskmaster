@@ -474,6 +474,7 @@ window.Combat = (function () {
         name: aDef.name,
         hp: aDef.hp,
         maxHp: aDef.hp,
+        dodge: aDef.dodge || 0,
         allyKey: config.allyEngagement.ally,
       };
       engagedSet[config.allyEngagement.ally] = true;
@@ -1580,6 +1581,14 @@ window.Combat = (function () {
     if (!state || !state.allyEnemy || state.allyEnemy.hp <= 0) return;
     const ae = state.allyEnemy;
     const key = ae.allyKey;
+    const niceName = key === "maya" ? "Maya" : key === "ren" ? "Ren" : key === "vega" ? "Vega" : key;
+    // Smart human enemies dodge ally fire too — keeps the parallel
+    // fight from ending faster than the player's main fight, so the
+    // 'promote ally's enemy when player wins' path actually triggers.
+    if (ae.dodge && Math.random() < ae.dodge) {
+      log(`${ae.name} ducks behind cover — ${niceName}'s shot goes wide.`, "info");
+      return;
+    }
     // Ally damage per tick scales with romance / bonds. Maya is ex-
     // military so she deals clean damage; Ren is a medic and was
     // never in the game as an engagement-partner, but if she's ever
@@ -1597,17 +1606,19 @@ window.Combat = (function () {
       tick = rand(2, 3);
     }
     ae.hp = Math.max(0, ae.hp - tick);
-    const niceName = key === "maya" ? "Maya" : key === "ren" ? "Ren" : key === "vega" ? "Vega" : key;
     log(`${niceName} trades shots with hers — ${tick} damage. (${ae.name}: ${ae.hp}/${ae.maxHp})`, "ally");
     renderAllies();
     if (ae.hp <= 0) {
       state.allyEnemy = null;
       if (state.engaged) state.engaged[key] = false;
-      // Grace cooldown — don't fire on the same tick she closes out.
-      if (key === "maya") state.mayaCd = Math.max(state.mayaCd || 0, 1);
-      if (key === "ren")  state.renCd  = Math.max(state.renCd  || 0, 1);
-      if (key === "vega") state.vegaCd = Math.max(state.vegaCd || 0, 1);
-      log(`${niceName} drops hers — swings back to yours.`, "crit");
+      // Bigger grace cooldown — without it, Maya immediately joins
+      // the player's main fight and double-teams the second bandit
+      // for a near-instant kill. 3 turns gives the player a real
+      // window with the survivor before help arrives.
+      if (key === "maya") state.mayaCd = Math.max(state.mayaCd || 0, 3);
+      if (key === "ren")  state.renCd  = Math.max(state.renCd  || 0, 3);
+      if (key === "vega") state.vegaCd = Math.max(state.vegaCd || 0, 3);
+      log(`${niceName} drops hers — wheeling on yours.`, "crit");
       renderAllies();
     }
   }
