@@ -426,46 +426,56 @@ window.Sound = (function () {
     else if (track === "title")    startTitleTrack();
   }
 
-  // --- Combat: 125 BPM kick + minor pad + offbeat hat + tense motif ---
+  // --- Combat: slow, dark, suspenseful. ~75 BPM. Horror-score
+  // construction — dual heartbeat sub, dissonant tritone pad, sparse
+  // chromatic high tones, occasional low filtered breath. No kick on
+  // every beat, no hi-hat. Drives dread, not adrenaline. ---
   function startCombatTrack() {
-    const beat = 480;
+    const beat = 800; // ~75 BPM
     const armed = () => musicTrack === "combat" && !muted;
-    // Sub kick on beats 1 + 3
-    const kick = () => {
+    // Heartbeat — two sub thumps close together, then long silence.
+    // thump-thump.................thump-thump..............
+    const heartbeat = () => {
       if (!armed()) return;
-      tone({ freq: 55, type: "sine", dur: 0.18, vol: 0.30, slideTo: 30, slideCurve: "exp", attack: 0.001 });
+      tone({ freq: 48, type: "sine", dur: 0.20, vol: 0.28, slideTo: 26, slideCurve: "exp", attack: 0.001 });
+      setTimeout(() => {
+        if (!armed()) return;
+        tone({ freq: 42, type: "sine", dur: 0.22, vol: 0.22, slideTo: 22, slideCurve: "exp", attack: 0.001 });
+      }, 200);
     };
-    kick();
-    musicTimers.push(setInterval(kick, beat * 2));
-    // A-minor pad (A1 + C2 + E2), retrigger every 8 beats
+    heartbeat();
+    musicTimers.push(setInterval(heartbeat, beat * 4));
+    // Dissonant low pad — minor + tritone (G1, Bb1, C#2). Slow
+    // retrigger so the dread sits.
     const pad = () => {
       if (!armed()) return;
       const dur = beat * 8 / 1000;
-      tone({ freq: 55,    type: "triangle", dur, vol: 0.05 });
-      tone({ freq: 65.4,  type: "triangle", dur, vol: 0.04 });
-      tone({ freq: 82.4,  type: "triangle", dur, vol: 0.03 });
+      tone({ freq: 49,   type: "triangle", dur, vol: 0.06 }); // G1
+      tone({ freq: 58.3, type: "triangle", dur, vol: 0.04 }); // Bb1 (minor 3rd)
+      tone({ freq: 69.3, type: "sine",     dur, vol: 0.028 }); // C#2 (tritone)
     };
     pad();
     musicTimers.push(setInterval(pad, beat * 8));
-    // Hi-hat tick on every off-beat
-    const hat = () => {
+    // Sparse chromatic high tones — chromatic dread, slithers between
+    // adjacent semitones rather than landing on a satisfying interval.
+    const chimePitches = [880, 932.3, 783.99, 830.6]; // A5, Bb5, G5, Ab5
+    let chimeIdx = 0;
+    const chime = () => {
       if (!armed()) return;
-      noise({ dur: 0.025, cutoff: 6500, q: 0.5, vol: 0.022, type: "highpass" });
+      const f = chimePitches[chimeIdx % chimePitches.length];
+      chimeIdx++;
+      tone({ freq: f, type: "sine", dur: 1.4, vol: 0.038, attack: 0.06 });
     };
-    setTimeout(hat, beat / 2);
-    musicTimers.push(setInterval(hat, beat));
-    // Tense descending pentatonic motif every 16 beats
-    const motif = () => {
+    setTimeout(chime, beat * 4);
+    musicTimers.push(setInterval(chime, beat * 8));
+    // Occasional low breath — filtered noise puff that sounds like
+    // something exhaling in the dark every 16 beats.
+    const breath = () => {
       if (!armed()) return;
-      [659, 587, 523, 440].forEach((f, i) => {
-        setTimeout(() => {
-          if (!armed()) return;
-          tone({ freq: f, type: "triangle", dur: 0.28, vol: 0.05 });
-        }, i * beat / 2);
-      });
+      noise({ dur: 0.45, cutoff: 200, q: 1.0, vol: 0.07, decay: 0.45 });
     };
-    setTimeout(motif, beat * 4);
-    musicTimers.push(setInterval(motif, beat * 16));
+    setTimeout(breath, beat * 8);
+    musicTimers.push(setInterval(breath, beat * 16));
   }
 
   // --- Romance: 60 BPM Cmaj7 pad + slow descent motif ---
