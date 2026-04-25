@@ -1149,8 +1149,14 @@ html, body {
   text-shadow: 0 1px 2px rgba(0,0,0,0.85);
 }
 .status-badge .badge-icon {
-  font-size: 11px; line-height: 1;
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 12px; height: 12px;
   filter: drop-shadow(0 1px 1px rgba(0,0,0,0.9));
+}
+.status-badge .badge-icon svg {
+  width: 100%; height: 100%;
+  display: block;
+  color: inherit;
 }
 .status-badge.tone-threat {
   border-color: rgba(229,90,90,0.55);
@@ -1561,10 +1567,15 @@ html, body {
 }
 .combat-btn.combat-btn-react .reaction-icon {
   position: absolute;
-  top: 4px; left: 50%;
-  transform: translateX(-50%);
-  font-size: 12px;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -55%);
+  width: 22px; height: 22px;
   filter: drop-shadow(0 1px 1px rgba(0,0,0,0.85));
+}
+.combat-btn.combat-btn-react .reaction-icon svg {
+  width: 100%; height: 100%;
+  display: block;
+  color: #fff;
 }
 .combat-btn.combat-btn-react .reaction-count {
   font-family: ui-monospace, "SF Mono", Menlo, monospace;

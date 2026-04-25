@@ -710,27 +710,27 @@ window.Combat = (function () {
   function computeEnemyBadges() {
     if (!state || !state.enemy || state.enemy.hp <= 0) return [];
     const out = [];
-    if (state.interruptedEnemy)       out.push({ tone: "edge",   icon: "💢", label: "REELING" });
-    if (state.enemyStunnedFromBreak)  out.push({ tone: "edge",   icon: "😵", label: "STAGGERED" });
-    if (state.telegraphPending)       out.push({ tone: "threat", icon: "⚠",  label: "WIND-UP" });
-    if (state.enemyAimed)             out.push({ tone: "threat", icon: "🎯", label: "AIMED" });
-    if (state.enemyBracing)           out.push({ tone: "threat", icon: "🛡", label: "BRACED" });
-    if (state.heldDown)               out.push({ tone: "threat", icon: "🤝", label: "GRIP" });
+    if (state.interruptedEnemy)       out.push({ tone: "edge",   icon: ICONS.reel,    label: "REELING" });
+    if (state.enemyStunnedFromBreak)  out.push({ tone: "edge",   icon: ICONS.stagger, label: "STAGGERED" });
+    if (state.telegraphPending)       out.push({ tone: "threat", icon: ICONS.warning, label: "WIND-UP" });
+    if (state.enemyAimed)             out.push({ tone: "threat", icon: ICONS.aim,     label: "AIMED" });
+    if (state.enemyBracing)           out.push({ tone: "threat", icon: ICONS.shield,  label: "BRACED" });
+    if (state.heldDown)               out.push({ tone: "threat", icon: ICONS.chain,   label: "GRIP" });
     if (state.range === "close" && state.enemy.toxic)
-                                      out.push({ tone: "threat", icon: "☣",  label: "TOXIC AURA" });
+                                      out.push({ tone: "threat", icon: ICONS.toxic,   label: "TOXIC AURA" });
     return out;
   }
   function computePlayerBadges() {
     const s = Game.state;
     if (!s || !state) return [];
     const out = [];
-    if (state.aimReady)               out.push({ tone: "edge",   icon: "🎯", label: "AIMED" });
-    if (state.counterReady)           out.push({ tone: "edge",   icon: "🛡", label: "COUNTER" });
-    if (state.bracing)                out.push({ tone: "edge",   icon: "💪", label: "BRACED" });
-    if (state.heldDown)               out.push({ tone: "threat", icon: "🤝", label: "PINNED" });
-    if (state.playerPanicked)         out.push({ tone: "threat", icon: "😰", label: "PANIC" });
+    if (state.aimReady)               out.push({ tone: "edge",   icon: ICONS.aim,    label: "AIMED" });
+    if (state.counterReady)           out.push({ tone: "edge",   icon: ICONS.shield, label: "COUNTER" });
+    if (state.bracing)                out.push({ tone: "edge",   icon: ICONS.flex,   label: "BRACED" });
+    if (state.heldDown)               out.push({ tone: "threat", icon: ICONS.chain,  label: "PINNED" });
+    if (state.playerPanicked)         out.push({ tone: "threat", icon: ICONS.panic,  label: "PANIC" });
     if (state.range === "close" && state.enemy && state.enemy.toxic)
-                                      out.push({ tone: "threat", icon: "☣",  label: "IN GAS" });
+                                      out.push({ tone: "threat", icon: ICONS.toxic,  label: "IN GAS" });
     return out;
   }
   function renderStatusBadges() {
@@ -1390,6 +1390,35 @@ window.Combat = (function () {
     setTimeout(() => el.classList.remove("muzzle-flash"), 260);
   }
 
+  // ---- SVG icon library ----
+  // Stroke-based monochrome icons matched to the existing combat-btn
+  // glyphs (Close / Strike / Fire / Aim / Brace / Flee). currentColor
+  // means each icon picks up the surrounding badge / button color.
+  const ICONS = {
+    // Sidestep chevrons — fast lateral motion.
+    dodge: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 7 11 12 6 17"/><polyline points="13 7 18 12 13 17"/></svg>',
+    // Eight-pointed burst — radiating outward, breaking free.
+    burst: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="12" y1="2" x2="12" y2="7"/><line x1="12" y1="17" x2="12" y2="22"/><line x1="2" y1="12" x2="7" y2="12"/><line x1="17" y1="12" x2="22" y2="12"/><line x1="4.9" y1="4.9" x2="8.4" y2="8.4"/><line x1="15.6" y1="15.6" x2="19.1" y2="19.1"/><line x1="4.9" y1="19.1" x2="8.4" y2="15.6"/><line x1="15.6" y1="8.4" x2="19.1" y2="4.9"/></svg>',
+    // Warning triangle with an exclamation — telegraphed kill shot.
+    warning: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 L22 20 H2 Z"/><line x1="12" y1="10" x2="12" y2="14"/><circle cx="12" cy="17.5" r="0.6" fill="currentColor"/></svg>',
+    // Crosshair — aimed shot (matches the Aim button).
+    aim: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4"/><line x1="12" y1="3" x2="12" y2="7"/><line x1="12" y1="17" x2="12" y2="21"/><line x1="3" y1="12" x2="7" y2="12"/><line x1="17" y1="12" x2="21" y2="12"/></svg>',
+    // Filled shield — braced / counter (matches the Brace button).
+    shield: '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2l9 4v6c0 5.5-4 10-9 12-5-2-9-6.5-9-12V6l9-4z"/></svg>',
+    // Two linked rings — handcuffs, the GRIP / PINNED state.
+    chain: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="12" r="4"/><circle cx="16" cy="12" r="4"/></svg>',
+    // Three-petal biohazard — TOXIC.
+    toxic: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="2.5"/><path d="M9.5 10 a4 4 0 0 1 5 0"/><path d="M14.5 14 a4 4 0 0 1 -2.5 4"/><path d="M9.5 14 a4 4 0 0 0 2.5 4"/><line x1="12" y1="9.5" x2="12" y2="6"/><line x1="14.5" y1="14" x2="17.5" y2="16"/><line x1="9.5" y1="14" x2="6.5" y2="16"/></svg>',
+    // Four-spoke impact star — REELING.
+    reel: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><line x1="12" y1="3" x2="12" y2="9"/><line x1="12" y1="15" x2="12" y2="21"/><line x1="3" y1="12" x2="9" y2="12"/><line x1="15" y1="12" x2="21" y2="12"/><circle cx="12" cy="12" r="1.4" fill="currentColor"/></svg>',
+    // Two stacked wavy lines — STAGGERED, can't stand straight.
+    stagger: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9 Q 7 5 12 9 T 21 9"/><path d="M3 17 Q 7 13 12 17 T 21 17"/></svg>',
+    // Planted-feet stick figure — player BRACED.
+    flex: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="5" r="2"/><line x1="12" y1="7" x2="12" y2="14"/><line x1="6" y1="11" x2="12" y2="13"/><line x1="18" y1="11" x2="12" y2="13"/><line x1="9" y1="20" x2="12" y2="14"/><line x1="15" y1="20" x2="12" y2="14"/></svg>',
+    // Lightning zigzag — PANIC, can't hold the gun still.
+    panic: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="13 3 8 12 13 12 9 21"/></svg>',
+  };
+
   // ---- Per-enemy zombie voice ----
   // Each turned-type gets its own procedural growl. Plays once on
   // combat start (signature) and again over each successful attack
@@ -1563,7 +1592,7 @@ window.Combat = (function () {
       promptReaction({
         kind: "break_pin",
         seconds: 3,
-        icon: "🤜", label: "BREAK",
+        icon: ICONS.burst, label: "BREAK",
         onSuccess: () => {
           log(`You wrench out of ${e.name}'s grip — back to range.`, "info");
           Sound.play("flee");
@@ -1698,7 +1727,7 @@ window.Combat = (function () {
       promptReaction({
         kind: "dodge_lurch",
         seconds: 3,
-        icon: "🤸", label: "DODGE",
+        icon: ICONS.dodge, label: "DODGE",
         onSuccess: () => {
           log(`You roll wide — ${e.name} closes on empty air.`, "info");
           Sound.play("dodge");
@@ -1757,7 +1786,7 @@ window.Combat = (function () {
       promptReaction({
         kind: "dodge_ranged",
         seconds: 1.5,
-        icon: "🤸", label: "DODGE",
+        icon: ICONS.dodge, label: "DODGE",
         onSuccess: () => {
           log(`The ${incoming} cracks past your ear.`, "info");
           Sound.play("dodge");
