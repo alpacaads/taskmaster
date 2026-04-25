@@ -1622,8 +1622,10 @@ window.Combat = (function () {
       btn.innerHTML = ICONS.dodge;
       const host = document.getElementById("nora-rescue-buttons");
       if (host) host.appendChild(btn);
-      // Tighten the window slightly per attempt so it stays tense.
-      const ms = Math.max(750, 1100 - (attempts - 1) * 60);
+      // Tighten the window slightly per attempt so it stays tense —
+      // start at 1300ms (was 1100) and shave 50ms each, floored at
+      // 900ms. Gives the player ~200ms more breathing room overall.
+      const ms = Math.max(900, 1300 - (attempts - 1) * 50);
       let resolved = false;
       const t = setTimeout(() => {
         if (resolved) return;
