@@ -34,7 +34,7 @@ window.Combat = (function () {
     bandit:       { name: "Bandit",      art: "🧔🔫",  hp: 10, atk: [3, 4], speed: 2, desc: "Smart. Armed. Desperate.", human: true, dodge: 0.22, telegraphEvery: 3 },
     // Older / Younger bandit — named variants for the ambush so the
     // two-person fight reads like two people, not one HP pool.
-    bandit_older:   { name: "Older Bandit",   art: "🧔🔫",  hp: 20, atk: [3, 5], speed: 2, desc: "Hand-tattoos. Steady aim. He's done this before.", human: true, dodge: 0.35, telegraphEvery: 3, repositionEvery: 5, enemyCanAim: true, enemyCanBrace: true },
+    bandit_older:   { name: "Older Bandit",   art: "🧔🔫",  hp: 26, atk: [3, 5], speed: 2, desc: "Hand-tattoos. Steady aim. He's done this before.", human: true, dodge: 0.4, telegraphEvery: 3, repositionEvery: 5, enemyCanAim: true, enemyCanBrace: true },
     bandit_younger: { name: "Younger Bandit", art: "🧑🔫",  hp: 12, atk: [3, 4], speed: 2, desc: "Skinny. Shaking. More dangerous for it.", human: true, dodge: 0.30, telegraphEvery: 3, repositionEvery: 6, enemyCanAim: true, enemyCanBrace: true, panic: 0.15 },
     // Kept for legacy / save-compat. No story node references it now.
     bandit_pair:  { name: "Two Bandits",  art: "🧔🔫🧔", hp: 24, atk: [3, 5], speed: 2, desc: "Smart. Armed. Coordinated.", human: true, pack: true, dodge: 0.25, repositionEvery: 4, telegraphEvery: 3, enemyCanAim: true, enemyCanBrace: true, panic: 0.15 },
@@ -1093,8 +1093,22 @@ window.Combat = (function () {
 
     refreshHud();
     updateEnemyHp();
+
+    // Check the player's kill BEFORE ticking the ally's parallel fight.
+    // If we tick first, Maya's shot can kill the older bandit on the
+    // same turn the player drops the younger — and finishOrAdvance
+    // then finds allyEnemy already cleared, so the older never gets
+    // promoted and the player never sees that fight.
+    if (state.enemy.hp <= 0) {
+      log(`${state.enemy.name} falls.`, "crit");
+      finishOrAdvance();
+      return;
+    }
+
     checkEngagementFlip();
 
+    // The ally tick may have just killed the player's would-be promoted
+    // enemy; if so we're done — fight over.
     if (state.enemy.hp <= 0) {
       log(`${state.enemy.name} falls.`, "crit");
       finishOrAdvance();
