@@ -400,10 +400,19 @@ window.Sound = (function () {
   const audioPlayers = {}; // slot → reusable HTMLAudioElement
   const audioServerUrl = {}; // slot → URL string when present, false when probed-missing
   const audioServerProbed = {}; // slot → true once a probe has been kicked off
+  // Append the game's cache-bust token to audio URLs. iOS Safari
+  // aggressively caches across reloads, so without this a stale
+  // (possibly broken) earlier response keeps being served.
+  function audioCacheTag() {
+    try {
+      const t = localStorage.getItem("dl_game_cache_bust") || "";
+      return t ? ("?v=" + encodeURIComponent(t)) : "";
+    } catch (e) { return ""; }
+  }
   function probeServerAudio(slot) {
     if (audioServerProbed[slot]) return;
     audioServerProbed[slot] = true;
-    const url = "audio/" + slot + ".mp3";
+    const url = "audio/" + slot + ".mp3" + audioCacheTag();
     fetch(url, { method: "HEAD", cache: "no-store" })
       .then(r => {
         audioServerUrl[slot] = r.ok ? url : false;
@@ -455,7 +464,11 @@ window.Sound = (function () {
     const o = opts || {};
     const loop = !!o.loop;
     const volume = typeof o.volume === "number" ? o.volume : 1;
-    if (!ensure() || muted) return false;
+    if (muted) return false;
+    // HTML Audio is independent of the Web Audio context — don't
+    // gate on ensure() / ctx.state. Music-ducking touches master.gain
+    // which is null-safe so it's fine if Web Audio hasn't been
+    // initialized yet.
     const url = resolveOverrideUrl(slot);
     if (!url) return false;
     let a = audioPlayers[slot];
@@ -517,15 +530,19 @@ window.Sound = (function () {
   }
 
   function play(name) {
-    if (!ensure() || muted) return;
-    // Context may still be resuming after a tab-switch or first
-    // gesture — queue the sound and let flushPending() pick it up.
+    if (muted) return;
+    // Audio override (HTMLAudioElement) is independent of the Web
+    // Audio context. iOS Safari can hold the AudioContext in
+    // 'interrupted' for various reasons (silent mode, app-switch
+    // return, etc.) — but HTML Audio still plays. So we try the
+    // override FIRST, regardless of ctx state. Procedural cues do
+    // need the context running, so they fall through the gate below.
+    if (playOverride(name)) return;
+    if (!ensure()) return;
     if (ctx.state !== "running") {
       pending.push(name);
       return;
     }
-    // Audio override file beats the procedural cue.
-    if (playOverride(name)) return;
     const fn = FX[name];
     if (!fn) return;
     try { fn(); } catch (e) { console.warn("sound", name, e); }
