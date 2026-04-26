@@ -602,13 +602,17 @@ window.Combat = (function () {
     // ambience will resume the moment combat ends (next goto() call).
     Sound.playMusic("combat");
 
-    // Combat opener — use the per-enemy voice when there is one, fall
-    // back to the generic horde roar / dry-snap / groan for the rest.
+    // Combat opener — pick the right ambient cue. Bandits and humans
+    // get the dry-snap (a weapon ready click), zombies get their
+    // species voice; horde its own roar; nothing zombie for humans.
     if (config.enemy === "horde") Sound.play("hordeRoar");
-    else if (config.enemy === "bandit" || config.enemy === "bandit_pair") Sound.play("drySnap");
+    else if (config.enemy && config.enemy.startsWith("bandit")) Sound.play("drySnap");
+    else if (config.enemy === "traitor") Sound.play("calderGasp");
     else {
       const v = voiceFor(config.enemy);
-      Sound.play(v || "groan");
+      // Only fall back to groan when the enemy's actually a zombie.
+      // Otherwise stay silent — better than a misplaced moan.
+      if (v) Sound.play(v);
     }
 
     // Opening log line when an ally gets pinned down — gives the player
