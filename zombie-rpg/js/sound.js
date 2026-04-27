@@ -821,6 +821,32 @@ window.Sound = (function () {
   ];
   let preProbeFired = false;
 
+  // HTMLAudioElement has its own autoplay gate, separate from the Web
+  // Audio context. ctx.resume() doesn't unlock it. Chrome (desktop and
+  // Android) is strict: any new Audio().play() that isn't synchronously
+  // inside a user gesture gets blocked, even after a previous gesture
+  // unlocked Web Audio. Workaround: on the first gesture, play a silent
+  // WAV element through to teach the browser this page is allowed to
+  // play <audio>. Subsequent .play() calls (incl. async ones from
+  // setTimeout / scene transitions) then work everywhere.
+  let audioElementPrimed = false;
+  // 44-byte silent PCM WAV — minimum valid WAVE header + 1 sample.
+  const SILENT_WAV =
+    "data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAAA";
+  function primeAudioElement() {
+    if (audioElementPrimed) return;
+    audioElementPrimed = true;
+    try {
+      const a = new Audio(SILENT_WAV);
+      a.volume = 0;
+      const p = a.play();
+      if (p && typeof p.then === "function") {
+        p.then(() => { try { a.pause(); } catch (e) {} },
+               () => { audioElementPrimed = false; });
+      }
+    } catch (e) { audioElementPrimed = false; }
+  }
+
   function unlock() {
     if (!ctx) init();
     if (ctx && ctx.state === "suspended") {
@@ -830,6 +856,7 @@ window.Sound = (function () {
     } else if (ctx && ctx.state === "running") {
       flushPending();
     }
+    primeAudioElement();
     // Background-probe every known slot's server URL exactly once.
     // This is what makes a committed audio file play on the FIRST
     // attempt, even when no IDB blob exists in this browser.
