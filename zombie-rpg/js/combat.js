@@ -668,6 +668,8 @@ window.Combat = (function () {
     }
     // Grenade still triggers a hostile turn — they're shooting through
     // the smoke — same cadence as the removed act('grenade') branch.
+    state.enemyIntent = predictEnemyIntent();
+    refreshCombatStatus();
     setTimeout(enemyTurn, 600);
   }
 
@@ -729,7 +731,67 @@ window.Combat = (function () {
     if (state.heldDown)               out.push({ tone: "threat", icon: ICONS.chain,   label: "GRIP" });
     if (state.range === "close" && state.enemy.toxic)
                                       out.push({ tone: "threat", icon: ICONS.toxic,   label: "TOXIC AURA" });
+    // Intent preview — what the enemy is ABOUT TO DO this incoming
+    // turn. Pinned at the bottom of the strip with a distinct
+    // 'INTENT:' prefix so the player can read the threat before the
+    // 600ms enemy-turn timer fires. Set by predictEnemyIntent at end
+    // of act(), cleared at start of enemyTurn.
+    if (state.enemyIntent) {
+      out.push({
+        tone: state.enemyIntent.tone || "threat",
+        icon: state.enemyIntent.icon,
+        label: "NEXT: " + state.enemyIntent.label,
+      });
+    }
     return out;
+  }
+  // Heuristic: predict what enemyTurn() will do next so we can show
+  // it as an INTENT badge during the 600ms gap between the player's
+  // action and the enemy's turn. Doesn't pre-roll random bits — the
+  // actual decision happens in enemyTurn — so a lurch chance the
+  // enemy WOULDN'T fire still shows up as 'STRIKE' in the preview.
+  // Close enough for the read; the player gets to plan.
+  function predictEnemyIntent() {
+    if (!state || !state.enemy || state.enemy.hp <= 0) return null;
+    const e = state.enemy;
+    // Persistent overrides win — these are deterministic.
+    if (state.heldDown && state.range === "close")
+      return { icon: ICONS.chain,   label: "TIGHTEN GRIP",  tone: "threat" };
+    if (state.enemyStunnedFromBreak)
+      return { icon: ICONS.stagger, label: "STAGGERED",     tone: "edge"   };
+    if (state.interruptedEnemy)
+      return { icon: ICONS.reel,    label: "REELING",       tone: "edge"   };
+    // Queued shot landing — highest-priority "next thing."
+    if (state.range === "far" && (state.enemyAimed || state.telegraphPending)) {
+      return { icon: ICONS.aim,     label: "FIRE",          tone: "threat" };
+    }
+    // Telegraph cycle due — windup turn.
+    if (e.telegraphEvery && state.turn > 0
+        && (state.turn % e.telegraphEvery === 0)
+        && !state.telegraphPending && !state.enemyAimed && !state.enemyBracing
+        && (e.hp > Math.ceil(e.maxHp / 2))) {
+      return { icon: ICONS.warning, label: "WIND UP",       tone: "threat" };
+    }
+    // Reposition due — they break cover, no attack this turn.
+    if (e.repositionEvery && state.turn > 0
+        && (state.turn % e.repositionEvery === 0)
+        && (e.hp > Math.ceil(e.maxHp / 2))) {
+      return { icon: ICONS.shield,  label: "RELOAD",        tone: "edge"   };
+    }
+    // Aggressive close — only flag it if conditions are right; the
+    // actual roll happens in enemyTurn. The preview hints the threat.
+    if (state.range === "far" && e.aggressive && state.turn >= 2) {
+      // Show only when chance is meaningful (>= 30%).
+      if (e.aggressive >= 0.30) {
+        return { icon: ICONS.dodge, label: "MAYBE LUNGE",   tone: "threat" };
+      }
+    }
+    // Default: plain attack.
+    return {
+      icon: e.human ? ICONS.aim : ICONS.strike,
+      label: e.human ? "FIRE" : (state.range === "close" ? "BITE" : "STRIKE"),
+      tone: "threat",
+    };
   }
   function computePlayerBadges() {
     const s = Game.state;
@@ -982,6 +1044,8 @@ window.Combat = (function () {
           // Skip to enemy turn — damage resolution handled below.
           refreshHud();
           updateEnemyHp();
+          state.enemyIntent = predictEnemyIntent();
+          refreshCombatStatus();
           setTimeout(enemyTurn, 600);
           return;
         }
@@ -1066,9 +1130,10 @@ window.Combat = (function () {
         } else {
           log("Your shot snaps wide — he was half-turned and you read it wrong.", "info");
           spawnMark("miss");
-          refreshCombatStatus();
           refreshHud();
           updateEnemyHp();
+          state.enemyIntent = predictEnemyIntent();
+          refreshCombatStatus();
           setTimeout(enemyTurn, 600);
           return;
         }
@@ -1285,6 +1350,12 @@ window.Combat = (function () {
       finishOrAdvance();
       return;
     }
+
+    // Preview what the enemy is about to do so the player can read
+    // the threat during the 600ms gap and pick a counter. Cleared
+    // at the top of enemyTurn so the actual outcome takes over.
+    state.enemyIntent = predictEnemyIntent();
+    refreshCombatStatus();
 
     setTimeout(enemyTurn, 600);
   }
@@ -1817,6 +1888,9 @@ window.Combat = (function () {
   // ---------- enemy turn ----------
   function enemyTurn() {
     if (!state) return;
+    // Clear the intent preview — the actual outcome chips
+    // (REELING, AIMED, GRIP, TOXIC, etc) take over from here.
+    state.enemyIntent = null;
     const s = Game.state;
     const e = state.enemy;
 
@@ -2107,7 +2181,35 @@ window.Combat = (function () {
       return;
     }
 
-    regularAttack();
+    promptReactiveDefense(regularAttack);
+  }
+
+  // Brief BRACE/DODGE window before every plain enemy attack lands.
+  // Beat the timer = halve incoming damage (skill payoff). Miss it
+  // (or already braced this turn) = full damage as before. Skipped
+  // when the player has chosen to brace — the Brace action is its
+  // own committed defense and shouldn't be undercut by a second QTE.
+  function promptReactiveDefense(then) {
+    if (!state || !state.enemy || state.enemy.hp <= 0) { then(); return; }
+    if (state.bracing || state.reaction) { then(); return; }
+    const e = state.enemy;
+    const close = state.range === "close";
+    const label = close ? "BRACE" : "DODGE";
+    const icon  = close ? ICONS.shield : ICONS.dodge;
+    const verb  = close ? "lunges" : "fires";
+    log(`${e.name} ${verb} — ${label}!`, "warn");
+    promptReaction({
+      kind: "reactive_defense",
+      seconds: 1.0,
+      icon, label,
+      onSuccess: () => {
+        flashCenterText(close ? "BRACED!" : "PARTIAL DODGE!", "edge");
+        Sound.play("brace");
+        state.partialDefense = true;
+        then();
+      },
+      onFail: () => { then(); },
+    });
   }
 
   // The vanilla attack roll — extracted so a failed reactive ranged
@@ -2133,6 +2235,14 @@ window.Combat = (function () {
     // +2 extra damage on top of everything else.
     const telegraphLanding = state.telegraphPending;
     if (telegraphLanding) dmg += 2;
+
+    // Reactive defense — player beat the brief BRACE/DODGE QTE before
+    // this attack. Halve the incoming damage. Floor at 1 so a brace
+    // never converts a real swing into a free turn.
+    if (state.partialDefense) {
+      dmg = Math.max(1, Math.ceil(dmg / 2));
+      state.partialDefense = false;
+    }
 
     // Brace absorbs more now: -3 normal, -2 on savage. Desperate brace
     // (stam was 0) still absorbs something but only half as much.
@@ -2709,6 +2819,8 @@ window.Combat = (function () {
     const itemName = item && item.name ? item.name.replace(/^[^\w]+\s*/, "") : "a breath";
     log(`You take a second for ${itemName}.`, "info");
     refreshHud();
+    state.enemyIntent = predictEnemyIntent();
+    refreshCombatStatus();
     setTimeout(enemyTurn, 600);
   }
 
