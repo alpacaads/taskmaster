@@ -799,10 +799,30 @@ window.Game = (function () {
   });
 
   // Stamp the build version onto the title screen so a refresh tells
-  // the player whether the new bundle actually loaded.
+  // the player whether the new bundle actually loaded. Tap the stamp
+  // five times in a row to toggle audio-debug toasts (surfaces play
+  // errors that are normally swallowed — useful for mobile diagnosis).
   document.addEventListener("DOMContentLoaded", () => {
     const el = document.getElementById("title-build");
-    if (el) el.textContent = "build " + (window.BUILD || "?");
+    if (!el) return;
+    const refresh = () => {
+      el.textContent = "build " + (window.BUILD || "?")
+        + (window.__AUDIO_DEBUG ? " · audio-debug" : "");
+    };
+    refresh();
+    let taps = 0, t = 0;
+    el.addEventListener("click", () => {
+      const now = Date.now();
+      if (now - t > 800) taps = 0;
+      t = now;
+      taps++;
+      if (taps >= 5) {
+        taps = 0;
+        window.__AUDIO_DEBUG = !window.__AUDIO_DEBUG;
+        refresh();
+        toast(window.__AUDIO_DEBUG ? "Audio debug ON" : "Audio debug OFF");
+      }
+    });
   });
 
   function fallbackToSVG(sceneId) {

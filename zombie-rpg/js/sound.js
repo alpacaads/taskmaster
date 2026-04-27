@@ -501,12 +501,35 @@ window.Sound = (function () {
       // unduck after 12s anyway so music doesn't stay quiet.
       setTimeout(restore, 12000);
       try {
-        a.play().catch(() => restore());
+        const p = a.play();
+        if (p && typeof p.then === "function") {
+          p.catch(err => {
+            restore();
+            if (window.__AUDIO_DEBUG) {
+              const kind = (err && err.name) || "PlayError";
+              const src  = (a.src || "").slice(0, 80);
+              try { Game.toast("audio " + slot + " " + kind + " " + src); } catch (e) {}
+            }
+          });
+        }
       } catch (e) {
         restore();
+        if (window.__AUDIO_DEBUG) {
+          try { Game.toast("audio " + slot + " threw " + (e && e.message || e)); } catch (e2) {}
+        }
       }
     } else {
-      try { a.play().catch(() => {}); } catch (e) {}
+      try {
+        const p = a.play();
+        if (p && typeof p.then === "function") {
+          p.catch(err => {
+            if (window.__AUDIO_DEBUG) {
+              const kind = (err && err.name) || "PlayError";
+              try { Game.toast("audio " + slot + " " + kind); } catch (e) {}
+            }
+          });
+        }
+      } catch (e) {}
     }
     return true;
   }
