@@ -986,8 +986,10 @@ window.Combat = (function () {
           return;
         }
       }
-      // Desperate swing: low dice, crit impossible, no counter payoff.
-      const base = desperateMelee ? rand(0, 2) : rand(1, 3);
+      // Fixed melee base — your weapon does what it does, no dice
+      // swing. Skill (counter / interrupt / crit) is what changes
+      // the number, not luck. Desperate swing still penalised.
+      const base = desperateMelee ? 1 : 2;
       const weaponBonus = s.bestMelee ? s.bestMelee.bonus : 0;
       // Brace-dodge on the previous turn sets up a counter: guaranteed
       // crit and a flat damage bonus, consumed by this swing.
@@ -1087,7 +1089,10 @@ window.Combat = (function () {
         log("The shot misses. The sound draws more attention.", "info");
         spawnMark("miss");
       } else {
-        const baseRoll = state.enemy.human ? rand(3, 5) : rand(2, 4);
+        // Fixed shot base. Humans take a touch more (4) than turned
+        // (3) — soft tissue vs. fungal mass. Skill stacks (aim,
+        // interrupt, headshot, weapon bonus) determine the total.
+        const baseRoll = state.enemy.human ? 4 : 3;
         const weaponBonus = s.bestRanged ? s.bestRanged.bonus : 0;
         const aimBonus = aimed ? 3 : 0;
         const interruptBonus = interrupted ? 2 : 0;
@@ -2113,11 +2118,12 @@ window.Combat = (function () {
     if (!state) return;
     const s = Game.state;
     const e = state.enemy;
-    let dmg = rand(e.atk[0], e.atk[1]);
-    // Rare savage hit — ignores 1 of brace.
-    let savage = Math.random() < 0.12;
-    if (savage) dmg += 2;
-    // Enemy lined up the shot last turn — auto-savage, +3 damage.
+    // Fixed enemy attack — average of the previous range. No more
+    // surprise savage crits eating you out of nowhere; 'savage' only
+    // fires from telegraphed shots the player had a chance to read.
+    let dmg = Math.round((e.atk[0] + e.atk[1]) / 2);
+    let savage = false;
+    // Enemy lined up the shot last turn — telegraphed crit, +3 damage.
     if (state.enemyAimed) { dmg += 3; savage = true; }
     // Cross-fire: while an ally is still tied up with their own
     // enemy, that enemy is also taking shots at the player through
@@ -2151,7 +2157,10 @@ window.Combat = (function () {
       ? e.accuracy
       : (e.human ? 0.82 : (e.heavySwing ? 0.7 : 0.92));
     const braceDodge = state.bracing ? (desperate ? 0.12 : 0.25) : 0;
-    const hitChance = Math.max(0.3, baseHit - mayaDodge() - braceDodge);
+    // Tightened the floor so dodge stacks (Maya + Brace + accuracy
+    // penalties) actually carve out big windows of safety instead of
+    // hitting a wall at 30%. Skill stacks > luck.
+    const hitChance = Math.max(0.15, baseHit - mayaDodge() - braceDodge);
     const hit = Math.random() < hitChance;
     if (!hit) {
       // Brace-dodge sets up a counter: your next melee is a guaranteed
