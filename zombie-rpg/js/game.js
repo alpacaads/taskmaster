@@ -798,6 +798,13 @@ window.Game = (function () {
     if (btn && Sound.isMuted()) btn.textContent = "🔇";
   });
 
+  // Stamp the build version onto the title screen so a refresh tells
+  // the player whether the new bundle actually loaded.
+  document.addEventListener("DOMContentLoaded", () => {
+    const el = document.getElementById("title-build");
+    if (el) el.textContent = "build " + (window.BUILD || "?");
+  });
+
   function fallbackToSVG(sceneId) {
     if (!window.Scenes || !Scenes.renderSVG) return;
     const art = document.getElementById("scene-art");

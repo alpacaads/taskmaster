@@ -127,6 +127,17 @@ html, body {
   gap: 10px;
 }
 
+.title-build {
+  flex: 0 0 auto;
+  text-align: center;
+  margin-top: 8px;
+  font-size: 11px;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: #6f7a6c;
+  opacity: .75;
+}
+
 /* Buttons */
 .primary-btn, .secondary-btn {
   padding: 14px 18px;

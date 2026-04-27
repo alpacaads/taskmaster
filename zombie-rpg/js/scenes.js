@@ -738,7 +738,7 @@ window.Scenes = (function () {
   // fresh image URLs automatically, so a commit on one device (PC)
   // shows up on another (phone) as soon as Pages rebuilds, without
   // relying on localStorage which is per-device.
-  const BUILD = "253";
+  const BUILD = "254";
 
   // Smart cache-bust: per-scene timestamp from the admin takes priority
   // (committer sees their upload immediately), then a device-wide global
@@ -999,6 +999,7 @@ window.Scenes = (function () {
   // Expose the resolver so admin.html can use the same URL pattern.
   window.sceneImageURL = imgUrlFor;
   window.sceneImageExt = extFor;
+  window.BUILD = BUILD;
 
   // Public helper: render only the SVG (no AI image) for a scene id.
   function renderSVG(sceneId) {
